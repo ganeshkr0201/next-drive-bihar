@@ -93,32 +93,6 @@ app.get('/', (req, res) => {
     })
 })
 
-// Debug endpoint to check environment variables (REMOVE IN PRODUCTION)
-app.get('/debug/env', (req, res) => {
-    res.json({
-        CLIENT_URL: process.env.CLIENT_URL,
-        GOOGLE_AUTH_CALLBACK: process.env.GOOGLE_AUTH_CALLBACK,
-        NODE_ENV: process.env.NODE_ENV,
-        hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
-        hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET
-    });
-})
-
-// Debug endpoint to check session status
-app.get('/debug/session', (req, res) => {
-    res.json({
-        authenticated: req.isAuthenticated(),
-        sessionID: req.sessionID,
-        user: req.user ? {
-            id: req.user._id,
-            name: req.user.name,
-            email: req.user.email,
-            role: req.user.role
-        } : null,
-        cookies: req.headers.cookie ? 'present' : 'missing'
-    });
-})
-
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api', publicRoutes);

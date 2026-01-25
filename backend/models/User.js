@@ -76,15 +76,15 @@ userSchema.pre('findOneAndDelete', async function() {
         
         if (user) {
             // Delete user's avatar from Cloudinary if exists
-            try {
-                if (user.avatarPublicId) {
+            if (user.avatarPublicId) {
+                try {
                     const { cloudinaryUtils } = await import('../config/cloudinary.js');
                     await cloudinaryUtils.deleteImage(user.avatarPublicId);
-                    console.log(`Deleted avatar from Cloudinary for user: ${user.name}`);
+                    console.log(`🗑️ Deleted avatar from Cloudinary for user: ${user.name}`);
+                } catch (cloudinaryError) {
+                    console.error('Error deleting avatar from Cloudinary:', cloudinaryError);
+                    // Continue with deletion even if Cloudinary cleanup fails
                 }
-            } catch (cloudinaryError) {
-                console.error('Error deleting avatar from Cloudinary:', cloudinaryError);
-                // Continue with deletion even if Cloudinary cleanup fails
             }
 
             try {
@@ -138,15 +138,15 @@ userSchema.pre('deleteOne', { document: true }, async function() {
         const userId = this._id;
 
         // Delete user's avatar from Cloudinary if exists
-        try {
-            if (this.avatarPublicId) {
+        if (this.avatarPublicId) {
+            try {
                 const { cloudinaryUtils } = await import('../config/cloudinary.js');
                 await cloudinaryUtils.deleteImage(this.avatarPublicId);
-                console.log(`Deleted avatar from Cloudinary for user: ${this.name}`);
+                console.log(`🗑️ Deleted avatar from Cloudinary for user: ${this.name}`);
+            } catch (cloudinaryError) {
+                console.error('Error deleting avatar from Cloudinary:', cloudinaryError);
+                // Continue with deletion even if Cloudinary cleanup fails
             }
-        } catch (cloudinaryError) {
-            console.error('Error deleting avatar from Cloudinary:', cloudinaryError);
-            // Continue with deletion even if Cloudinary cleanup fails
         }
 
         try {

@@ -154,68 +154,7 @@ class EnvConfig {
     if (path.startsWith('http') || path.startsWith('data:')) {
       return path;
     }
-    // For Cloudinary URLs, return as-is since they're already full URLs
-    if (path.includes('cloudinary.com')) {
-      return path;
-    }
     return `${this.apiUrl}/${path.replace(/^\//, '')}`;
-  }
-
-  // Helper method to get optimized Cloudinary URL
-  getOptimizedImageUrl(cloudinaryUrl, options = {}) {
-    if (!cloudinaryUrl || !cloudinaryUrl.includes('cloudinary.com')) {
-      return cloudinaryUrl;
-    }
-
-    const {
-      width = 'auto',
-      height = 'auto',
-      crop = 'fill',
-      quality = 'auto',
-      format = 'auto'
-    } = options;
-
-    try {
-      // Extract the public_id from the URL
-      const urlParts = cloudinaryUrl.split('/');
-      const uploadIndex = urlParts.findIndex(part => part === 'upload');
-      
-      if (uploadIndex === -1) return cloudinaryUrl;
-      
-      // Build transformation string
-      const transformations = [];
-      if (width !== 'auto') transformations.push(`w_${width}`);
-      if (height !== 'auto') transformations.push(`h_${height}`);
-      if (crop !== 'fill') transformations.push(`c_${crop}`);
-      if (quality !== 'auto') transformations.push(`q_${quality}`);
-      if (format !== 'auto') transformations.push(`f_${format}`);
-      
-      const transformationString = transformations.join(',');
-      
-      // Insert transformations into URL
-      const beforeUpload = urlParts.slice(0, uploadIndex + 1);
-      const afterUpload = urlParts.slice(uploadIndex + 1);
-      
-      if (transformationString) {
-        return [...beforeUpload, transformationString, ...afterUpload].join('/');
-      }
-      
-      return cloudinaryUrl;
-    } catch (error) {
-      console.error('Error optimizing Cloudinary URL:', error);
-      return cloudinaryUrl;
-    }
-  }
-
-  // Helper method to get thumbnail URL
-  getThumbnailUrl(imageUrl, size = null) {
-    const thumbnailSize = size || this.thumbnailSize;
-    return this.getOptimizedImageUrl(imageUrl, {
-      width: thumbnailSize,
-      height: thumbnailSize,
-      crop: 'fill',
-      quality: 'auto'
-    });
   }
 
   // Helper method to validate file size

@@ -1,5 +1,5 @@
 import api from '../config/axios.js';
-import errorHandler from '../utils/errorHandler.js';
+import envConfig from '../config/env.js';
 
 class BookingService {
   // Create a new tour booking
@@ -8,7 +8,10 @@ class BookingService {
       const response = await api.post('/api/bookings/tour', bookingData);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Booking', 'createTourBooking');
+      if (envConfig.enableDebugLogs) {
+        console.error('Create tour booking error:', error);
+      }
+      throw this.handleError(error);
     }
   }
 
@@ -23,7 +26,9 @@ class BookingService {
       const response = await api.get('/api/bookings/my-bookings');
       return response.data.bookings || [];
     } catch (error) {
-      errorHandler.logError(error, 'BookingService.getUserBookings');
+      if (envConfig.enableDebugLogs) {
+        console.error('Get user bookings error:', error);
+      }
       return [];
     }
   }
@@ -34,17 +39,23 @@ class BookingService {
       const response = await api.get(`/api/bookings/${bookingId}`);
       return response.data.booking;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Booking', 'getBooking');
+      if (envConfig.enableDebugLogs) {
+        console.error('Get booking error:', error);
+      }
+      throw this.handleError(error);
     }
   }
 
   // Cancel a booking
   async cancelBooking(bookingId, reason) {
     try {
-      const response = await api.patch(`/api/bookings/${bookingId}/cancel`, { reason });
+      const response = await api.put(`/api/bookings/${bookingId}/cancel`, { reason });
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Booking', 'cancelBooking');
+      if (envConfig.enableDebugLogs) {
+        console.error('Cancel booking error:', error);
+      }
+      throw this.handleError(error);
     }
   }
 
@@ -54,7 +65,10 @@ class BookingService {
       const response = await api.post(`/api/bookings/${bookingId}/feedback`, feedbackData);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Booking', 'submitFeedback');
+      if (envConfig.enableDebugLogs) {
+        console.error('Submit feedback error:', error);
+      }
+      throw this.handleError(error);
     }
   }
 
@@ -64,9 +78,40 @@ class BookingService {
       const response = await api.get(`/api/bookings/${bookingId}/feedback`);
       return response.data.feedback;
     } catch (error) {
-      errorHandler.logError(error, 'BookingService.getBookingFeedback');
+      if (envConfig.enableDebugLogs) {
+        console.error('Get feedback error:', error);
+      }
       return null;
     }
+  }
+
+  // Helper method to handle errors consistently
+  handleError(error) {
+    if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+      return new Error('Unable to connect to server. Please check your connection.');
+    }
+    
+    if (error.response) {
+      const status = error.response.status;
+      const message = error.response.data?.message || 'An error occurred';
+      
+      switch (status) {
+        case 401:
+          return new Error('Authentication required. Please login.');
+        case 403:
+          return new Error('Access denied.');
+        case 404:
+          return new Error('Booking not found.');
+        case 422:
+          return new Error(`Validation error: ${message}`);
+        case 500:
+          return new Error('Server error. Please try again later.');
+        default:
+          return new Error(message);
+      }
+    }
+    
+    return error;
   }
 }
 

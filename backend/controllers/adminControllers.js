@@ -431,8 +431,7 @@ export const updateTourPackage = async (req, res) => {
       highlights,
       maxGroupSize,
       difficulty,
-      rating,
-      removeImages // Array of public IDs to remove
+      rating
     } = req.body;
 
     const tourPackage = await TourPackage.findById(id);
@@ -453,54 +452,13 @@ export const updateTourPackage = async (req, res) => {
       }
     }
 
-    // Handle image removal from Cloudinary
-    if (removeImages && removeImages.length > 0) {
-      try {
-        const { cloudinaryUtils } = await import('../config/cloudinary.js');
-        const imagesToRemove = Array.isArray(removeImages) ? removeImages : JSON.parse(removeImages);
-        
-        // Delete images from Cloudinary
-        await cloudinaryUtils.deleteImages(imagesToRemove);
-        
-        // Remove from featured image if it's being removed
-        if (imagesToRemove.includes(tourPackage.images.featuredPublicId)) {
-          tourPackage.images.featured = '';
-          tourPackage.images.featuredPublicId = '';
-        }
-        
-        // Remove from gallery
-        tourPackage.images.gallery = tourPackage.images.gallery.filter(
-          img => !imagesToRemove.includes(img.publicId)
-        );
-        
-        console.log(`🗑️ Removed ${imagesToRemove.length} images from Cloudinary`);
-      } catch (error) {
-        console.error('Error removing images from Cloudinary:', error);
-        // Continue with update even if image removal fails
-      }
-    }
-
-    // Process new uploaded images from Cloudinary
-    const newImages = req.files || [];
-    if (newImages.length > 0) {
-      const newGalleryImages = newImages.map(file => ({
-        url: file.path, // Cloudinary URL
-        publicId: file.filename, // Cloudinary public_id
-        caption: '',
-        alt: name || tourPackage.title
-      }));
-
-      // Add new images to gallery
-      tourPackage.images.gallery = [...tourPackage.images.gallery, ...newGalleryImages];
-      
-      // Set first new image as featured if no featured image exists
-      if (!tourPackage.images.featured && newImages[0]) {
-        tourPackage.images.featured = newImages[0].path;
-        tourPackage.images.featuredPublicId = newImages[0].filename;
-      }
-      
-      console.log(`📸 Added ${newImages.length} new images to Cloudinary`);
-    }
+    // Process uploaded images from Cloudinary
+    const newImages = req.files ? req.files.map(file => ({
+      url: file.path, // Cloudinary URL
+      publicId: file.filename, // Cloudinary public_id
+      caption: '',
+      alt: name || tourPackage.title
+    })) : [];
 
     // Update fields
     if (name) tourPackage.title = name;
@@ -510,28 +468,34 @@ export const updateTourPackage = async (req, res) => {
       tourPackage.pricing.originalPrice = parseFloat(price);
     }
     if (duration) {
-      // Parse duration if it's a string
-      if (typeof duration === 'string') {
-        const durationParts = duration.match(/(\d+)\s*days?\s*\/?\s*(\d+)?\s*nights?/i);
-        const days = durationParts ? parseInt(durationParts[1]) : 1;
-        const nights = durationParts && durationParts[2] ? parseInt(durationParts[2]) : Math.max(0, days - 1);
-        tourPackage.duration = { days, nights };
-      } else {
-        tourPackage.duration = duration;
-      }
-    }
-    if (location) {
-      // Update destinations
-      tourPackage.destinations = [{
-        name: location,
-        description: description || tourPackage.description,
-        attractions: highlightsArray
-      }];
+      // Parse duration (e.g., "5 Days / 4 Nights" -> { days: 5, nights: 4 })
+      const durationParts = duration.match(/(\d+)\s*days?\s*\/?\s*(\d+)?\s*nights?/i);
+      const days = durationParts ? parseInt(durationParts[1]) : 1;
+      const nights = durationParts && durationParts[2] ? parseInt(durationParts[2]) : Math.max(0, days - 1);
+      tourPackage.duration = { days, nights };
     }
     if (highlightsArray.length > 0) tourPackage.highlights = highlightsArray;
     if (maxGroupSize) tourPackage.maxGroupSize = parseInt(maxGroupSize);
     if (difficulty) tourPackage.difficulty = difficulty;
     
+    // Add new images to existing gallery
+    if (newImages.length > 0) {
+      if (!tourPackage.images) {
+        tourPackage.images = { gallery: [] };
+      }
+      if (!tourPackage.images.gallery) {
+        tourPackage.images.gallery = [];
+      }
+      
+      // If this is the first image and no featured image exists, set it as featured
+      if (!tourPackage.images.featured && newImages.length > 0) {
+        tourPackage.images.featured = newImages[0].url;
+        tourPackage.images.featuredPublicId = newImages[0].publicId;
+      }
+      
+      tourPackage.images.gallery = [...tourPackage.images.gallery, ...newImages];
+    }
+
     // Update lastModifiedBy
     tourPackage.lastModifiedBy = req.user._id;
 

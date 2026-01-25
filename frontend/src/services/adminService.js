@@ -2,7 +2,7 @@
 // Handles all admin-related API requests
 
 import api from '../config/axios.js';
-import errorHandler from '../utils/errorHandler.js';
+import envConfig from '../config/env.js';
 
 class AdminService {
   // Get dashboard statistics
@@ -17,7 +17,9 @@ class AdminService {
         totalUsers: 0
       };
     } catch (error) {
-      errorHandler.logError(error, 'AdminService.getStats');
+      if (envConfig.enableDebugLogs) {
+        console.error('Failed to fetch stats:', error);
+      }
       return {
         totalQueries: 0,
         totalTourBookings: 0,
@@ -35,7 +37,9 @@ class AdminService {
       // Return just the queries array for data synchronization
       return response.data.queries || [];
     } catch (error) {
-      errorHandler.logError(error, 'AdminService.getQueries');
+      if (envConfig.enableDebugLogs) {
+        console.error('Failed to fetch queries:', error);
+      }
       return [];
     }
   }
@@ -46,7 +50,9 @@ class AdminService {
       const response = await api.get('/admin/tour-bookings');
       return response.data.bookings || [];
     } catch (error) {
-      errorHandler.logError(error, 'AdminService.getTourBookings');
+      if (envConfig.enableDebugLogs) {
+        console.error('Failed to fetch tour bookings:', error);
+      }
       return [];
     }
   }
@@ -57,7 +63,9 @@ class AdminService {
       const response = await api.get('/admin/car-bookings');
       return response.data.bookings || [];
     } catch (error) {
-      errorHandler.logError(error, 'AdminService.getCarBookings');
+      if (envConfig.enableDebugLogs) {
+        console.error('Failed to fetch car bookings:', error);
+      }
       return [];
     }
   }
@@ -68,7 +76,9 @@ class AdminService {
       const response = await api.get('/admin/tour-packages');
       return response.data.packages || [];
     } catch (error) {
-      errorHandler.logError(error, 'AdminService.getTourPackages');
+      if (envConfig.enableDebugLogs) {
+        console.error('Failed to fetch tour packages:', error);
+      }
       return [];
     }
   }
@@ -83,7 +93,10 @@ class AdminService {
       });
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'createTourPackage');
+      if (error.response) {
+        throw new Error(error.response.data.message || 'Failed to create tour package');
+      }
+      throw error;
     }
   }
 
@@ -97,7 +110,10 @@ class AdminService {
       });
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'updateTourPackage');
+      if (error.response) {
+        throw new Error(error.response.data.message || 'Failed to update tour package');
+      }
+      throw error;
     }
   }
 
@@ -107,7 +123,10 @@ class AdminService {
       const response = await api.patch(`/admin/tour-packages/${id}/status`, { status });
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'updateTourPackageStatus');
+      if (error.response) {
+        throw new Error(error.response.data.message || 'Failed to update tour package status');
+      }
+      throw error;
     }
   }
 
@@ -117,7 +136,10 @@ class AdminService {
       const response = await api.delete(`/admin/tour-packages/${id}`);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'deleteTourPackage');
+      if (error.response) {
+        throw new Error(error.response.data.message || 'Failed to delete tour package');
+      }
+      throw error;
     }
   }
 
@@ -127,7 +149,10 @@ class AdminService {
       const response = await api.put(`/admin/${type}-bookings/${id}/status`, { status });
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'updateBookingStatus');
+      if (error.response) {
+        throw new Error(error.response.data.message || 'Failed to update booking status');
+      }
+      throw error;
     }
   }
 
@@ -137,7 +162,8 @@ class AdminService {
       const response = await api.patch(`/admin/bookings/${bookingId}/confirm`);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'confirmBooking');
+      console.error('Confirm booking error:', error);
+      throw this.handleError(error);
     }
   }
 
@@ -147,7 +173,8 @@ class AdminService {
       const response = await api.patch(`/admin/bookings/${bookingId}/cancel`, { reason });
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'cancelBooking');
+      console.error('Cancel booking error:', error);
+      throw this.handleError(error);
     }
   }
 
@@ -157,7 +184,8 @@ class AdminService {
       const response = await api.patch(`/admin/bookings/${bookingId}/complete`);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'completeBooking');
+      console.error('Complete booking error:', error);
+      throw this.handleError(error);
     }
   }
 
@@ -167,7 +195,7 @@ class AdminService {
       const response = await api.get('/admin/feedbacks');
       return response.data.feedbacks || [];
     } catch (error) {
-      errorHandler.logError(error, 'AdminService.getFeedbacks');
+      console.error('Failed to fetch feedbacks:', error);
       return [];
     }
   }
@@ -178,7 +206,8 @@ class AdminService {
       const response = await api.patch(`/admin/feedbacks/${feedbackId}/respond`, responseData);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'respondToFeedback');
+      console.error('Respond to feedback error:', error);
+      throw this.handleError(error);
     }
   }
 
@@ -188,7 +217,7 @@ class AdminService {
       const response = await api.get('/admin/users');
       return response.data.users || [];
     } catch (error) {
-      errorHandler.logError(error, 'AdminService.getUsers');
+      console.error('Failed to fetch users:', error);
       return [];
     }
   }
@@ -199,7 +228,10 @@ class AdminService {
       const response = await api.delete(`/admin/users/${id}`);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'deleteUser');
+      if (error.response) {
+        throw new Error(error.response.data.message || 'Failed to delete user');
+      }
+      throw error;
     }
   }
 
@@ -214,7 +246,8 @@ class AdminService {
       const response = await api.get('/admin/bookings', { params });
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'getBookings');
+      console.error('Get bookings error:', error);
+      throw this.handleError(error);
     }
   }
 
@@ -224,7 +257,8 @@ class AdminService {
       const response = await api.post(`/admin/queries/${queryId}/reply`, replyData);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'replyToQuery');
+      console.error('Reply to query error:', error);
+      throw this.handleError(error);
     }
   }
 
@@ -234,7 +268,8 @@ class AdminService {
       const response = await api.patch(`/admin/queries/${queryId}/respond`, responseData);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'respondToQuery');
+      console.error('Respond to query error:', error);
+      throw this.handleError(error);
     }
   }
 
@@ -244,7 +279,8 @@ class AdminService {
       const response = await api.patch(`/admin/queries/${queryId}/assign`, assignData);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'assignQuery');
+      console.error('Assign query error:', error);
+      throw this.handleError(error);
     }
   }
 
@@ -254,7 +290,8 @@ class AdminService {
       const response = await api.patch(`/admin/bookings/${bookingId}/assign`, assignData);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'assignBooking');
+      console.error('Assign booking error:', error);
+      throw this.handleError(error);
     }
   }
 
@@ -264,7 +301,8 @@ class AdminService {
       const response = await api.get('/admin/users/admins');
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'getAdminUsers');
+      console.error('Get admin users error:', error);
+      throw this.handleError(error);
     }
   }
 
@@ -274,7 +312,8 @@ class AdminService {
       const response = await api.patch(`/admin/queries/${queryId}/priority`, priorityData);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'updateQueryPriority');
+      console.error('Update query priority error:', error);
+      throw this.handleError(error);
     }
   }
 
@@ -284,7 +323,8 @@ class AdminService {
       const response = await api.patch(`/admin/bookings/${bookingId}/priority`, priorityData);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'updateBookingPriority');
+      console.error('Update booking priority error:', error);
+      throw this.handleError(error);
     }
   }
 
@@ -294,7 +334,8 @@ class AdminService {
       const response = await api.post('/public/queries', queryData);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'submitQuery');
+      console.error('Submit query error:', error);
+      throw this.handleError(error);
     }
   }
 
@@ -304,8 +345,38 @@ class AdminService {
       const response = await api.post('/public/bookings', bookingData);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Admin', 'submitBooking');
+      console.error('Submit booking error:', error);
+      throw this.handleError(error);
     }
+  }
+
+  // Helper method to handle errors consistently
+  handleError(error) {
+    if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+      return new Error('Unable to connect to server. Please check your connection.');
+    }
+    
+    if (error.response) {
+      const status = error.response.status;
+      const message = error.response.data?.message || 'An error occurred';
+      
+      switch (status) {
+        case 401:
+          return new Error('Authentication required. Please login.');
+        case 403:
+          return new Error('Access denied. Admin privileges required.');
+        case 404:
+          return new Error('Resource not found.');
+        case 422:
+          return new Error(`Validation error: ${message}`);
+        case 500:
+          return new Error('Server error. Please try again later.');
+        default:
+          return new Error(message);
+      }
+    }
+    
+    return error;
   }
 }
 

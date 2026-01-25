@@ -51,10 +51,10 @@ router.get('/car-bookings', requireAdmin, adminControllers.getAllCarBookings);
 // Get all tour packages
 router.get('/tour-packages', requireAdmin, adminControllers.getAllTourPackages);
 
-// Create new tour package with Cloudinary upload
+// Create new tour package
 router.post('/tour-packages', requireAdmin, tourUpload.array('images', 10), adminControllers.createNewTourPackage);
 
-// Update tour package with Cloudinary upload
+// Update tour package
 router.put('/tour-packages/:id', requireAdmin, tourUpload.array('images', 10), adminControllers.updateTourPackage);
 
 // Delete tour package

@@ -6,15 +6,11 @@ import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
 import User from '../models/User.js';
 import TourPackage from '../models/TourPackage.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Load environment variables
-dotenv.config();
 
 // Configure Cloudinary
 cloudinary.config({

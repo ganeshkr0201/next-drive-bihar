@@ -1,5 +1,4 @@
 import api from '../config/axios';
-import errorHandler from '../utils/errorHandler';
 import envConfig from '../config/env';
 
 const notificationService = {
@@ -9,7 +8,10 @@ const notificationService = {
       const response = await api.get(`/api/notifications?limit=${limit}`);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Notification', 'getNotifications');
+      if (envConfig.enableDebugLogs) {
+        console.error('Get notifications error:', error);
+      }
+      throw error.response?.data || { message: 'Failed to fetch notifications' };
     }
   },
 
@@ -19,7 +21,10 @@ const notificationService = {
       const response = await api.get('/api/notifications/unread-count');
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Notification', 'getUnreadCount');
+      if (envConfig.enableDebugLogs) {
+        console.error('Get unread count error:', error);
+      }
+      throw error.response?.data || { message: 'Failed to fetch unread count' };
     }
   },
 
@@ -29,7 +34,10 @@ const notificationService = {
       const response = await api.patch(`/api/notifications/${notificationId}/read`);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Notification', 'markAsRead');
+      if (envConfig.enableDebugLogs) {
+        console.error('Mark as read error:', error);
+      }
+      throw error.response?.data || { message: 'Failed to mark notification as read' };
     }
   },
 
@@ -39,7 +47,10 @@ const notificationService = {
       const response = await api.patch('/api/notifications/mark-all-read');
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Notification', 'markAllAsRead');
+      if (envConfig.enableDebugLogs) {
+        console.error('Mark all as read error:', error);
+      }
+      throw error.response?.data || { message: 'Failed to mark all notifications as read' };
     }
   },
 
@@ -49,7 +60,10 @@ const notificationService = {
       const response = await api.delete(`/api/notifications/${notificationId}`);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Notification', 'deleteNotification');
+      if (envConfig.enableDebugLogs) {
+        console.error('Delete notification error:', error);
+      }
+      throw error.response?.data || { message: 'Failed to delete notification' };
     }
   },
 
@@ -59,7 +73,10 @@ const notificationService = {
       const response = await api.post('/api/notifications', notificationData);
       return response.data;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Notification', 'createNotification');
+      if (envConfig.enableDebugLogs) {
+        console.error('Create notification error:', error);
+      }
+      throw error.response?.data || { message: 'Failed to create notification' };
     }
   }
 };

@@ -1,4 +1,3 @@
-// Cloudinary configuration for image storage
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
@@ -10,165 +9,118 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Storage configuration for profile avatars
-const avatarStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'nextdrive/avatars',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-    transformation: [
-      { width: 400, height: 400, crop: 'fill', gravity: 'face' },
-      { quality: 'auto', fetch_format: 'auto' }
-    ],
-    public_id: (req, file) => {
-      // Use user ID for consistent naming
-      return `avatar_${req.user.id}_${Date.now()}`;
-    },
+// Cloudinary utility functions
+export const cloudinaryUtils = {
+  // Delete a single image by public_id
+  async deleteImage(publicId) {
+    try {
+      const result = await cloudinary.uploader.destroy(publicId);
+      console.log(`🗑️ Deleted image from Cloudinary: ${publicId}`, result);
+      return result;
+    } catch (error) {
+      console.error(`❌ Failed to delete image from Cloudinary: ${publicId}`, error);
+      throw error;
+    }
   },
-});
 
-// Storage configuration for tour package images
+  // Delete multiple images by public_ids
+  async deleteImages(publicIds) {
+    try {
+      if (!Array.isArray(publicIds) || publicIds.length === 0) {
+        return { deleted: [] };
+      }
+
+      const results = await Promise.allSettled(
+        publicIds.map(publicId => this.deleteImage(publicId))
+      );
+
+      const deleted = [];
+      const failed = [];
+
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          deleted.push(publicIds[index]);
+        } else {
+          failed.push({ publicId: publicIds[index], error: result.reason });
+        }
+      });
+
+      console.log(`🗑️ Deleted ${deleted.length} images from Cloudinary`);
+      if (failed.length > 0) {
+        console.warn(`⚠️ Failed to delete ${failed.length} images:`, failed);
+      }
+
+      return { deleted, failed };
+    } catch (error) {
+      console.error('❌ Failed to delete multiple images from Cloudinary:', error);
+      throw error;
+    }
+  },
+
+  // Delete all images in a folder
+  async deleteFolder(folderPath) {
+    try {
+      const result = await cloudinary.api.delete_resources_by_prefix(folderPath);
+      console.log(`🗑️ Deleted folder from Cloudinary: ${folderPath}`, result);
+      return result;
+    } catch (error) {
+      console.error(`❌ Failed to delete folder from Cloudinary: ${folderPath}`, error);
+      throw error;
+    }
+  },
+
+  // Get image details
+  async getImageDetails(publicId) {
+    try {
+      const result = await cloudinary.api.resource(publicId);
+      return result;
+    } catch (error) {
+      console.error(`❌ Failed to get image details: ${publicId}`, error);
+      throw error;
+    }
+  }
+};
+
+// Configure Cloudinary storage for tour packages
 const tourStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'nextdrive/tours',
     allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
     transformation: [
-      { width: 1200, height: 800, crop: 'fill' },
-      { quality: 'auto', fetch_format: 'auto' }
-    ],
-    public_id: (req, file) => {
-      // Use timestamp and original name for uniqueness
-      const timestamp = Date.now();
-      const originalName = file.originalname.split('.')[0];
-      return `tour_${timestamp}_${originalName}`;
-    },
+      { width: 1200, height: 800, crop: 'fill', quality: 'auto' }
+    ]
   },
 });
 
-// Multer configurations
-const avatarUpload = multer({
-  storage: avatarStorage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    // Check file type
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'), false);
-    }
+// Configure Cloudinary storage for avatars
+const avatarStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'nextdrive/avatars',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation: [
+      { width: 400, height: 400, crop: 'fill', quality: 'auto', gravity: 'face' }
+    ]
   },
 });
 
-const tourUpload = multer({
+// Create multer instances
+const tourUpload = multer({ 
   storage: tourStorage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    // Check file type
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'), false);
-    }
-  },
+    fileSize: 5 * 1024 * 1024, // 5MB
+    files: 10
+  }
 });
 
-// Utility functions for image management
-const cloudinaryUtils = {
-  // Delete image by public_id
-  async deleteImage(publicId) {
-    try {
-      const result = await cloudinary.uploader.destroy(publicId);
-      console.log('Image deleted from Cloudinary:', result);
-      return result;
-    } catch (error) {
-      console.error('Error deleting image from Cloudinary:', error);
-      throw error;
-    }
-  },
-
-  // Delete multiple images
-  async deleteImages(publicIds) {
-    try {
-      const result = await cloudinary.api.delete_resources(publicIds);
-      console.log('Multiple images deleted from Cloudinary:', result);
-      return result;
-    } catch (error) {
-      console.error('Error deleting multiple images from Cloudinary:', error);
-      throw error;
-    }
-  },
-
-  // Extract public_id from Cloudinary URL
-  extractPublicId(cloudinaryUrl) {
-    if (!cloudinaryUrl || !cloudinaryUrl.includes('cloudinary.com')) {
-      return null;
-    }
-    
-    try {
-      // Extract public_id from URL
-      // Example: https://res.cloudinary.com/demo/image/upload/v1234567890/nextdrive/avatars/avatar_123_1234567890.jpg
-      const urlParts = cloudinaryUrl.split('/');
-      const uploadIndex = urlParts.findIndex(part => part === 'upload');
-      
-      if (uploadIndex === -1) return null;
-      
-      // Get everything after version (v1234567890)
-      const pathAfterVersion = urlParts.slice(uploadIndex + 2).join('/');
-      
-      // Remove file extension
-      const publicId = pathAfterVersion.replace(/\.[^/.]+$/, '');
-      
-      return publicId;
-    } catch (error) {
-      console.error('Error extracting public_id:', error);
-      return null;
-    }
-  },
-
-  // Get optimized URL for different sizes
-  getOptimizedUrl(publicId, options = {}) {
-    const {
-      width = 'auto',
-      height = 'auto',
-      crop = 'fill',
-      quality = 'auto',
-      format = 'auto'
-    } = options;
-
-    return cloudinary.url(publicId, {
-      width,
-      height,
-      crop,
-      quality,
-      fetch_format: format,
-    });
-  },
-
-  // Generate thumbnail URL
-  getThumbnailUrl(publicId, size = 150) {
-    return this.getOptimizedUrl(publicId, {
-      width: size,
-      height: size,
-      crop: 'fill'
-    });
-  },
-
-  // Validate Cloudinary URL
-  isCloudinaryUrl(url) {
-    return url && url.includes('cloudinary.com');
+const avatarUpload = multer({ 
+  storage: avatarStorage,
+  limits: {
+    fileSize: 2 * 1024 * 1024, // 2MB
+    files: 1
   }
-};
+});
 
-export {
-  cloudinary,
-  avatarUpload,
-  tourUpload,
-  cloudinaryUtils,
-  avatarStorage,
-  tourStorage
-};
+// Export cloudinary instance, utilities, and upload middlewares
+export { cloudinary, tourUpload, avatarUpload };

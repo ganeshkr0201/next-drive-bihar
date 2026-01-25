@@ -160,82 +160,69 @@ tourPackageSchema.index({ createdAt: -1 });
 // Pre-delete middleware to clean up Cloudinary images
 tourPackageSchema.pre('findOneAndDelete', async function() {
   try {
-    const tourPackage = await this.model.findOne(this.getQuery());
+    const tourPackageId = this.getQuery()._id;
+    const tourPackage = await this.model.findById(tourPackageId);
     
-    if (tourPackage) {
-      // Import cloudinary utils
+    if (tourPackage && tourPackage.images) {
       const { cloudinaryUtils } = await import('../config/cloudinary.js');
+      const imagesToDelete = [];
       
-      // Collect all public IDs to delete
-      const publicIdsToDelete = [];
-      
-      // Add featured image public ID
+      // Add featured image public_id if exists
       if (tourPackage.images.featuredPublicId) {
-        publicIdsToDelete.push(tourPackage.images.featuredPublicId);
+        imagesToDelete.push(tourPackage.images.featuredPublicId);
       }
       
-      // Add gallery images public IDs
+      // Add gallery images public_ids if exist
       if (tourPackage.images.gallery && tourPackage.images.gallery.length > 0) {
         tourPackage.images.gallery.forEach(image => {
           if (image.publicId) {
-            publicIdsToDelete.push(image.publicId);
+            imagesToDelete.push(image.publicId);
           }
         });
       }
       
-      // Delete images from Cloudinary
-      if (publicIdsToDelete.length > 0) {
-        try {
-          await cloudinaryUtils.deleteImages(publicIdsToDelete);
-          console.log(`Deleted ${publicIdsToDelete.length} images from Cloudinary for tour package: ${tourPackage.title}`);
-        } catch (cloudinaryError) {
-          console.error('Error deleting images from Cloudinary:', cloudinaryError);
-          // Continue with deletion even if Cloudinary cleanup fails
-        }
+      // Delete all images from Cloudinary
+      if (imagesToDelete.length > 0) {
+        await cloudinaryUtils.deleteImages(imagesToDelete);
+        console.log(`🗑️ Deleted ${imagesToDelete.length} images from Cloudinary for tour package: ${tourPackage.title}`);
       }
     }
   } catch (error) {
-    console.error('Error in tour package pre-delete middleware:', error);
-    // Continue with deletion even if cleanup fails
+    console.error('Error deleting tour package images from Cloudinary:', error);
+    // Continue with deletion even if Cloudinary cleanup fails
   }
 });
 
 // Also handle direct deleteOne calls
 tourPackageSchema.pre('deleteOne', { document: true }, async function() {
   try {
-    // Import cloudinary utils
-    const { cloudinaryUtils } = await import('../config/cloudinary.js');
-    
-    // Collect all public IDs to delete
-    const publicIdsToDelete = [];
-    
-    // Add featured image public ID
-    if (this.images.featuredPublicId) {
-      publicIdsToDelete.push(this.images.featuredPublicId);
-    }
-    
-    // Add gallery images public IDs
-    if (this.images.gallery && this.images.gallery.length > 0) {
-      this.images.gallery.forEach(image => {
-        if (image.publicId) {
-          publicIdsToDelete.push(image.publicId);
-        }
-      });
-    }
-    
-    // Delete images from Cloudinary
-    if (publicIdsToDelete.length > 0) {
-      try {
-        await cloudinaryUtils.deleteImages(publicIdsToDelete);
-        console.log(`Deleted ${publicIdsToDelete.length} images from Cloudinary for tour package: ${this.title}`);
-      } catch (cloudinaryError) {
-        console.error('Error deleting images from Cloudinary:', cloudinaryError);
-        // Continue with deletion even if Cloudinary cleanup fails
+    if (this.images) {
+      const { cloudinaryUtils } = await import('../config/cloudinary.js');
+      const imagesToDelete = [];
+      
+      // Add featured image public_id if exists
+      if (this.images.featuredPublicId) {
+        imagesToDelete.push(this.images.featuredPublicId);
+      }
+      
+      // Add gallery images public_ids if exist
+      if (this.images.gallery && this.images.gallery.length > 0) {
+        this.images.gallery.forEach(image => {
+          if (image.publicId) {
+            imagesToDelete.push(image.publicId);
+          }
+        });
+      }
+      
+      // Delete all images from Cloudinary
+      if (imagesToDelete.length > 0) {
+        await cloudinaryUtils.deleteImages(imagesToDelete);
+        console.log(`🗑️ Deleted ${imagesToDelete.length} images from Cloudinary for tour package: ${this.title}`);
       }
     }
   } catch (error) {
-    console.error('Error in tour package pre-delete middleware:', error);
-    // Continue with deletion even if cleanup fails
+    console.error('Error deleting tour package images from Cloudinary:', error);
+    // Continue with deletion even if Cloudinary cleanup fails
   }
 });
 

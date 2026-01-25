@@ -1,13 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { authStorage } from '../utils/storage';
 import envConfig from '../config/env';
 
 const GoogleAuthSuccessSimple = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { setUser } = useAuth();
   const { showSuccess, showError } = useToast();
   const [status, setStatus] = useState('checking'); // 'checking', 'success', 'error'
@@ -23,98 +21,46 @@ const GoogleAuthSuccessSimple = () => {
       hasProcessed.current = true;
       
       try {
-        // Check if we have a token from OAuth redirect
-        const token = searchParams.get('token');
+        // Simple delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        if (token) {
-          console.log('🔍 Found OAuth token, verifying...');
+        const response = await fetch(`${envConfig.apiUrl}/auth/me`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
           
-          // Verify the OAuth token
-          const response = await fetch(`${envConfig.apiUrl}/auth/verify-oauth-token`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ token }),
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
+          if (data.success && data.user) {
+            // Store user data
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('isAuthenticated', 'true');
+            setUser(data.user);
             
-            if (data.success && data.user) {
-              console.log('✅ OAuth token verified, user logged in');
-              
-              // Store user data using storage utility
-              authStorage.login(data.user);
-              setUser(data.user);
-              
-              // Show success and redirect - only once
-              setStatus('success');
-              if (!hasShownToast.current) {
-                hasShownToast.current = true;
-                showSuccess(`Welcome, ${data.user.name}!`);
-              }
-              
-              setTimeout(() => {
-                // Redirect based on user role
-                if (data.user.role === 'admin') {
-                  navigate('/admin/dashboard', { replace: true });
-                } else {
-                  navigate('/user-dashboard', { replace: true });
-                }
-              }, 1000);
-              
-              return;
+            // Show success and redirect - only once
+            setStatus('success');
+            if (!hasShownToast.current) {
+              hasShownToast.current = true;
+              showSuccess(`Welcome, ${data.user.name}!`);
             }
-          }
-          
-          throw new Error('Token verification failed');
-        } else {
-          // Fallback to checking existing session
-          console.log('🔍 No token found, checking existing session...');
-          
-          // Simple delay
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const response = await fetch(`${envConfig.apiUrl}/auth/me`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
             
-            if (data.success && data.user) {
-              // Store user data using storage utility
-              authStorage.login(data.user);
-              setUser(data.user);
-              
-              // Show success and redirect - only once
-              setStatus('success');
-              if (!hasShownToast.current) {
-                hasShownToast.current = true;
-                showSuccess(`Welcome, ${data.user.name}!`);
+            setTimeout(() => {
+              // Redirect based on user role
+              if (data.user.role === 'admin') {
+                navigate('/admin/dashboard', { replace: true });
+              } else {
+                navigate('/user-dashboard', { replace: true });
               }
-              
-              setTimeout(() => {
-                // Redirect based on user role
-                if (data.user.role === 'admin') {
-                  navigate('/admin/dashboard', { replace: true });
-                } else {
-                  navigate('/user-dashboard', { replace: true });
-                }
-              }, 1000);
-              
-              return;
-            }
+            }, 1000);
+            
+            return;
           }
-          
-          throw new Error('Authentication failed');
         }
         
+        throw new Error('Authentication failed');
+        
       } catch (error) {
-        console.error('❌ Authentication error:', error);
         setStatus('error');
         if (!hasShownToast.current) {
           hasShownToast.current = true;
@@ -128,7 +74,7 @@ const GoogleAuthSuccessSimple = () => {
     };
 
     checkAuth();
-  }, [searchParams]); // Add searchParams to dependency array
+  }, []); // Empty dependency array
 
   if (status === 'checking') {
     return (

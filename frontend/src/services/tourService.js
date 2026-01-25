@@ -1,5 +1,4 @@
 import api from '../config/axios.js';
-import errorHandler from '../utils/errorHandler.js';
 import envConfig from '../config/env.js';
 
 class TourService {
@@ -9,7 +8,9 @@ class TourService {
       const response = await api.get('/api/tour-packages', { params });
       return response.data.packages || [];
     } catch (error) {
-      errorHandler.logError(error, 'TourService.getTourPackages');
+      if (envConfig.enableDebugLogs) {
+        console.error('Failed to fetch tour packages:', error);
+      }
       return [];
     }
   }
@@ -22,7 +23,9 @@ class TourService {
       });
       return response.data.packages || [];
     } catch (error) {
-      errorHandler.logError(error, 'TourService.getFeaturedTourPackages');
+      if (envConfig.enableDebugLogs) {
+        console.error('Failed to fetch featured tour packages:', error);
+      }
       return [];
     }
   }
@@ -33,7 +36,10 @@ class TourService {
       const response = await api.get(`/api/tour-packages/${identifier}`);
       return response.data.package;
     } catch (error) {
-      throw errorHandler.handleServiceError(error, 'Tour', 'getTourPackage');
+      if (envConfig.enableDebugLogs) {
+        console.error('Failed to fetch tour package:', error);
+      }
+      throw error;
     }
   }
 
@@ -43,7 +49,9 @@ class TourService {
       const response = await api.get('/api/tour-categories');
       return response.data.categories || [];
     } catch (error) {
-      errorHandler.logError(error, 'TourService.getTourCategories');
+      if (envConfig.enableDebugLogs) {
+        console.error('Failed to fetch tour categories:', error);
+      }
       return [];
     }
   }
