@@ -3,6 +3,26 @@ import dotenv from 'dotenv';
 // Load environment variables FIRST before importing other modules
 dotenv.config();
 
+// Validate critical environment variables
+const requiredEnvVars = ['MONGO_URI', 'PASSPORT_SECRET'];
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingEnvVars.length > 0) {
+    console.error('❌ Missing required environment variables:', missingEnvVars);
+    console.error('💡 Make sure to set these in your Render dashboard Environment tab');
+} else {
+    console.log('✅ Required environment variables loaded');
+}
+
+// Optional environment variables check
+const optionalEnvVars = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'CLIENT_URL'];
+const missingOptionalVars = optionalEnvVars.filter(varName => !process.env[varName]);
+
+if (missingOptionalVars.length > 0) {
+    console.warn('⚠️ Missing optional environment variables:', missingOptionalVars);
+    console.warn('💡 Some features (like Google OAuth) may not work');
+}
+
 import cors from 'cors';
 import express from 'express'
 import session from 'express-session';
