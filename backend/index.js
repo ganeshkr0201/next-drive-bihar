@@ -22,7 +22,6 @@ const PORT = process.env.PORT;
 // connecting database
 connectToDB(process.env.MONGO_URI);
 
-af
 // enabling cors
 app.use(cors({
     origin: [
