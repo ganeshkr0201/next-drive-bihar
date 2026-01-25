@@ -1,0 +1,133 @@
+# Root-level gitignore for NextDrive Bihar project
+# This ignores documentation and test files created during development
+
+# Documentation files (development/setup docs)
+API_DOCUMENTATION.md
+CLEANUP_SUMMARY.md
+CLOUDINARY_INTEGRATION_SUMMARY.md
+CLOUDINARY_SETUP.md
+GITIGNORE_UPDATE_SUMMARY.md
+TROUBLESHOOTING.md
+
+# Test files
+test-*.js
+test-*.ts
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
+# Development utilities
+cookies.txt
+start-dev.sh
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files (root level)
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Backup files
+*.backup
+*.bak
+*.orig
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Log files (root level)
+*.log
+logs/
+
+# Environment files (root level)
+.env
+.env.local
+.env.*.local
+
+# Node.js (root level if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+
+# Build artifacts (root level)
+dist/
+build/
+
+# Coverage reports (root level)
+coverage/
+.nyc_output/
+
+# Cache directories (root level)
+.cache/
+.npm/
+.yarn/
+
+# Lock files (optional - uncomment if you want to ignore them)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Database files
+*.sqlite
+*.db
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.p12
+
+# Docker files (if any)
+docker-compose.override.yml
+.dockerignore
+
+# Deployment files
+.vercel/
+.netlify/
+
+# Editor directories and files
+.history/
+.vscode-test/
+
+# MacOS
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*

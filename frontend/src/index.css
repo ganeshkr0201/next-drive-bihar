@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+/* Simple background animations only */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes gradient-xy {
+  0%, 100% {
+    transform: translate(0%, 0%);
+  }
+  25% {
+    transform: translate(10%, 10%);
+  }
+  50% {
+    transform: translate(-5%, 20%);
+  }
+  75% {
+    transform: translate(-20%, 10%);
+  }
+}
+
+/* Typing cursor animation - smoother version */
+@keyframes typing-cursor {
+  0%, 45% {
+    opacity: 1;
+  }
+  50%, 95% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Toast animations */
+@keyframes toast-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-slide-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Simple utility classes for background animation only */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-gradient-xy {
+  animation: gradient-xy 15s ease infinite;
+}
+
+/* Typing cursor utility class */
+.animate-typing-cursor {
+  animation: typing-cursor 1s infinite;
+}
+
+/* Toast utility classes */
+.animate-toast-in {
+  animation: toast-slide-in 0.3s ease-out;
+}
+
+/* Custom scrollbar for better UX */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
