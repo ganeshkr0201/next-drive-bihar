@@ -19,85 +19,87 @@ export const AuthProvider = ({ children }) => {
     // Check if user is already logged in on app start
     const checkAuth = async () => {
       try {
-        console.log('🔍 Checking authentication status...');
+        console.log('🔍 Checking JWT authentication status...');
         
-        // First check local storage
+        // First check local storage for tokens
         if (authService.isAuthenticated()) {
           const currentUser = authService.getCurrentUser();
           if (currentUser) {
             setUser(currentUser);
             console.log('✅ Found user in localStorage:', currentUser.name);
             
-            // Validate session with backend in the background
+            // Validate token with backend in the background
             try {
-              console.log('🔄 Validating session with backend...');
+              console.log('🔄 Validating JWT token with backend...');
               const sessionUser = await authService.checkSession();
               if (sessionUser) {
-                // Update user data from backend if session is valid
+                // Update user data from backend if token is valid
                 setUser(sessionUser);
-                console.log('✅ Session validated, user authenticated:', sessionUser.name);
+                console.log('✅ JWT token validated, user authenticated:', sessionUser.name);
               } else {
-                // Session is invalid, but keep local user for now
-                // This prevents logout on every refresh if there are temporary network issues
-                console.log('⚠️ Session validation failed, keeping local user');
+                // Token is invalid, clear auth data
+                console.log('❌ JWT token invalid, clearing auth data');
+                authService.clearAuthData();
+                setUser(null);
               }
             } catch (sessionError) {
-              console.log('❌ Session check error:', sessionError.message);
+              console.log('❌ JWT token validation error:', sessionError.message);
               
               // Only clear user if it's a clear 401 authentication error
               if (sessionError.response?.status === 401) {
-                console.log('❌ Session expired (401), clearing user');
-                authService.logout();
+                console.log('❌ JWT token expired (401), clearing auth data');
+                authService.clearAuthData();
                 setUser(null);
               } else if (sessionError.code === 'ECONNREFUSED' || sessionError.message.includes('Network Error')) {
                 // Network error - keep local user but log the issue
-                console.log('⚠️ Network error during session check, keeping local user');
+                console.log('⚠️ Network error during token validation, keeping local user');
               } else {
-                // Other errors - session check failed due to server issues, keep local user
-                console.log('⚠️ Session check failed due to server error, keeping local user:', sessionError.message);
+                // Other errors - token validation failed due to server issues, keep local user
+                console.log('⚠️ Token validation failed due to server error, keeping local user:', sessionError.message);
               }
             }
           }
         } else {
-          console.log('ℹ️ No local authentication found');
+          console.log('ℹ️ No JWT tokens found in localStorage');
           
-          // No local authentication, try to check if there's a valid session
-          try {
-            console.log('🔄 Checking for existing session...');
-            const sessionUser = await authService.checkSession();
-            if (sessionUser) {
-              setUser(sessionUser);
-              console.log('✅ Found valid session, user authenticated:', sessionUser.name);
-            } else {
-              console.log('ℹ️ No valid session found');
-            }
-          } catch (error) {
-            // No valid session, user remains null
-            console.log('ℹ️ No valid session found:', error.message);
-          }
+          // No local authentication, user remains null
+          console.log('ℹ️ No valid JWT authentication found');
         }
       } catch (error) {
         // Auth check failed silently
-        console.log('❌ Auth check failed:', error.message);
+        console.log('❌ JWT auth check failed:', error.message);
         setUser(null);
       } finally {
         setIsLoading(false);
-        console.log('✅ Authentication check completed');
+        console.log('✅ JWT authentication check completed');
       }
     };
 
+    // Listen for token expiration events
+    const handleTokenExpired = () => {
+      console.log('🔔 Token expired event received');
+      setUser(null);
+    };
+
+    window.addEventListener('tokenExpired', handleTokenExpired);
+    
     checkAuth();
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('tokenExpired', handleTokenExpired);
+    };
   }, []);
 
   const login = async (email, password) => {
     try {
-      console.log('🔐 Attempting login for:', email);
+      console.log('🔐 Attempting JWT login for:', email);
       const response = await authService.login(email, password);
       setUser(response.user);
-      console.log('✅ Login successful:', response.user.name);
+      console.log('✅ JWT login successful:', response.user.name);
       return response;
     } catch (error) {
-      console.log('❌ Login failed:', error.message);
+      console.log('❌ JWT login failed:', error.message);
       throw error;
     }
   };
@@ -107,7 +109,7 @@ export const AuthProvider = ({ children }) => {
       console.log('📝 Attempting registration for:', userData.email);
       const response = await authService.register(userData);
       console.log('✅ Registration successful');
-      // Note: User will need to login after registration since backend doesn't auto-login
+      // Note: User will need to verify email before getting JWT tokens
       return response;
     } catch (error) {
       console.log('❌ Registration failed:', error.message);
@@ -117,14 +119,14 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      console.log('🚪 Attempting logout...');
+      console.log('🚪 Attempting JWT logout...');
       await authService.logout();
       setUser(null);
-      console.log('✅ Logout successful');
+      console.log('✅ JWT logout successful');
       return { success: true, message: 'Logged out successfully' };
     } catch (error) {
       // Clear user state even if logout request fails
-      console.log('⚠️ Logout request failed, clearing local state:', error.message);
+      console.log('⚠️ JWT logout request failed, clearing local state:', error.message);
       setUser(null);
       throw error;
     }

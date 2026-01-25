@@ -1,4 +1,4 @@
-// Authentication service for API calls
+// Authentication service for JWT-based API calls
 // Integrated with NextDrive Bihar backend
 
 import api from '../config/axios.js';
@@ -20,17 +20,7 @@ class AuthService {
         requiresVerification: response.data.requiresVerification
       };
     } catch (error) {
-      // Handle axios errors
-      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
-        throw new Error(`Cannot connect to server. Please make sure the backend is running on ${api.defaults.baseURL}`);
-      }
-      
-      // Handle HTTP errors
-      if (error.response) {
-        throw new Error(error.response.data.message || `Registration failed (${error.response.status})`);
-      }
-      
-      throw error;
+      this.handleError(error);
     }
   }
 
@@ -39,36 +29,21 @@ class AuthService {
     try {
       const response = await api.post('/auth/login', { email, password });
 
-      // Store user data in localStorage for persistence
+      // Store tokens and user data
+      if (response.data.tokens) {
+        localStorage.setItem('accessToken', response.data.tokens.accessToken);
+        localStorage.setItem('refreshToken', response.data.tokens.refreshToken);
+      }
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      localStorage.setItem('isAuthenticated', 'true');
 
       return {
         success: true,
         message: response.data.message,
-        user: response.data.user
+        user: response.data.user,
+        tokens: response.data.tokens
       };
     } catch (error) {
-      // Handle axios errors
-      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
-        throw new Error(`Cannot connect to server. Please make sure the backend is running on ${api.defaults.baseURL}`);
-      }
-      
-      // Handle HTTP errors
-      if (error.response) {
-        // Check if user needs email verification
-        if (error.response.status === 403 && error.response.data.requiresVerification) {
-          throw {
-            requiresVerification: true,
-            email: error.response.data.email,
-            message: error.response.data.message
-          };
-        }
-        
-        throw new Error(error.response.data.message || `Login failed (${error.response.status})`);
-      }
-      
-      throw error;
+      this.handleError(error);
     }
   }
 
@@ -81,10 +56,11 @@ class AuthService {
         autoLogin
       });
 
-      // If auto-login was successful, store user data
-      if (response.data.autoLogin && response.data.user) {
+      // If auto-login was successful, store tokens and user data
+      if (response.data.autoLogin && response.data.tokens) {
+        localStorage.setItem('accessToken', response.data.tokens.accessToken);
+        localStorage.setItem('refreshToken', response.data.tokens.refreshToken);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        localStorage.setItem('isAuthenticated', 'true');
       }
 
       return {
@@ -92,20 +68,11 @@ class AuthService {
         message: response.data.message,
         verified: response.data.verified,
         autoLogin: response.data.autoLogin,
-        user: response.data.user
+        user: response.data.user,
+        tokens: response.data.tokens
       };
     } catch (error) {
-      // Handle axios errors
-      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
-        throw new Error(`Cannot connect to server. Please make sure the backend is running on ${api.defaults.baseURL}`);
-      }
-      
-      // Handle HTTP errors
-      if (error.response) {
-        throw new Error(error.response.data.message || `Verification failed (${error.response.status})`);
-      }
-      
-      throw error;
+      this.handleError(error);
     }
   }
 
@@ -119,46 +86,30 @@ class AuthService {
         message: response.data.message
       };
     } catch (error) {
-      // Handle axios errors
-      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
-        throw new Error(`Cannot connect to server. Please make sure the backend is running on ${api.defaults.baseURL}`);
-      }
-      
-      // Handle HTTP errors
-      if (error.response) {
-        throw new Error(error.response.data.message || `Failed to resend OTP (${error.response.status})`);
-      }
-      
-      throw error;
+      this.handleError(error);
     }
   }
 
-  // Google OAuth login - redirect to backend
+  // Google OAuth login - temporarily disabled
   initiateGoogleLogin() {
+    // Redirect to backend Google OAuth endpoint
     window.location.href = `${api.defaults.baseURL}/auth/google`;
   }
 
   // Logout user
   async logout() {
     try {
-      const response = await api.get('/auth/logout');
-
-      // Clear local storage regardless of response
-      localStorage.removeItem('user');
-      localStorage.removeItem('isAuthenticated');
-
-      return {
-        success: true,
-        message: response.data.message || 'Logged out successfully'
-      };
+      // Call logout endpoint (optional for JWT)
+      await api.post('/auth/logout');
     } catch (error) {
-      // Clear local storage even if request fails
-      localStorage.removeItem('user');
-      localStorage.removeItem('isAuthenticated');
-      
+      // Continue with logout even if request fails
+      console.log('Logout request failed:', error.message);
+    } finally {
+      // Always clear local storage
+      this.clearAuthData();
       return {
         success: true,
-        message: 'Logged out locally'
+        message: 'Logged out successfully'
       };
     }
   }
@@ -175,31 +126,29 @@ class AuthService {
 
   // Check if user is authenticated
   isAuthenticated() {
-    const isAuth = localStorage.getItem('isAuthenticated');
+    const token = localStorage.getItem('accessToken');
     const user = this.getCurrentUser();
-    return isAuth === 'true' && user !== null;
+    return !!(token && user);
   }
 
-  // Check user session with backend (optional - for extra security)
+  // Check user session with backend
   async checkSession() {
     try {
       const response = await api.get('/auth/me');
 
       if (response.data.user) {
+        // Update stored user data
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        localStorage.setItem('isAuthenticated', 'true');
         return response.data.user;
       }
       
-      // Session expired or invalid
-      localStorage.removeItem('user');
-      localStorage.removeItem('isAuthenticated');
+      // Session invalid
+      this.clearAuthData();
       return null;
     } catch (error) {
       // If unauthorized, clear local storage
       if (error.response?.status === 401) {
-        localStorage.removeItem('user');
-        localStorage.removeItem('isAuthenticated');
+        this.clearAuthData();
       }
       
       return null;
@@ -226,17 +175,7 @@ class AuthService {
         user: response.data.user
       };
     } catch (error) {
-      // Handle axios errors
-      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
-        throw new Error(`Cannot connect to server. Please make sure the backend is running on ${api.defaults.baseURL}`);
-      }
-      
-      // Handle HTTP errors
-      if (error.response) {
-        throw new Error(error.response.data.message || `Profile update failed (${error.response.status})`);
-      }
-      
-      throw error;
+      this.handleError(error);
     }
   }
 
@@ -248,8 +187,7 @@ class AuthService {
       });
 
       // Clear local storage after successful deletion
-      localStorage.removeItem('user');
-      localStorage.removeItem('isAuthenticated');
+      this.clearAuthData();
 
       return {
         success: true,
@@ -257,18 +195,62 @@ class AuthService {
         deletedData: response.data.deletedData
       };
     } catch (error) {
-      // Handle axios errors
-      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
-        throw new Error(`Cannot connect to server. Please make sure the backend is running on ${api.defaults.baseURL}`);
-      }
+      this.handleError(error);
+    }
+  }
+
+  // Refresh access token
+  async refreshToken() {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
       
-      // Handle HTTP errors
-      if (error.response) {
-        throw new Error(error.response.data.message || `Account deletion failed (${error.response.status})`);
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
       }
-      
+
+      const response = await api.post('/auth/refresh-token', {
+        refreshToken
+      });
+
+      // Update stored tokens
+      localStorage.setItem('accessToken', response.data.tokens.accessToken);
+      localStorage.setItem('refreshToken', response.data.tokens.refreshToken);
+
+      return response.data.tokens;
+    } catch (error) {
+      // Clear auth data if refresh fails
+      this.clearAuthData();
       throw error;
     }
+  }
+
+  // Clear all authentication data
+  clearAuthData() {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+  }
+
+  // Handle API errors consistently
+  handleError(error) {
+    if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+      throw new Error(`Cannot connect to server. Please make sure the backend is running on ${api.defaults.baseURL}`);
+    }
+    
+    if (error.response) {
+      // Check if user needs email verification
+      if (error.response.status === 403 && error.response.data.requiresVerification) {
+        throw {
+          requiresVerification: true,
+          email: error.response.data.email,
+          message: error.response.data.message
+        };
+      }
+      
+      throw new Error(error.response.data.message || `Request failed (${error.response.status})`);
+    }
+    
+    throw error;
   }
 }
 

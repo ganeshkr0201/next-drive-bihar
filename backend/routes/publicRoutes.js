@@ -1,47 +1,23 @@
 import express from 'express';
+import { authenticateJWT, requireUser } from '../middlewares/auth.js';
 import * as publicControllers from '../controllers/publicControllers.js';
 
 const router = express.Router();
 
-// Middleware to check authentication for booking routes
-const requireAuth = (req, res, next) => {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ 
-      success: false,
-      message: "Authentication required" 
-    });
-  }
-  next();
-};
-
-// Get all published tour packages
+// Public routes (no authentication required)
 router.get('/tour-packages', publicControllers.tourPackage);
-
-// Get single tour package by slug or ID
 router.get('/tour-packages/:identifier', publicControllers.tourPackageById);
-
-// Get tour package categories
 router.get('/tour-categories', publicControllers.tourPackageCategory);
 
-// Create tour booking
-router.post('/bookings/tour', requireAuth, publicControllers.tourBookings);
+// Protected routes (require JWT authentication)
+router.post('/bookings/tour', authenticateJWT, requireUser, publicControllers.tourBookings);
+router.get('/bookings/my-bookings', authenticateJWT, requireUser, publicControllers.userBookings);
+router.get('/bookings/:id', authenticateJWT, requireUser, publicControllers.singleBookings);
+router.patch('/bookings/:id/cancel', authenticateJWT, requireUser, publicControllers.cancelBookings);
 
-// Get user's bookings
-router.get('/bookings/my-bookings', requireAuth, publicControllers.userBookings);
-
-// Get single booking
-router.get('/bookings/:id', requireAuth, publicControllers.singleBookings);
-
-// Cancel booking
-router.patch('/bookings/:id/cancel', requireAuth, publicControllers.cancelBookings);
-
-// Submit query (requires authentication)
-router.post('/queries', requireAuth, publicControllers.submitQuery);
-
-// Get user's queries
-router.get('/queries/my-queries', requireAuth, publicControllers.getUsersQueries);
-
-// Rate query response
-router.patch('/queries/:id/rate', requireAuth, publicControllers.rateQueryResponse);
+// Query routes (require authentication)
+router.post('/queries', authenticateJWT, requireUser, publicControllers.submitQuery);
+router.get('/queries/my-queries', authenticateJWT, requireUser, publicControllers.getUsersQueries);
+router.patch('/queries/:id/rate', authenticateJWT, requireUser, publicControllers.rateQueryResponse);
 
 export default router;

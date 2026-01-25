@@ -1,10 +1,10 @@
-import passport from 'passport';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 import User from '../models/User.js';
 import { sendEmail } from '../utils/sendEmail.js';
 import { generateOTP } from '../utils/generateOtp.js';
 import { cloudinaryUtils } from '../config/cloudinary.js';
+import { generateTokenPair, verifyToken } from '../utils/jwt.js';
 
 
 
@@ -285,78 +285,157 @@ export const resendOtp = async (req, res) => {
 
 
 
-export const login = (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
-        if (err) {
-            return res.status(500).json({ message: "Internal server error" });
+export const login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and password are required"
+            });
         }
-        
+
+        // Find user by email
+        const user = await User.findOne({ email });
         if (!user) {
-            // Check if the error is due to unverified email
-            if (info?.message === "Please verify your email before logging in") {
-                // Find the user to get their email for verification redirect
-                User.findOne({ email: req.body.email })
-                .then(foundUser => {
-                    if (foundUser && !foundUser.isVerified) {
-                        return res.status(403).json({ 
-                            message: info.message,
-                            requiresVerification: true,
-                            email: foundUser.email
-                        });
-                    }
-                    return res.status(401).json({ 
-                        message: info?.message || "Invalid email or password" 
-                    });
-                })
-                .catch(() => {
-                    return res.status(401).json({ 
-                        message: info?.message || "Invalid email or password" 
-                    });
-                });
-                return;
-            }
-            
-            return res.status(401).json({ 
-                message: info?.message || "Invalid email or password" 
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password"
             });
         }
-        
-        req.logIn(user, (err) => {
-            if (err) {
-                return res.status(500).json({ message: "Login session error" });
-            }
-            
-            res.json({ 
-                message: "Login Successful", 
-                user: req.user 
+
+        // Check if user has a password (not Google OAuth only)
+        if (!user.password) {
+            return res.status(401).json({
+                success: false,
+                message: "Please login using Google"
             });
+        }
+
+        // Verify password
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password"
+            });
+        }
+
+        // Check if email is verified
+        if (!user.isVerified) {
+            return res.status(403).json({
+                success: false,
+                message: "Please verify your email before logging in",
+                requiresVerification: true,
+                email: user.email
+            });
+        }
+
+        // Generate JWT tokens
+        const tokens = generateTokenPair(user);
+
+        // Return user data without sensitive information
+        const userResponse = {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            authProvider: user.authProvider,
+            avatar: user.avatar,
+            avatarPublicId: user.avatarPublicId,
+            phone: user.phone,
+            address: user.address,
+            dateOfBirth: user.dateOfBirth,
+            bio: user.bio,
+            isVerified: user.isVerified,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+        };
+
+        res.json({
+            success: true,
+            message: "Login successful",
+            user: userResponse,
+            tokens
         });
-    })(req, res, next);
+
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({
+            success: false,
+            message: "Login failed. Please try again."
+        });
+    }
 }
 
 
-export const google = (req, res, next) => {
-    passport.authenticate("google", { scope: ["profile", "email"]})(req, res, next);
+// Google OAuth endpoints - temporarily disabled for JWT implementation
+// These would need to be reimplemented with JWT tokens
+export const google = (req, res) => {
+    res.status(501).json({
+        success: false,
+        message: "Google OAuth temporarily unavailable during JWT migration"
+    });
 }
 
-export const googleCallback = (req, res, next) => {
-    passport.authenticate("google", { failureRedirect: `${process.env.CLIENT_URL}/login?error=google_auth_failed` })(req, res, next);
+export const googleCallback = (req, res) => {
+    res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_unavailable`);
 }
 
 export const googleSuccess = (req, res) => {
-    res.redirect(`${process.env.CLIENT_URL}/auth/google/success`);
+    res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_unavailable`);
+}
+
+// Token refresh endpoint
+export const refreshToken = async (req, res) => {
+    try {
+        const { refreshToken } = req.body;
+
+        if (!refreshToken) {
+            return res.status(400).json({
+                success: false,
+                message: "Refresh token is required"
+            });
+        }
+
+        // Verify refresh token
+        const decoded = verifyToken(refreshToken);
+        
+        // Get user from database
+        const user = await User.findById(decoded.id).select('-password -otpHash');
+        
+        if (!user || !user.isVerified) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid refresh token"
+            });
+        }
+
+        // Generate new token pair
+        const tokens = generateTokenPair(user);
+
+        res.json({
+            success: true,
+            message: "Tokens refreshed successfully",
+            tokens
+        });
+
+    } catch (error) {
+        console.error('Token refresh error:', error);
+        res.status(401).json({
+            success: false,
+            message: "Invalid or expired refresh token"
+        });
+    }
 }
 
 export const logout = (req, res) => {
-    req.logout((err) => {
-        if (err) {
-            return res.status(500).json({ 
-                message: "Logout failed" 
-            });
-        }
-        res.json({ 
-            message: "Logged out successfully" 
-        });
+    // With JWT, logout is handled client-side by removing the token
+    // Server-side logout would require token blacklisting (optional)
+    res.json({ 
+        success: true,
+        message: "Logged out successfully" 
     });
 }
 
@@ -366,29 +445,44 @@ export const verifyOtp = async (req, res) => {
         const { email, otp, autoLogin } = req.body;
 
         if (!email || !otp) {
-            return res.status(400).json({ message: "Email and OTP are required" });
+            return res.status(400).json({ 
+                success: false,
+                message: "Email and OTP are required" 
+            });
         }
 
         const user = await User.findOne({ email });
 
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ 
+                success: false,
+                message: "User not found" 
+            });
         }
 
         if (user.isVerified) {
-            return res.status(400).json({ message: "User is already verified" });
+            return res.status(400).json({ 
+                success: false,
+                message: "User is already verified" 
+            });
         }
 
         // Check if OTP has expired
         if (Date.now() > user.otpExpireAt) {
-            return res.status(400).json({ message: "OTP has expired. Please request a new one." });
+            return res.status(400).json({ 
+                success: false,
+                message: "OTP has expired. Please request a new one." 
+            });
         }
 
         // Verify OTP
         const isOtpValid = await bcrypt.compare(otp, user.otpHash);
 
         if (!isOtpValid) {
-            return res.status(400).json({ message: "Invalid OTP. Please try again." });
+            return res.status(400).json({ 
+                success: false,
+                message: "Invalid OTP. Please try again." 
+            });
         }
 
         // Mark user as verified and clear OTP data
@@ -400,51 +494,43 @@ export const verifyOtp = async (req, res) => {
 
         await user.save();
 
-        // If autoLogin is requested, log the user in
+        // Prepare user response
+        const userResponse = {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            authProvider: user.authProvider,
+            avatar: user.avatar,
+            isVerified: user.isVerified,
+            createdAt: user.createdAt
+        };
+
+        // If autoLogin is requested, generate JWT tokens
         if (autoLogin) {
-            req.logIn(user, (err) => {
-                if (err) {
-                    return res.status(500).json({ 
-                        message: "Email verified successfully, but login failed. Please try logging in manually.",
-                        verified: true,
-                        autoLoginFailed: true
-                    });
-                }
-                
-                return res.status(200).json({ 
-                    message: "Email verified and logged in successfully!",
-                    verified: true,
-                    autoLogin: true,
-                    user: {
-                        _id: user._id,
-                        name: user.name,
-                        email: user.email,
-                        role: user.role,
-                        authProvider: user.authProvider,
-                        isVerified: user.isVerified,
-                        createdAt: user.createdAt
-                    }
-                });
+            const tokens = generateTokenPair(user);
+            
+            return res.status(200).json({ 
+                success: true,
+                message: "Email verified and logged in successfully!",
+                verified: true,
+                autoLogin: true,
+                user: userResponse,
+                tokens
             });
         } else {
             res.status(200).json({ 
+                success: true,
                 message: "Email verified successfully! You can now login.",
                 verified: true,
-                user: {
-                    _id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    role: user.role,
-                    authProvider: user.authProvider,
-                    isVerified: user.isVerified,
-                    createdAt: user.createdAt
-                }
+                user: userResponse
             });
         }
 
     } catch (error) {
         console.error('OTP verification error:', error);
         res.status(500).json({ 
+            success: false,
             message: "Verification failed. Please try again." 
         });
     }
@@ -452,7 +538,9 @@ export const verifyOtp = async (req, res) => {
 
 
 export const getCurrentUser = (req, res) => {
-    if (req.isAuthenticated()) {
+    // This endpoint now requires JWT authentication middleware
+    // The user will be available in req.user if token is valid
+    if (req.user) {
         res.json({ 
             success: true, 
             user: req.user 
@@ -468,15 +556,7 @@ export const getCurrentUser = (req, res) => {
 
 export const userProfile = async (req, res) => {
     try { 
-        // Check if user is authenticated
-        if (!req.isAuthenticated()) {
-            console.log('❌ User not authenticated');
-            return res.status(401).json({ 
-                success: false,
-                message: "Authentication required" 
-            });
-        }
-
+        // JWT middleware ensures req.user is available
         const userId = req.user._id;
         const { name, phone, address, dateOfBirth, bio } = req.body;
 
@@ -558,14 +638,7 @@ export const userProfile = async (req, res) => {
 
 export const deleteAccount = async (req, res) => {
     try {
-        // Check if user is authenticated
-        if (!req.isAuthenticated()) {
-            return res.status(401).json({ 
-                success: false,
-                message: "Authentication required" 
-            });
-        }
-
+        // JWT middleware ensures req.user is available
         const userId = req.user._id;
         const { password, confirmText } = req.body;
 
@@ -595,7 +668,6 @@ export const deleteAccount = async (req, res) => {
 
         // Verify password for local auth users
         if (user.authProvider === 'local' && password) {
-            const bcrypt = await import('bcrypt');
             const isPasswordValid = await bcrypt.compare(password, user.password);
             if (!isPasswordValid) {
                 return res.status(400).json({
@@ -617,13 +689,6 @@ export const deleteAccount = async (req, res) => {
                 ]
             })
         ]);
-
-        // Logout user first
-        req.logout((err) => {
-            if (err) {
-                console.error('Logout error during account deletion:', err);
-            }
-        });
 
         // Delete user account (cascade delete will handle all related data)
         await User.findByIdAndDelete(userId);

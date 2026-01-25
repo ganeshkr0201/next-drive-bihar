@@ -1,39 +1,27 @@
 import express from 'express';
 import { avatarUpload } from '../config/cloudinary.js';
+import { authenticateJWT } from '../middlewares/auth.js';
 import * as authControllers from '../controllers/authControllers.js';
-
 
 const router = express.Router();
 
-
-
-// Register users
+// Public routes (no authentication required)
 router.post('/register', authControllers.register);  
-
-// Resend OTP route
 router.post('/resend-otp', authControllers.resendOtp);
-
-// Login users
 router.post('/login', authControllers.login);
+router.post('/verify-otp', authControllers.verifyOtp);
+router.post('/refresh-token', authControllers.refreshToken);
 
-// Google authentication
+// Google OAuth routes (temporarily disabled)
 router.get('/google', authControllers.google);
 router.get('/google/callback', authControllers.googleCallback, authControllers.googleSuccess);
 
-// Logout users
-router.get('/logout', authControllers.logout);
+// Protected routes (require JWT authentication)
+router.get('/me', authenticateJWT, authControllers.getCurrentUser);
+router.put('/profile', authenticateJWT, avatarUpload.single('avatar'), authControllers.userProfile);
+router.delete('/delete-account', authenticateJWT, authControllers.deleteAccount);
 
-// Verify OTP route
-router.post('/verify-otp', authControllers.verifyOtp);
-
-// Get current user session
-router.get('/me', authControllers.getCurrentUser);
-
-// Update user profile
-router.put('/profile', avatarUpload.single('avatar'), authControllers.userProfile);
-
-// Delete own account
-router.delete('/delete-account', authControllers.deleteAccount);
-
+// Logout route (client-side token removal)
+router.post('/logout', authControllers.logout);
 
 export default router;
