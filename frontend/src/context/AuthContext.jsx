@@ -19,25 +19,40 @@ export const AuthProvider = ({ children }) => {
     // Check if user is already logged in on app start
     const checkAuth = async () => {
       try {
+        // First check local storage
         if (authService.isAuthenticated()) {
           const currentUser = authService.getCurrentUser();
           if (currentUser) {
             setUser(currentUser);
             
-            // Also validate session with backend to ensure it's still valid
+            // Validate session with backend in the background
             try {
               const sessionUser = await authService.checkSession();
               if (sessionUser) {
                 // Update user data from backend if session is valid
                 setUser(sessionUser);
+                console.log('✅ Session validated, user authenticated');
               } else {
-                // Session is invalid, clear local storage
-                setUser(null);
+                // Session is invalid, but keep local user for now
+                // This prevents logout on every refresh if there are temporary network issues
+                console.log('⚠️ Session validation failed, keeping local user');
               }
             } catch (sessionError) {
               // Session check failed, but keep local user for now
-              console.log('Session validation failed, using local user data');
+              console.log('⚠️ Session check failed, keeping local user:', sessionError.message);
             }
+          }
+        } else {
+          // No local authentication, try to check if there's a valid session
+          try {
+            const sessionUser = await authService.checkSession();
+            if (sessionUser) {
+              setUser(sessionUser);
+              console.log('✅ Found valid session, user authenticated');
+            }
+          } catch (error) {
+            // No valid session, user remains null
+            console.log('No valid session found');
           }
         }
       } catch (error) {

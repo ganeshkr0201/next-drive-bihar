@@ -131,21 +131,24 @@ class AuthService {
     try {
       const response = await api.get('/auth/me');
 
-      if (response.data.user) {
+      if (response.data.success && response.data.user) {
+        // Update storage with fresh user data
         authStorage.login(response.data.user);
         return response.data.user;
       }
       
       // Session expired or invalid
-      authStorage.logout();
       return null;
     } catch (error) {
-      // If unauthorized, clear local storage
+      // If unauthorized, session is invalid
       if (error.response?.status === 401) {
-        authStorage.logout();
+        return null;
       }
       
-      return null;
+      // For other errors (network issues, etc.), don't clear storage
+      // This prevents logout on temporary network issues
+      console.warn('Session check failed due to network/server error:', error.message);
+      throw error;
     }
   }
 

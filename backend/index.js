@@ -69,8 +69,8 @@ app.use(
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production', // true in production with HTTPS
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-site in production
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours
-            domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined // Allow subdomain sharing in production
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days instead of 24 hours
+            domain: undefined // Remove domain restriction to allow cross-site cookies
         }
     })
 );
@@ -101,6 +101,21 @@ app.get('/debug/env', (req, res) => {
         NODE_ENV: process.env.NODE_ENV,
         hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
         hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET
+    });
+})
+
+// Debug endpoint to check session status
+app.get('/debug/session', (req, res) => {
+    res.json({
+        authenticated: req.isAuthenticated(),
+        sessionID: req.sessionID,
+        user: req.user ? {
+            id: req.user._id,
+            name: req.user.name,
+            email: req.user.email,
+            role: req.user.role
+        } : null,
+        cookies: req.headers.cookie ? 'present' : 'missing'
     });
 })
 
