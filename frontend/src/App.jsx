@@ -4,6 +4,7 @@ import { ToastProvider } from './context/ToastContext';
 import { DataProvider } from './context/DataContext';
 import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
+import DebugInfo from './components/DebugInfo/DebugInfo';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
 import ContactProtectedRoute from './components/ContactProtectedRoute';
@@ -123,6 +124,7 @@ function App() {
             </Routes>
           </main>
           <Footer />
+          <DebugInfo />
         </div>
       </Router>
         </DataProvider>
