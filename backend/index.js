@@ -45,7 +45,8 @@ connectToDB(process.env.MONGO_URI);
 // enabling cors
 app.use(cors({
     origin: [
-        'https://nextdrivebihar.vercel.app',        // Production frontend
+        'https://next-drive-bihar.vercel.app',      // Production frontend (correct URL)
+        'https://nextdrivebihar.vercel.app',        // Alternative frontend URL (if any)
         'https://next-drive-bihar.onrender.com',    // Production backend (for OAuth)
         'http://localhost:5173',                    // Development frontend
         'http://localhost:5174',                    // Alternative dev port
