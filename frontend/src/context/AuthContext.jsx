@@ -38,8 +38,15 @@ export const AuthProvider = ({ children }) => {
                 console.log('⚠️ Session validation failed, keeping local user');
               }
             } catch (sessionError) {
-              // Session check failed, but keep local user for now
-              console.log('⚠️ Session check failed, keeping local user:', sessionError.message);
+              // Only clear user if it's a clear 401 authentication error
+              if (sessionError.response?.status === 401) {
+                console.log('❌ Session expired, clearing user');
+                authService.logout();
+                setUser(null);
+              } else {
+                // Session check failed due to network/server issues, keep local user
+                console.log('⚠️ Session check failed due to network/server error, keeping local user:', sessionError.message);
+              }
             }
           }
         } else {

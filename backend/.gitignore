@@ -112,6 +112,10 @@ dist/
 *.backup
 *.bak
 
+# Uploads directory (now using Cloudinary)
+uploads/
+public/uploads/
+
 # PM2 files
 ecosystem.config.js
 .pm2/

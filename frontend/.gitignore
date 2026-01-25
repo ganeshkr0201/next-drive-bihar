@@ -149,5 +149,9 @@ firestore-debug.log
 *.msm
 *.msp
 
+# Uploads directory (now using Cloudinary)
+uploads/
+public/uploads/
+
 # Windows shortcuts
 *.lnk

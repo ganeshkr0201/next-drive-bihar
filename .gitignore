@@ -2,12 +2,23 @@
 # This ignores documentation and test files created during development
 
 # Documentation files (development/setup docs)
+*_FIX.md
+*_SETUP.md
+*_SUMMARY.md
 API_DOCUMENTATION.md
 CLEANUP_SUMMARY.md
 CLOUDINARY_INTEGRATION_SUMMARY.md
 CLOUDINARY_SETUP.md
 GITIGNORE_UPDATE_SUMMARY.md
 TROUBLESHOOTING.md
+BACKEND_CORS_FIX.md
+FRONTEND_URL_FIX.md
+GOOGLE_OAUTH_FIX.md
+RENDER_SETUP.md
+SESSION_PERSISTENCE_FIX.md
+VERCEL_404_FIX.md
+VERCEL_ENV_FIX.md
+VERCEL_SPA_FIX.md
 
 # Test files
 test-*.js

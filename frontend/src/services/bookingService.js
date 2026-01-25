@@ -41,7 +41,7 @@ class BookingService {
   // Cancel a booking
   async cancelBooking(bookingId, reason) {
     try {
-      const response = await api.put(`/api/bookings/${bookingId}/cancel`, { reason });
+      const response = await api.patch(`/api/bookings/${bookingId}/cancel`, { reason });
       return response.data;
     } catch (error) {
       throw errorHandler.handleServiceError(error, 'Booking', 'cancelBooking');

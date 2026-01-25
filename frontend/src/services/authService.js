@@ -142,10 +142,12 @@ class AuthService {
     } catch (error) {
       // If unauthorized, session is invalid
       if (error.response?.status === 401) {
+        // Clear storage only on explicit 401 errors
+        authStorage.logout();
         return null;
       }
       
-      // For other errors (network issues, etc.), don't clear storage
+      // For other errors (network issues, server errors, etc.), don't clear storage
       // This prevents logout on temporary network issues
       console.warn('Session check failed due to network/server error:', error.message);
       throw error;

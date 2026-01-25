@@ -34,14 +34,28 @@ const UserProfile = () => {
           updateUser(sessionUser);
           setSessionValid(true);
         } else {
-          setSessionValid(false);
+          // Only set session invalid if user is not authenticated locally
+          if (!isAuthenticated) {
+            setSessionValid(false);
+          } else {
+            // User is authenticated locally, assume session is valid
+            // This prevents false session expired messages
+            setSessionValid(true);
+          }
         }
       } catch (error) {
-        setSessionValid(false);
+        // Don't immediately invalidate session on network errors
+        // Only invalidate if it's a clear authentication error
+        if (error.response?.status === 401) {
+          setSessionValid(false);
+        } else {
+          // For network errors, keep session valid if user is authenticated locally
+          setSessionValid(isAuthenticated);
+        }
       }
     };
     
-    if (user) {
+    if (user && isAuthenticated) {
       checkSession();
       
       setFormData({
@@ -53,8 +67,10 @@ const UserProfile = () => {
         bio: user.bio || ''
       });
       setImagePreview(user.avatar || null);
+    } else if (!isAuthenticated) {
+      setSessionValid(false);
     }
-  }, [user]);
+  }, [user, isAuthenticated]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -126,11 +142,11 @@ const UserProfile = () => {
     setIsLoading(true);
 
     try {
-      // Double-check session before making the request
-      const sessionUser = await authService.checkSession();
-      if (!sessionUser) {
+      // Only do a session check if we're not confident about the current session
+      // If user is authenticated locally, proceed with the update
+      if (!isAuthenticated) {
         setSessionValid(false);
-        showToast('Session expired. Please login again.', 'error');
+        showToast('Please log in to update your profile.', 'error');
         return;
       }
 
@@ -187,9 +203,11 @@ const UserProfile = () => {
       console.error('Profile update error:', error);
       
       // Check if it's an authentication error
-      if (error.message.includes('Authentication required') || error.message.includes('401')) {
+      if (error.response?.status === 401 || error.message.includes('Authentication required')) {
         setSessionValid(false);
         showToast('Session expired. Please log in again.', 'error');
+      } else if (error.response?.status === 403) {
+        showToast('You do not have permission to perform this action.', 'error');
       } else {
         showToast(error.message || 'Failed to update profile', 'error');
       }

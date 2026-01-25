@@ -5,6 +5,7 @@ import { DataProvider } from './context/DataContext';
 import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
 import DebugInfo from './components/DebugInfo/DebugInfo';
+import ApiDebugger from './components/ApiDebugger/ApiDebugger';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
 import ContactProtectedRoute from './components/ContactProtectedRoute';
@@ -117,6 +118,18 @@ function App() {
                   <AdminProtectedRoute>
                     <AdminDashboard />
                   </AdminProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/debug/api" 
+                element={
+                  <ProtectedRoute>
+                    <div className="min-h-screen py-8">
+                      <div className="container mx-auto px-4">
+                        <ApiDebugger />
+                      </div>
+                    </div>
+                  </ProtectedRoute>
                 } 
               />
               {/* Catch-all route for 404 - must be last */}
