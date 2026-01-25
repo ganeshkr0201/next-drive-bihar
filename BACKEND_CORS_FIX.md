@@ -1,42 +1,29 @@
-# Backend CORS Fix - Environment Variables Issue
+# Backend CORS Fix - Correct Frontend URL
 
-## 🚨 **Issue Found**
+## ✅ **Issue Fixed in Code**
 
-The backend debug endpoint shows:
-```json
-{"CLIENT_URL":"https://next-drive-bihar.vercel.app"}
-```
+Updated the CORS configuration to use the correct frontend URL:
+- ✅ `https://next-drive-bihar.vercel.app` (with hyphens)
 
-But your actual frontend URL is:
-```
-https://nextdrivebihar.vercel.app
-```
-
-This URL mismatch is causing CORS issues!
-
-## ✅ **Solution: Update Render Environment Variables**
+## 🔧 **Render Environment Variables to Update**
 
 ### Step 1: Go to Render Dashboard
 1. Visit [Render Dashboard](https://dashboard.render.com)
 2. Click on your backend service (`next-drive-bihar`)
 3. Go to "Environment" tab
 
-### Step 2: Update CLIENT_URL
-Find the `CLIENT_URL` variable and change it from:
+### Step 2: Verify CLIENT_URL
+Make sure `CLIENT_URL` is set to:
 ```
-❌ https://next-drive-bihar.vercel.app
-```
-To:
-```
-✅ https://nextdrivebihar.vercel.app
+✅ https://next-drive-bihar.vercel.app
 ```
 
-### Step 3: Verify Other Environment Variables
-Make sure these are set correctly in Render:
+### Step 3: Complete Environment Variables List
+Ensure all these are set correctly in Render:
 
 ```
 PORT=3000
-CLIENT_URL=https://nextdrivebihar.vercel.app
+CLIENT_URL=https://next-drive-bihar.vercel.app
 MONGO_URI=your_mongodb_connection_string
 PASSPORT_SECRET=your_passport_secret
 EMAIL_USER=your_email@gmail.com
@@ -49,27 +36,12 @@ CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ```
 
-### Step 4: Save and Redeploy
-1. Click "Save Changes"
-2. Wait for automatic redeploy
-3. Check logs to ensure no errors
-
-## 🔍 **Verification**
-
-After updating, test these URLs:
-
-1. **Backend Debug**: `https://next-drive-bihar.onrender.com/debug/env`
-   - Should show: `"CLIENT_URL":"https://nextdrivebihar.vercel.app"`
-
-2. **Frontend Connection**: Visit your frontend
-   - Should connect successfully to backend
-   - No more "Cannot connect to server" errors
-
 ## 🎯 **Expected Result**
 
-- ✅ CORS will allow requests from correct frontend domain
-- ✅ Frontend will connect to backend successfully
+After the backend redeploys with the updated CORS configuration:
+- ✅ Frontend at `https://next-drive-bihar.vercel.app` will connect successfully
+- ✅ No more "Cannot connect to server" errors
 - ✅ All API calls will work properly
 - ✅ Login, register, and other features will function
 
-The issue is just a URL mismatch in the environment variables!
+The CORS configuration now matches your actual frontend URL!
