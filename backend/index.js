@@ -55,19 +55,47 @@ const CLIENT_URL = process.env.CLIENT_URL || 'https://next-drive-bihar.vercel.ap
 
 // enabling cors
 app.use(cors({
-    origin: [
-        'https://next-drive-bihar.vercel.app',      // Production frontend (correct URL)
-        'https://nextdrivebihar.vercel.app',        // Alternative frontend URL (if any)
-        'https://next-drive-bihar.onrender.com',    // Production backend (for OAuth)
-        CLIENT_URL,                                 // Dynamic client URL from env
-        'http://localhost:5173',                    // Development frontend
-        'http://localhost:5174',                    // Alternative dev port
-        'http://localhost:3000'                     // Development backend
-    ],
+    origin: function(origin, callback) {
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        
+        const allowedOrigins = [
+            'https://next-drive-bihar.vercel.app',      // Production frontend (correct URL)
+            'https://nextdrivebihar.vercel.app',        // Alternative frontend URL (if any)
+            'https://next-drive-bihar.onrender.com',    // Production backend (for OAuth)
+            CLIENT_URL,                                 // Dynamic client URL from env
+            'http://localhost:5173',                    // Development frontend
+            'http://localhost:5174',                    // Alternative dev port
+            'http://localhost:3000'                     // Development backend
+        ];
+        
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        
+        // Log rejected origins for debugging
+        console.log('❌ CORS rejected origin:', origin);
+        return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-    optionsSuccessStatus: 200 // For legacy browser support
+    allowedHeaders: [
+        'Content-Type', 
+        'Authorization', 
+        'Cookie',
+        'X-Requested-With',
+        'Accept',
+        'Origin',
+        'User-Agent',
+        'DNT',
+        'Cache-Control',
+        'X-Mx-ReqToken',
+        'Keep-Alive',
+        'X-Requested-With'
+    ],
+    exposedHeaders: ['Set-Cookie'],
+    optionsSuccessStatus: 200, // For legacy browser support
+    preflightContinue: false
 }));
 
 // Trust proxy for production (important for secure cookies behind reverse proxy)
@@ -75,40 +103,85 @@ if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', 1);
 }
 
-// using express-session with MongoDB store for production
-app.use(
-    session({
-        secret: process.env.PASSPORT_SECRET,
-        resave: false,
-        saveUninitialized: false,
-        name: 'sessionId', // Custom session name
-        store: MongoStore.create({
-            mongoUrl: process.env.MONGO_URI,
-            touchAfter: 24 * 3600, // lazy session update
-            ttl: 7 * 24 * 60 * 60 // 7 days
-        }),
-        cookie: {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // true in production with HTTPS
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-site in production
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-            domain: undefined // Remove domain restriction to allow cross-site cookies
-        }
-    })
-);
+// Mobile-friendly session configuration
+const sessionConfig = {
+    secret: process.env.PASSPORT_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    name: 'sessionId', // Custom session name
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URI,
+        touchAfter: 24 * 3600, // lazy session update
+        ttl: 7 * 24 * 60 * 60 // 7 days
+    }),
+    cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // true in production with HTTPS
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        domain: undefined // Remove domain restriction to allow cross-site cookies
+    }
+};
+
+// Mobile-specific cookie configuration
+if (process.env.NODE_ENV === 'production') {
+    // For production, use 'none' for cross-site but with fallback
+    sessionConfig.cookie.sameSite = 'none';
+    sessionConfig.cookie.secure = true; // Required for sameSite: 'none'
+} else {
+    // For development, use 'lax' which works better locally
+    sessionConfig.cookie.sameSite = 'lax';
+    sessionConfig.cookie.secure = false;
+}
+
+// using express-session with mobile-friendly configuration
+app.use(session(sessionConfig));
 
 app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(express.json());
 
-// Add request logging for debugging in production
-if (process.env.NODE_ENV === 'production') {
-    app.use((req, res, next) => {
-        console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.get('Origin')} - User-Agent: ${req.get('User-Agent')?.substring(0, 50)}`);
-        next();
-    });
-}
+// Mobile detection and debugging middleware
+app.use((req, res, next) => {
+    const userAgent = req.get('User-Agent') || '';
+    const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    
+    // Add mobile detection to request object
+    req.isMobile = isMobile;
+    
+    // Enhanced logging for mobile requests
+    if (process.env.NODE_ENV === 'production') {
+        const logData = {
+            timestamp: new Date().toISOString(),
+            method: req.method,
+            path: req.path,
+            origin: req.get('Origin'),
+            userAgent: userAgent.substring(0, 100),
+            isMobile: isMobile,
+            hasSession: !!req.sessionID,
+            isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false
+        };
+        
+        // Log mobile requests with more detail
+        if (isMobile || req.path.includes('/auth/')) {
+            console.log('📱 Request:', JSON.stringify(logData));
+        }
+    }
+    
+    next();
+});
+
+// Add mobile-specific headers for better compatibility
+app.use((req, res, next) => {
+    if (req.isMobile) {
+        // Add headers that help with mobile cookie handling
+        res.header('Vary', 'User-Agent, Origin');
+        res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.header('Pragma', 'no-cache');
+        res.header('Expires', '0');
+    }
+    next();
+});
 
 // Static file serving removed - now using Cloudinary for all images
 
