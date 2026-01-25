@@ -8,7 +8,7 @@ import User from "../models/User.js";
 // Load environment variables
 dotenv.config();
 
-//  LOCAL STRATEGY
+//  LOCAL STRATEGY (not used with JWT, but keeping for compatibility)
 passport.use(new LocalStrategy(
     {usernameField: "email"},                           // options
     async (email, password, done) => {                  // verify-callback
@@ -31,7 +31,7 @@ passport.use(new LocalStrategy(
     }
 ));
 
-// GOOGLE STRATEGY - Only configure if all required environment variables are present
+// GOOGLE STRATEGY - Updated for JWT (no sessions)
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_AUTH_CALLBACK) {
     passport.use(new GoogleStrategy(
         {
@@ -43,7 +43,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
             try {
                 let user = await User.findOne({ email: profile.emails[0].value });
 
-                    if(user) {
+                if(user) {
+                    // Update existing user with Google info if needed
                     if(!user.googleId) {
                         user.googleId = profile.id;
                         user.authProvider = "google";
@@ -56,13 +57,14 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
                     return done(null, user);
                 }
 
+                // Create new user
                 user = await User.create({
                     name: profile.displayName,
                     email: profile.emails[0].value,
                     googleId: profile.id,
                     authProvider: "google",
                     avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
-                    isVerified: true
+                    isVerified: true // Google users are automatically verified
                 });
 
                 return done(null, user);
@@ -77,13 +79,16 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
     console.warn('Required: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_AUTH_CALLBACK');
 }
 
-// passport serialize
+// Passport serialize/deserialize - not used with JWT but required for passport
 passport.serializeUser((user, done) => {
     done(null, user.id);
 })
 
-// passport deserilize
 passport.deserializeUser(async (id, done) => {
-    const user = await User.findById(id);
-    done(null, user);
+    try {
+        const user = await User.findById(id);
+        done(null, user);
+    } catch (error) {
+        done(error, null);
+    }
 })

@@ -1,13 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import envConfig from '../config/env';
 
-const GoogleAuthSuccessSimple = () => {
+const GoogleAuthSuccess = () => {
   const navigate = useNavigate();
   const { setUser } = useAuth();
   const { showSuccess, showError } = useToast();
+  const [searchParams] = useSearchParams();
   const [status, setStatus] = useState('checking'); // 'checking', 'success', 'error'
   const hasProcessed = useRef(false); // Prevent duplicate processing
   const hasShownToast = useRef(false); // Prevent duplicate toasts
@@ -16,56 +16,63 @@ const GoogleAuthSuccessSimple = () => {
     // Prevent multiple executions in StrictMode
     if (hasProcessed.current) return;
     
-    const checkAuth = async () => {
+    const processGoogleAuth = async () => {
       // Mark as processed immediately to prevent race conditions
       hasProcessed.current = true;
       
       try {
-        // Simple delay
+        // Simple delay for UX
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        const response = await fetch(`${envConfig.apiUrl}/auth/me`, {
-          method: 'GET',
-          credentials: 'include',
-        });
+        // Extract tokens and user data from URL parameters
+        const accessToken = searchParams.get('accessToken');
+        const refreshToken = searchParams.get('refreshToken');
+        const userParam = searchParams.get('user');
         
-        if (response.ok) {
-          const data = await response.json();
-          
-          if (data.success && data.user) {
-            // Store user data
-            localStorage.setItem('user', JSON.stringify(data.user));
-            localStorage.setItem('isAuthenticated', 'true');
-            setUser(data.user);
-            
-            // Show success and redirect - only once
-            setStatus('success');
-            if (!hasShownToast.current) {
-              hasShownToast.current = true;
-              showSuccess(`Welcome, ${data.user.name}!`);
-            }
-            
-            setTimeout(() => {
-              // Redirect based on user role
-              if (data.user.role === 'admin') {
-                navigate('/admin/dashboard', { replace: true });
-              } else {
-                navigate('/user-dashboard', { replace: true });
-              }
-            }, 1000);
-            
-            return;
-          }
+        if (!accessToken || !refreshToken || !userParam) {
+          throw new Error('Missing authentication data in URL');
         }
         
-        throw new Error('Authentication failed');
+        // Parse user data
+        const userData = JSON.parse(decodeURIComponent(userParam));
+        
+        // Store JWT tokens in localStorage
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // Update auth context
+        setUser(userData);
+        
+        // Show success and redirect - only once
+        setStatus('success');
+        if (!hasShownToast.current) {
+          hasShownToast.current = true;
+          showSuccess(`Welcome, ${userData.name}!`);
+        }
+        
+        // Clean up URL by replacing it without the sensitive parameters
+        window.history.replaceState({}, document.title, '/auth/google/success');
+        
+        setTimeout(() => {
+          // Redirect based on user role
+          if (userData.role === 'admin') {
+            navigate('/admin/dashboard', { replace: true });
+          } else {
+            navigate('/user-dashboard', { replace: true });
+          }
+        }, 1500);
         
       } catch (error) {
+        console.error('Google OAuth processing error:', error);
         setStatus('error');
         if (!hasShownToast.current) {
           hasShownToast.current = true;
-          showError('Authentication failed. Redirecting to login...');
+          showError('Google authentication failed. Redirecting to login...');
         }
+        
+        // Clean up URL
+        window.history.replaceState({}, document.title, '/auth/google/success');
         
         setTimeout(() => {
           navigate('/login', { replace: true });
@@ -73,8 +80,8 @@ const GoogleAuthSuccessSimple = () => {
       }
     };
 
-    checkAuth();
-  }, []); // Empty dependency array
+    processGoogleAuth();
+  }, [searchParams, setUser, showSuccess, showError, navigate]); // Include dependencies
 
   if (status === 'checking') {
     return (
@@ -84,7 +91,7 @@ const GoogleAuthSuccessSimple = () => {
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
             Completing Google Sign In...
           </h2>
-          <p className="text-gray-600">Please wait while we verify your account.</p>
+          <p className="text-gray-600">Please wait while we process your authentication.</p>
         </div>
       </div>
     );
@@ -100,7 +107,7 @@ const GoogleAuthSuccessSimple = () => {
             </svg>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Sign In Successful!
+            Google Sign In Successful!
           </h2>
           <p className="text-gray-600">Redirecting to your dashboard...</p>
         </div>
@@ -117,7 +124,7 @@ const GoogleAuthSuccessSimple = () => {
           </svg>
         </div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Authentication Failed
+          Google Authentication Failed
         </h2>
         <p className="text-gray-600">Redirecting to login page...</p>
       </div>
@@ -125,4 +132,4 @@ const GoogleAuthSuccessSimple = () => {
   );
 };
 
-export default GoogleAuthSuccessSimple;
+export default GoogleAuthSuccess;

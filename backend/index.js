@@ -35,6 +35,10 @@ console.log(`🔐 Authentication: JWT-based (stateless)`);
 
 import cors from 'cors';
 import express from 'express'
+import passport from 'passport';
+
+// Import passport configuration for Google OAuth
+import './config/passport.js'
 
 import connectToDB from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
@@ -72,6 +76,9 @@ app.use(cors({
 if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', 1);
 }
+
+// Initialize passport for Google OAuth (without sessions)
+app.use(passport.initialize());
 
 // Body parsing middleware
 app.use(express.json());

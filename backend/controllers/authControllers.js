@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
+import passport from 'passport';
 import User from '../models/User.js';
 import { sendEmail } from '../utils/sendEmail.js';
 import { generateOTP } from '../utils/generateOtp.js';
@@ -370,21 +371,66 @@ export const login = async (req, res) => {
 }
 
 
-// Google OAuth endpoints - temporarily disabled for JWT implementation
-// These would need to be reimplemented with JWT tokens
-export const google = (req, res) => {
-    res.status(501).json({
-        success: false,
-        message: "Google OAuth temporarily unavailable during JWT migration"
-    });
+// Google OAuth with JWT implementation
+export const google = (req, res, next) => {
+    // Check if Google OAuth is configured
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+        return res.status(501).json({
+            success: false,
+            message: "Google OAuth not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables."
+        });
+    }
+    
+    // Use passport for Google OAuth
+    passport.authenticate("google", { scope: ["profile", "email"]})(req, res, next);
 }
 
-export const googleCallback = (req, res) => {
-    res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_unavailable`);
+export const googleCallback = (req, res, next) => {
+    passport.authenticate("google", { 
+        failureRedirect: `${process.env.CLIENT_URL}/login?error=google_auth_failed`,
+        session: false // Important: disable session for JWT
+    }, (err, user, info) => {
+        if (err) {
+            console.error('Google OAuth error:', err);
+            return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_error`);
+        }
+        
+        if (!user) {
+            console.error('Google OAuth failed:', info);
+            return res.redirect(`${process.env.CLIENT_URL}/login?error=google_auth_failed`);
+        }
+        
+        try {
+            // Generate JWT tokens for the authenticated user
+            const tokens = generateTokenPair(user);
+            
+            // Redirect to frontend with tokens as URL parameters (temporary)
+            // Frontend will extract tokens and store them properly
+            const redirectUrl = `${process.env.CLIENT_URL}/auth/google/success?` +
+                `accessToken=${encodeURIComponent(tokens.accessToken)}&` +
+                `refreshToken=${encodeURIComponent(tokens.refreshToken)}&` +
+                `user=${encodeURIComponent(JSON.stringify({
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    authProvider: user.authProvider,
+                    avatar: user.avatar,
+                    isVerified: user.isVerified
+                }))}`;
+            
+            res.redirect(redirectUrl);
+        } catch (tokenError) {
+            console.error('JWT token generation error:', tokenError);
+            res.redirect(`${process.env.CLIENT_URL}/login?error=token_generation_failed`);
+        }
+    })(req, res, next);
 }
 
 export const googleSuccess = (req, res) => {
-    res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_unavailable`);
+    // This endpoint is no longer used with JWT implementation
+    // Redirect is handled in googleCallback
+    res.redirect(`${process.env.CLIENT_URL}/login?error=deprecated_endpoint`);
 }
 
 // Token refresh endpoint
