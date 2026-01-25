@@ -345,6 +345,12 @@ export const googleCallback = (req, res, next) => {
 }
 
 export const googleSuccess = (req, res) => {
+    console.log('🔍 Google OAuth Success Handler:');
+    console.log('- User authenticated:', req.isAuthenticated());
+    console.log('- User object:', req.user ? { id: req.user._id, name: req.user.name, email: req.user.email } : 'null');
+    console.log('- Session ID:', req.sessionID);
+    console.log('- Redirecting to:', `${process.env.CLIENT_URL}/auth/google/success`);
+    
     res.redirect(`${process.env.CLIENT_URL}/auth/google/success`);
 }
 
@@ -453,6 +459,12 @@ export const verifyOtp = async (req, res) => {
 
 
 export const getCurrentUser = (req, res) => {
+    console.log('🔍 getCurrentUser called:');
+    console.log('- Authenticated:', req.isAuthenticated());
+    console.log('- Session ID:', req.sessionID);
+    console.log('- User:', req.user ? { id: req.user._id, name: req.user.name, email: req.user.email } : 'null');
+    console.log('- Cookies:', req.headers.cookie);
+    
     if (req.isAuthenticated()) {
         res.json({ 
             success: true, 
