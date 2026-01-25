@@ -66,22 +66,8 @@ app.use(cors({
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: [
-        'Content-Type', 
-        'Authorization', 
-        'Cookie',
-        'X-Requested-With',
-        'Accept',
-        'Origin',
-        'User-Agent',
-        'DNT',
-        'Cache-Control',
-        'X-Mx-ReqToken',
-        'Keep-Alive'
-    ],
-    exposedHeaders: ['Set-Cookie'],
-    optionsSuccessStatus: 200, // For legacy browser support
-    preflightContinue: false
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    optionsSuccessStatus: 200 // For legacy browser support
 }));
 
 // Trust proxy for production (important for secure cookies behind reverse proxy)
@@ -89,59 +75,40 @@ if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', 1);
 }
 
-// Mobile-friendly session configuration
-const sessionConfig = {
-    secret: process.env.PASSPORT_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    name: 'sessionId', // Custom session name
-    store: MongoStore.create({
-        mongoUrl: process.env.MONGO_URI,
-        touchAfter: 24 * 3600, // lazy session update
-        ttl: 7 * 24 * 60 * 60 // 7 days
-    }),
-    cookie: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // true in production with HTTPS
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        domain: undefined // Remove domain restriction to allow cross-site cookies
-    }
-};
-
-// Mobile-specific cookie configuration
-if (process.env.NODE_ENV === 'production') {
-    // For production, use 'none' for cross-site but with fallback
-    sessionConfig.cookie.sameSite = 'none';
-    sessionConfig.cookie.secure = true; // Required for sameSite: 'none'
-} else {
-    // For development, use 'lax' which works better locally
-    sessionConfig.cookie.sameSite = 'lax';
-    sessionConfig.cookie.secure = false;
-}
-
-// using express-session with mobile-friendly configuration
-app.use(session(sessionConfig));
+// using express-session with MongoDB store for production
+app.use(
+    session({
+        secret: process.env.PASSPORT_SECRET,
+        resave: false,
+        saveUninitialized: false,
+        name: 'sessionId', // Custom session name
+        store: MongoStore.create({
+            mongoUrl: process.env.MONGO_URI,
+            touchAfter: 24 * 3600, // lazy session update
+            ttl: 7 * 24 * 60 * 60 // 7 days
+        }),
+        cookie: {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // true in production with HTTPS
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-site in production
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            domain: undefined // Remove domain restriction to allow cross-site cookies
+        }
+    })
+);
 
 app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(express.json());
 
-// Simplified mobile detection and logging
-app.use((req, res, next) => {
-    const userAgent = req.get('User-Agent') || '';
-    const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-    
-    // Add mobile detection to request object
-    req.isMobile = isMobile;
-    
-    // Simple logging for debugging
-    if (process.env.NODE_ENV === 'production') {
-        console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.get('Origin')} - Mobile: ${isMobile}`);
-    }
-    
-    next();
-});
+// Add request logging for debugging in production
+if (process.env.NODE_ENV === 'production') {
+    app.use((req, res, next) => {
+        console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.get('Origin')} - User-Agent: ${req.get('User-Agent')?.substring(0, 50)}`);
+        next();
+    });
+}
 
 // Static file serving removed - now using Cloudinary for all images
 
