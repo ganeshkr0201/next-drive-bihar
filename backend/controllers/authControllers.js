@@ -349,9 +349,23 @@ export const googleSuccess = (req, res) => {
     console.log('- User authenticated:', req.isAuthenticated());
     console.log('- User object:', req.user ? { id: req.user._id, name: req.user.name, email: req.user.email } : 'null');
     console.log('- Session ID:', req.sessionID);
-    console.log('- Redirecting to:', `${process.env.CLIENT_URL}/auth/google/success`);
     
-    res.redirect(`${process.env.CLIENT_URL}/auth/google/success`);
+    if (req.isAuthenticated() && req.user) {
+        // Create a temporary token for the frontend to use
+        const tempToken = Buffer.from(JSON.stringify({
+            userId: req.user._id,
+            sessionId: req.sessionID,
+            timestamp: Date.now()
+        })).toString('base64');
+        
+        console.log('- Generated temp token for frontend');
+        console.log('- Redirecting to:', `${process.env.CLIENT_URL}/auth/google/success?token=${tempToken}`);
+        
+        res.redirect(`${process.env.CLIENT_URL}/auth/google/success?token=${tempToken}`);
+    } else {
+        console.log('- Authentication failed, redirecting to login');
+        res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
+    }
 }
 
 export const logout = (req, res) => {
@@ -474,6 +488,74 @@ export const getCurrentUser = (req, res) => {
         res.status(401).json({ 
             success: false, 
             message: "Not authenticated" 
+        });
+    }
+}
+
+// New endpoint to verify OAuth token and establish session
+export const verifyOAuthToken = async (req, res) => {
+    try {
+        const { token } = req.body;
+        
+        if (!token) {
+            return res.status(400).json({
+                success: false,
+                message: "Token required"
+            });
+        }
+        
+        // Decode the token
+        const tokenData = JSON.parse(Buffer.from(token, 'base64').toString());
+        const { userId, sessionId, timestamp } = tokenData;
+        
+        // Check if token is not too old (5 minutes max)
+        if (Date.now() - timestamp > 5 * 60 * 1000) {
+            return res.status(400).json({
+                success: false,
+                message: "Token expired"
+            });
+        }
+        
+        // Find the user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+        
+        // Log the user in to the current session
+        req.logIn(user, (err) => {
+            if (err) {
+                console.error('Error logging in user:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: "Login failed"
+                });
+            }
+            
+            console.log('✅ User logged in via OAuth token:', user.email);
+            res.json({
+                success: true,
+                user: {
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    authProvider: user.authProvider,
+                    avatar: user.avatar,
+                    isVerified: user.isVerified,
+                    createdAt: user.createdAt
+                }
+            });
+        });
+        
+    } catch (error) {
+        console.error('OAuth token verification error:', error);
+        res.status(400).json({
+            success: false,
+            message: "Invalid token"
         });
     }
 }

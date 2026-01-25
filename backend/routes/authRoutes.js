@@ -29,6 +29,9 @@ router.post('/verify-otp', authControllers.verifyOtp);
 // Get current user session
 router.get('/me', authControllers.getCurrentUser);
 
+// Verify OAuth token and establish session
+router.post('/verify-oauth-token', authControllers.verifyOAuthToken);
+
 // Update user profile with Cloudinary upload
 router.put('/profile', avatarUpload.single('avatar'), authControllers.userProfile);
 

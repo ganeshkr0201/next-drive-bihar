@@ -64,11 +64,13 @@ app.use(
         secret: process.env.PASSPORT_SECRET,
         resave: false,
         saveUninitialized: false,
+        name: 'sessionId', // Custom session name
         cookie: {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production', // true in production with HTTPS
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-site in production
-            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined // Allow subdomain sharing in production
         }
     })
 );
