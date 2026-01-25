@@ -55,28 +55,15 @@ const CLIENT_URL = process.env.CLIENT_URL || 'https://next-drive-bihar.vercel.ap
 
 // enabling cors
 app.use(cors({
-    origin: function(origin, callback) {
-        // Allow requests with no origin (mobile apps, curl, etc.)
-        if (!origin) return callback(null, true);
-        
-        const allowedOrigins = [
-            'https://next-drive-bihar.vercel.app',      // Production frontend (correct URL)
-            'https://nextdrivebihar.vercel.app',        // Alternative frontend URL (if any)
-            'https://next-drive-bihar.onrender.com',    // Production backend (for OAuth)
-            CLIENT_URL,                                 // Dynamic client URL from env
-            'http://localhost:5173',                    // Development frontend
-            'http://localhost:5174',                    // Alternative dev port
-            'http://localhost:3000'                     // Development backend
-        ];
-        
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-        
-        // Log rejected origins for debugging
-        console.log('❌ CORS rejected origin:', origin);
-        return callback(new Error('Not allowed by CORS'));
-    },
+    origin: [
+        'https://next-drive-bihar.vercel.app',      // Production frontend (correct URL)
+        'https://nextdrivebihar.vercel.app',        // Alternative frontend URL (if any)
+        'https://next-drive-bihar.onrender.com',    // Production backend (for OAuth)
+        CLIENT_URL,                                 // Dynamic client URL from env
+        'http://localhost:5173',                    // Development frontend
+        'http://localhost:5174',                    // Alternative dev port
+        'http://localhost:3000'                     // Development backend
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: [
@@ -90,8 +77,7 @@ app.use(cors({
         'DNT',
         'Cache-Control',
         'X-Mx-ReqToken',
-        'Keep-Alive',
-        'X-Requested-With'
+        'Keep-Alive'
     ],
     exposedHeaders: ['Set-Cookie'],
     optionsSuccessStatus: 200, // For legacy browser support
@@ -141,7 +127,7 @@ app.use(passport.session());
 
 app.use(express.json());
 
-// Mobile detection and debugging middleware
+// Simplified mobile detection and logging
 app.use((req, res, next) => {
     const userAgent = req.get('User-Agent') || '';
     const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
@@ -149,37 +135,11 @@ app.use((req, res, next) => {
     // Add mobile detection to request object
     req.isMobile = isMobile;
     
-    // Enhanced logging for mobile requests
+    // Simple logging for debugging
     if (process.env.NODE_ENV === 'production') {
-        const logData = {
-            timestamp: new Date().toISOString(),
-            method: req.method,
-            path: req.path,
-            origin: req.get('Origin'),
-            userAgent: userAgent.substring(0, 100),
-            isMobile: isMobile,
-            hasSession: !!req.sessionID,
-            isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false
-        };
-        
-        // Log mobile requests with more detail
-        if (isMobile || req.path.includes('/auth/')) {
-            console.log('📱 Request:', JSON.stringify(logData));
-        }
+        console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.get('Origin')} - Mobile: ${isMobile}`);
     }
     
-    next();
-});
-
-// Add mobile-specific headers for better compatibility
-app.use((req, res, next) => {
-    if (req.isMobile) {
-        // Add headers that help with mobile cookie handling
-        res.header('Vary', 'User-Agent, Origin');
-        res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.header('Pragma', 'no-cache');
-        res.header('Expires', '0');
-    }
     next();
 });
 
