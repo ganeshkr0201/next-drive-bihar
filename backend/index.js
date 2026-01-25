@@ -1,7 +1,13 @@
 import dotenv from 'dotenv';
+import MongoStore from 'connect-mongo';
 
 // Load environment variables FIRST before importing other modules
 dotenv.config();
+
+// Set NODE_ENV if not set
+if (!process.env.NODE_ENV) {
+    process.env.NODE_ENV = 'production';
+}
 
 // Validate critical environment variables
 const requiredEnvVars = ['MONGO_URI', 'PASSPORT_SECRET'];
@@ -23,6 +29,9 @@ if (missingOptionalVars.length > 0) {
     console.warn('💡 Some features (like Google OAuth) may not work');
 }
 
+console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+console.log(`🔗 Client URL: ${process.env.CLIENT_URL || 'https://next-drive-bihar.vercel.app'}`);
+
 import cors from 'cors';
 import express from 'express'
 import session from 'express-session';
@@ -36,11 +45,13 @@ import publicRoutes from './routes/publicRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 
 const app = express();
-const PORT = process.env.PORT;
-
+const PORT = process.env.PORT || 3000;
 
 // connecting database
 connectToDB(process.env.MONGO_URI);
+
+// Get client URL from environment or use default
+const CLIENT_URL = process.env.CLIENT_URL || 'https://next-drive-bihar.vercel.app';
 
 // enabling cors
 app.use(cors({
@@ -48,28 +59,39 @@ app.use(cors({
         'https://next-drive-bihar.vercel.app',      // Production frontend (correct URL)
         'https://nextdrivebihar.vercel.app',        // Alternative frontend URL (if any)
         'https://next-drive-bihar.onrender.com',    // Production backend (for OAuth)
+        CLIENT_URL,                                 // Dynamic client URL from env
         'http://localhost:5173',                    // Development frontend
         'http://localhost:5174',                    // Alternative dev port
         'http://localhost:3000'                     // Development backend
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
-}))
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    optionsSuccessStatus: 200 // For legacy browser support
+}));
 
+// Trust proxy for production (important for secure cookies behind reverse proxy)
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+}
 
-// using express-session
+// using express-session with MongoDB store for production
 app.use(
     session({
         secret: process.env.PASSPORT_SECRET,
         resave: false,
         saveUninitialized: false,
         name: 'sessionId', // Custom session name
+        store: MongoStore.create({
+            mongoUrl: process.env.MONGO_URI,
+            touchAfter: 24 * 3600, // lazy session update
+            ttl: 7 * 24 * 60 * 60 // 7 days
+        }),
         cookie: {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production', // true in production with HTTPS
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-site in production
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days instead of 24 hours
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
             domain: undefined // Remove domain restriction to allow cross-site cookies
         }
     })
@@ -79,6 +101,14 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(express.json());
+
+// Add request logging for debugging in production
+if (process.env.NODE_ENV === 'production') {
+    app.use((req, res, next) => {
+        console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.get('Origin')} - User-Agent: ${req.get('User-Agent')?.substring(0, 50)}`);
+        next();
+    });
+}
 
 // Static file serving removed - now using Cloudinary for all images
 
