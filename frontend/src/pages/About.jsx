@@ -224,7 +224,7 @@ const About = () => {
                     <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                   </svg>
                 </div>
-                <span className="text-sm font-semibold text-yellow-300">Heritage Tours</span>
+                <span className="text-sm font-semibold text-black">Heritage Tours</span>
               </div>
               <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-3 border border-white border-opacity-30 hover:bg-opacity-30 transition-all duration-300">
                 <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
@@ -232,7 +232,7 @@ const About = () => {
                     <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
                   </svg>
                 </div>
-                <span className="text-sm font-semibold text-yellow-300">Premium Rentals</span>
+                <span className="text-sm font-semibold text-black">Premium Rentals</span>
               </div>
               <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-3 border border-white border-opacity-30 hover:bg-opacity-30 transition-all duration-300">
                 <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
@@ -240,7 +240,7 @@ const About = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                   </svg>
                 </div>
-                <span className="text-sm font-semibold text-yellow-300">Custom Packages</span>
+                <span className="text-sm font-semibold text-black">Custom Packages</span>
               </div>
             </div>
 
