@@ -192,28 +192,47 @@ export const register = async (req, res) => {
 
 
 export const resendOtp = async (req, res) => {
+    const requestId = `resend-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
     try {
         const { email } = req.body;
 
-        console.log('🔄 Resend OTP request for:', email);
+        console.log(`[${requestId}] 🔄 Resend OTP request initiated for:`, email);
+        console.log(`[${requestId}] Request details:`, {
+            userAgent: req.get('User-Agent'),
+            ip: req.ip || req.connection.remoteAddress,
+            timestamp: new Date().toISOString()
+        });
 
         if (!email) {
+            console.log(`[${requestId}] ❌ Email validation failed: Email is required`);
             return res.status(400).json({ 
                 success: false,
                 message: "Email is required" 
             });
         }
 
+        console.log(`[${requestId}] 🔍 Looking up user in database...`);
         const user = await User.findOne({ email });
 
         if (!user) {
+            console.log(`[${requestId}] ❌ User not found for email:`, email);
             return res.status(404).json({ 
                 success: false,
                 message: "User not found" 
             });
         }
 
+        console.log(`[${requestId}] ✅ User found:`, {
+            userId: user._id,
+            name: user.name,
+            isVerified: user.isVerified,
+            otpResendCount: user.otpResendCount,
+            lastOtpSent: user.otpLastSentAt
+        });
+
         if (user.isVerified) {
+            console.log(`[${requestId}] ⚠️ User is already verified`);
             return res.status(400).json({ 
                 success: false,
                 message: "User is already verified" 
@@ -226,8 +245,17 @@ export const resendOtp = async (req, res) => {
         const timeDiff = now - lastSent;
         const thirtySeconds = 30 * 1000; // Reduced from 1 minute to 30 seconds
 
+        console.log(`[${requestId}] ⏱️ Rate limiting check:`, {
+            now: now.toISOString(),
+            lastSent: lastSent ? lastSent.toISOString() : 'never',
+            timeDiffMs: timeDiff,
+            requiredWaitMs: thirtySeconds,
+            canResend: timeDiff >= thirtySeconds
+        });
+
         if (timeDiff < thirtySeconds) {
             const waitTime = Math.ceil((thirtySeconds - timeDiff) / 1000);
+            console.log(`[${requestId}] ❌ Rate limit exceeded. Wait time: ${waitTime}s`);
             return res.status(429).json({ 
                 success: false,
                 message: `Please wait ${waitTime} seconds before requesting another OTP`
@@ -235,35 +263,52 @@ export const resendOtp = async (req, res) => {
         }
 
         // Check resend count (max 10 per hour - increased from 5)
+        console.log(`[${requestId}] 📊 Resend count check:`, {
+            currentCount: user.otpResendCount,
+            maxAllowed: 10,
+            timeSinceLastSent: `${Math.floor(timeDiff / 1000)}s`
+        });
+
         if (user.otpResendCount >= 10) {
             const oneHour = 60 * 60 * 1000;
             if (timeDiff < oneHour) {
+                console.log(`[${requestId}] ❌ Maximum OTP requests reached. Count: ${user.otpResendCount}`);
                 return res.status(429).json({ 
                     success: false,
                     message: "Maximum OTP requests reached. Please try again after an hour." 
                 });
             } else {
                 // Reset count after an hour
+                console.log(`[${requestId}] 🔄 Resetting OTP count after 1 hour`);
                 user.otpResendCount = 0;
             }
         }
 
         // Generate new OTP
+        console.log(`[${requestId}] 🔐 Generating new OTP...`);
         const otp = generateOTP();
         const hashedOtp = await bcrypt.hash(otp, 10);
 
+        const oldOtpExpiry = user.otpExpireAt;
         user.otpHash = hashedOtp;
         user.otpExpireAt = Date.now() + 10 * 60 * 1000; // 10 minutes
         user.otpLastSentAt = now;
         user.otpResendCount += 1;
 
+        console.log(`[${requestId}] 💾 Updating user record:`, {
+            oldExpiry: oldOtpExpiry ? new Date(oldOtpExpiry).toISOString() : 'none',
+            newExpiry: new Date(user.otpExpireAt).toISOString(),
+            newResendCount: user.otpResendCount
+        });
+
         await user.save();
+        console.log(`[${requestId}] ✅ User record updated successfully`);
 
-        console.log('🔐 New OTP generated and saved');
-
-        // Send OTP email
+        // Send OTP email with enhanced debugging
         try {
-            await sendEmail(
+            console.log(`[${requestId}] 📧 Initiating email send...`);
+            
+            const emailResult = await sendEmail(
                 email,
                 "Verify Your Email – NextDrive Bihar",
 
@@ -298,6 +343,93 @@ export const resendOtp = async (req, res) => {
                         Thank you for registering with <strong>NextDrive Bihar</strong>.
                         Please use the OTP below to verify your email address.
                     </p>
+
+                    <div style="text-align:center; margin:30px 0;">
+                        <span style="
+                        font-size:32px;
+                        font-weight:bold;
+                        letter-spacing:6px;
+                        color:#2563eb;
+                        ">
+                        ${otp}
+                        </span>
+                    </div>
+
+                    <p style="color:#475569;">
+                        This OTP is valid for <strong>10 minutes</strong>.
+                        Do not share this code with anyone.
+                    </p>
+
+                    <p style="font-size:14px; color:#64748b;">
+                        If you did not request this verification, you can safely ignore this email.
+                    </p>
+
+                    <hr />
+
+                    <p style="font-size:12px; color:#94a3b8; text-align:center;">
+                        © ${new Date().getFullYear()} NextDrive Bihar. All rights reserved.
+                    </p>
+
+                    </div>
+                </div>
+                `
+            );
+            
+            console.log(`[${requestId}] ✅ Email sent successfully:`, {
+                messageId: emailResult.messageId,
+                duration: emailResult.duration,
+                success: emailResult.success
+            });
+
+            res.status(200).json({ 
+                success: true,
+                message: "OTP sent successfully! Please check your email.",
+                debug: process.env.NODE_ENV === 'development' ? {
+                    requestId: requestId,
+                    emailResult: emailResult,
+                    otpExpiry: new Date(user.otpExpireAt).toISOString()
+                } : undefined
+            });
+            
+        } catch (emailError) {
+            console.error(`[${requestId}] ❌ Email sending failed:`, {
+                error: emailError.message,
+                category: emailError.category,
+                originalError: emailError.originalError,
+                duration: emailError.duration,
+                stack: process.env.NODE_ENV === 'development' ? emailError.stack : 'Hidden in production'
+            });
+
+            // Return detailed error information
+            res.status(500).json({ 
+                success: false,
+                message: "Failed to send OTP email. Please try again.",
+                error: emailError.message,
+                category: emailError.category,
+                debug: process.env.NODE_ENV === 'development' ? {
+                    requestId: requestId,
+                    originalError: emailError.originalError,
+                    duration: emailError.duration
+                } : undefined
+            });
+        }
+        
+    } catch (error) {
+        console.error(`[${requestId}] ❌ Resend OTP error:`, {
+            message: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : 'Hidden in production'
+        });
+        
+        res.status(500).json({ 
+            success: false,
+            message: "Failed to resend OTP. Please try again.",
+            debug: process.env.NODE_ENV === 'development' ? {
+                requestId: requestId,
+                error: error.message
+            } : undefined
+        });
+    }
+}
 
                     <div style="text-align:center; margin:30px 0;">
                         <span style="
@@ -921,50 +1053,128 @@ export const deleteAccount = async (req, res) => {
 
 // Test email endpoint for debugging
 export const testEmail = async (req, res) => {
+    const testId = `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
     try {
-        const { email } = req.body;
-
+        console.log(`[${testId}] 🧪 Email test endpoint called`);
+        
+        const { email, testType = 'basic' } = req.body;
+        
         if (!email) {
             return res.status(400).json({
                 success: false,
-                message: "Email is required"
+                message: "Email is required for testing"
             });
         }
-
-        console.log('🧪 Testing email service for:', email);
-
-        // Test email sending
-        await sendEmail(
-            email,
-            "Test Email - NextDrive Bihar",
-            "This is a test email to verify email service is working.",
-            `
-            <div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:30px">
-                <div style="max-width:600px; margin:auto; background:#ffffff; padding:25px; border-radius:8px">
-                    <h2 style="color:#1e293b; text-align:center;">Email Service Test</h2>
-                    <p>This is a test email to verify that the email service is working correctly.</p>
-                    <p>If you received this email, the email service is functioning properly.</p>
-                    <p style="color:#475569;">Timestamp: ${new Date().toISOString()}</p>
-                    <hr />
-                    <p style="font-size:12px; color:#94a3b8; text-align:center;">© ${new Date().getFullYear()} NextDrive Bihar. All rights reserved.</p>
-                </div>
-            </div>
-            `
-        );
-
-        console.log('✅ Test email sent successfully');
-
-        res.json({
-            success: true,
-            message: "Test email sent successfully! Check your inbox."
+        
+        console.log(`[${testId}] Test parameters:`, {
+            email: email,
+            testType: testType,
+            timestamp: new Date().toISOString(),
+            userAgent: req.get('User-Agent'),
+            ip: req.ip || req.connection.remoteAddress
         });
-
+        
+        // Environment check
+        console.log(`[${testId}] 🔍 Environment check:`, {
+            NODE_ENV: process.env.NODE_ENV,
+            hasEmailUser: !!process.env.EMAIL_USER,
+            hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
+            hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+            hasGoogleRefreshToken: !!process.env.GOOGLE_REFRESH_TOKEN,
+            emailUserLength: process.env.EMAIL_USER ? process.env.EMAIL_USER.length : 0
+        });
+        
+        let subject, text, html;
+        
+        if (testType === 'verification') {
+            // Test with actual verification email format
+            const testOtp = '123456';
+            subject = "Test Verification Email – NextDrive Bihar";
+            text = `Test verification email. OTP: ${testOtp}`;
+            html = `
+                <div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:30px">
+                    <div style="max-width:600px; margin:auto; background:#ffffff; padding:25px; border-radius:8px">
+                        <h2 style="color:#1e293b; text-align:center;">Test Email Verification</h2>
+                        <p>This is a test email from NextDrive Bihar.</p>
+                        <div style="text-align:center; margin:30px 0;">
+                            <span style="font-size:32px; font-weight:bold; letter-spacing:6px; color:#2563eb;">
+                                ${testOtp}
+                            </span>
+                        </div>
+                        <p>Test ID: ${testId}</p>
+                        <p>Timestamp: ${new Date().toISOString()}</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Basic test email
+            subject = "Test Email – NextDrive Bihar";
+            text = `This is a test email from NextDrive Bihar. Test ID: ${testId}`;
+            html = `
+                <div style="font-family: Arial, sans-serif; padding: 20px;">
+                    <h2>Test Email from NextDrive Bihar</h2>
+                    <p>This is a test email to verify email functionality.</p>
+                    <p><strong>Test ID:</strong> ${testId}</p>
+                    <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+                    <p><strong>Environment:</strong> ${process.env.NODE_ENV}</p>
+                </div>
+            `;
+        }
+        
+        console.log(`[${testId}] 📧 Sending test email...`);
+        
+        const startTime = Date.now();
+        const emailResult = await sendEmail(email, subject, text, html);
+        const endTime = Date.now();
+        
+        console.log(`[${testId}] ✅ Test email sent successfully:`, {
+            messageId: emailResult.messageId,
+            duration: `${endTime - startTime}ms`,
+            success: emailResult.success
+        });
+        
+        res.status(200).json({
+            success: true,
+            message: "Test email sent successfully!",
+            testId: testId,
+            emailResult: {
+                messageId: emailResult.messageId,
+                duration: emailResult.duration || `${endTime - startTime}ms`,
+                success: emailResult.success
+            },
+            debug: {
+                timestamp: new Date().toISOString(),
+                environment: process.env.NODE_ENV,
+                testType: testType,
+                recipient: email
+            }
+        });
+        
     } catch (error) {
-        console.error('❌ Test email failed:', error);
+        console.error(`[${testId}] ❌ Test email failed:`, {
+            message: error.message,
+            category: error.category,
+            originalError: error.originalError,
+            duration: error.duration,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : 'Hidden in production'
+        });
+        
         res.status(500).json({
             success: false,
             message: "Test email failed",
-            error: error.message
+            testId: testId,
+            error: {
+                message: error.message,
+                category: error.category,
+                originalError: error.originalError,
+                duration: error.duration
+            },
+            debug: {
+                timestamp: new Date().toISOString(),
+                environment: process.env.NODE_ENV
+            }
         });
+    }
     }
 }
