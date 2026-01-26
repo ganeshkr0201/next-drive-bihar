@@ -13,17 +13,33 @@ export const register = async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
+        console.log('📝 Registration attempt for:', email);
+
         // Validation
         if (!name || !email || !password) {
             return res.status(400).json({ 
+                success: false,
                 message: "Name, email, and password are required" 
             });
         }
 
         const userExist = await User.findOne({email});
         if(userExist) {
+            console.log('⚠️ User already exists:', email, 'Verified:', userExist.isVerified);
+            
+            // If user exists but is not verified, allow them to resend OTP
+            if (!userExist.isVerified) {
+                return res.status(400).json({ 
+                    success: false,
+                    message: "User already exists but email is not verified. Please check your email for verification code or request a new one.",
+                    requiresVerification: true,
+                    email: userExist.email
+                });
+            }
+            
             return res.status(400).json({ 
-                message: "User already exists with this email" 
+                success: false,
+                message: "User already exists with this email. Please login instead." 
             });
         }
 
@@ -32,17 +48,24 @@ export const register = async (req, res) => {
         const otp = generateOTP();
         const hashedOtp = await bcrypt.hash(otp, 10);
 
+        console.log('🔐 Creating user with OTP...');
+
         const user = await User.create({
             name,
             email,
             password: hashedPassword,
             otpHash: hashedOtp,
             otpExpireAt: Date.now() + 10 * 60 * 1000, // 10 minutes
-            otpLastSentAt: new Date()
+            otpLastSentAt: new Date(),
+            otpResendCount: 1 // Initialize count
         });
 
-        // Send OTP email with better formatting
+        console.log('✅ User created successfully:', user._id);
+
+        // Send OTP email with better error handling
         try {
+            console.log('📧 Sending verification email...');
+            
             await sendEmail(
                 email,
                 "Verify Your Email – NextDrive Bihar",
@@ -109,11 +132,33 @@ export const register = async (req, res) => {
                 </div>
                 `
             );
+            
+            console.log('✅ Verification email sent successfully');
+            
         } catch (emailError) {
-            // Delete user if email fails
-            await User.findByIdAndDelete(user._id);
-            return res.status(500).json({ 
-                message: "Failed to send verification email. Please try again." 
+            console.error('❌ Email sending failed:', emailError);
+            
+            // Don't delete user, just inform about email issue
+            // User can still verify later by requesting new OTP
+            console.log('⚠️ User created but email failed. User can request new OTP.');
+            
+            // Return success but indicate email issue
+            const userResponse = {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                authProvider: user.authProvider,
+                isVerified: user.isVerified,
+                createdAt: user.createdAt
+            };
+
+            return res.status(201).json({ 
+                success: true,
+                message: "Registration successful! However, there was an issue sending the verification email. Please use 'Resend OTP' to get your verification code.", 
+                user: userResponse,
+                requiresVerification: true,
+                emailIssue: true
             });
         }
 
@@ -129,12 +174,16 @@ export const register = async (req, res) => {
         };
 
         res.status(201).json({ 
+            success: true,
             message: "Registration successful! Please check your email for verification code.", 
             user: userResponse,
             requiresVerification: true
         });
+        
     } catch (error) {
+        console.error('❌ Registration error:', error);
         res.status(500).json({ 
+            success: false,
             message: "Registration failed. Please try again." 
         });
     }
@@ -146,38 +195,52 @@ export const resendOtp = async (req, res) => {
     try {
         const { email } = req.body;
 
+        console.log('🔄 Resend OTP request for:', email);
+
         if (!email) {
-            return res.status(400).json({ message: "Email is required" });
+            return res.status(400).json({ 
+                success: false,
+                message: "Email is required" 
+            });
         }
 
         const user = await User.findOne({ email });
 
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ 
+                success: false,
+                message: "User not found" 
+            });
         }
 
         if (user.isVerified) {
-            return res.status(400).json({ message: "User is already verified" });
+            return res.status(400).json({ 
+                success: false,
+                message: "User is already verified" 
+            });
         }
 
         // Check if user can resend OTP (limit to prevent spam)
         const now = new Date();
         const lastSent = user.otpLastSentAt;
         const timeDiff = now - lastSent;
-        const oneMinute = 60 * 1000;
+        const thirtySeconds = 30 * 1000; // Reduced from 1 minute to 30 seconds
 
-        if (timeDiff < oneMinute) {
+        if (timeDiff < thirtySeconds) {
+            const waitTime = Math.ceil((thirtySeconds - timeDiff) / 1000);
             return res.status(429).json({ 
-                message: `Please wait ${oneMinute-timeDiff} seconds before requesting another OTP`
+                success: false,
+                message: `Please wait ${waitTime} seconds before requesting another OTP`
             });
         }
 
-        // Check resend count (max 5 per hour)
-        if (user.otpResendCount >= 5) {
+        // Check resend count (max 10 per hour - increased from 5)
+        if (user.otpResendCount >= 10) {
             const oneHour = 60 * 60 * 1000;
             if (timeDiff < oneHour) {
                 return res.status(429).json({ 
-                    message: "Maximum OTP requests reached. Please try again later." 
+                    success: false,
+                    message: "Maximum OTP requests reached. Please try again after an hour." 
                 });
             } else {
                 // Reset count after an hour
@@ -195,6 +258,8 @@ export const resendOtp = async (req, res) => {
         user.otpResendCount += 1;
 
         await user.save();
+
+        console.log('🔐 New OTP generated and saved');
 
         // Send OTP email
         try {
@@ -265,20 +330,25 @@ export const resendOtp = async (req, res) => {
                 `
                 );
 
+            console.log('✅ Resend OTP email sent successfully');
 
             res.status(200).json({ 
+                success: true,
                 message: "Verification code sent successfully!" 
             });
         } catch (emailError) {
-            console.error('Email sending failed:', emailError);
+            console.error('❌ Resend email failed:', emailError);
             res.status(500).json({ 
-                message: "Failed to send verification email. Please try again." 
+                success: false,
+                message: "Failed to send verification email. Please try again.",
+                emailError: emailError.message
             });
         }
 
     } catch (error) {
-        console.error('Resend OTP error:', error);
+        console.error('❌ Resend OTP error:', error);
         res.status(500).json({ 
+            success: false,
             message: "Failed to resend OTP. Please try again." 
         });
     }
