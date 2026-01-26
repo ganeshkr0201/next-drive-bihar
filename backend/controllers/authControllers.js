@@ -525,7 +525,8 @@ export const login = async (req, res) => {
             });
         }
 
-        // Check if email is verified
+        // Check if email is verified - TEMPORARILY COMMENTED OUT FOR TESTING
+        /*
         if (!user.isVerified) {
             console.log('⚠️ Login attempt with unverified email:', email);
             
@@ -622,6 +623,12 @@ export const login = async (req, res) => {
                     emailError: "Failed to send verification email automatically"
                 });
             }
+        }
+        */
+
+        console.log('⚠️ EMAIL VERIFICATION TEMPORARILY DISABLED - Users can login without verification');
+        if (!user.isVerified) {
+            console.log('⚠️ User logging in without email verification:', email);
         }
 
         // Generate JWT tokens
