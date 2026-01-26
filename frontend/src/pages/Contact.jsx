@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import api from '../config/axios';
 import envConfig from '../config/env';
 
 const Contact = () => {
@@ -81,18 +82,9 @@ const Contact = () => {
         category: formData.subject
       };
 
-      const response = await fetch(`${envConfig.apiUrl}/api/queries`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include cookies for session
-        body: JSON.stringify(queryData),
-      });
+      const response = await api.post('/api/queries', queryData);
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (response.data.success) {
         showSuccess('Your query has been submitted successfully! You can track its status in your dashboard.');
         setFormData({
           name: user?.name || '',
@@ -104,7 +96,7 @@ const Contact = () => {
           message: ''
         });
       } else {
-        showError(data.message || 'Failed to send query. Please try again.');
+        showError(response.data.message || 'Failed to send query. Please try again.');
       }
     } catch (error) {
       console.error('Contact form error:', error);

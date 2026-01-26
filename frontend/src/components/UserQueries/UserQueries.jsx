@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import api from '../../config/axios';
 import envConfig from '../../config/env';
 
 const UserQueries = () => {
@@ -16,15 +17,12 @@ const UserQueries = () => {
   const loadQueries = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${envConfig.apiUrl}/api/queries/my-queries`, {
-        credentials: 'include'
-      });
+      const response = await api.get('/api/queries/my-queries');
 
-      const data = await response.json();
-      if (data.success) {
-        setQueries(data.queries || []);
+      if (response.data.success) {
+        setQueries(response.data.queries || []);
       } else {
-        showError(data.message || 'Failed to load queries');
+        showError(response.data.message || 'Failed to load queries');
       }
     } catch (error) {
       console.error('Load queries error:', error);
@@ -36,21 +34,16 @@ const UserQueries = () => {
 
   const handleRateQuery = async (queryId, rating, feedback = '') => {
     try {
-      const response = await fetch(`${envConfig.apiUrl}/api/queries/${queryId}/rate`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ rating, feedback })
+      const response = await api.patch(`/api/queries/${queryId}/rate`, {
+        rating,
+        feedback
       });
 
-      const data = await response.json();
-      if (data.success) {
+      if (response.data.success) {
         showSuccess('Thank you for your feedback!');
         loadQueries(); // Reload to show updated rating
       } else {
-        showError(data.message || 'Failed to submit rating');
+        showError(response.data.message || 'Failed to submit rating');
       }
     } catch (error) {
       console.error('Rate query error:', error);

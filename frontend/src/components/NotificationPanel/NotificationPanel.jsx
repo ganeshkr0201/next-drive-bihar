@@ -28,12 +28,20 @@ const NotificationPanel = () => {
   useEffect(() => {
     if (isOpen && user) {
       loadNotifications();
-      // Auto-mark all notifications as read when panel is opened
-      if (unreadCount > 0) {
-        markAllAsRead();
-      }
     }
   }, [isOpen, user]);
+
+  // Auto-mark all notifications as read when panel is opened (separate effect)
+  useEffect(() => {
+    if (isOpen && user && unreadCount > 0) {
+      // Use a timeout to avoid immediate execution and potential loops
+      const timeoutId = setTimeout(() => {
+        markAllAsRead();
+      }, 500);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isOpen, user]); // Remove unreadCount from dependencies to prevent loop
 
   // Load unread count on component mount
   useEffect(() => {
