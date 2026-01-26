@@ -431,61 +431,6 @@ export const resendOtp = async (req, res) => {
     }
 }
 
-                    <div style="text-align:center; margin:30px 0;">
-                        <span style="
-                        font-size:32px;
-                        font-weight:bold;
-                        letter-spacing:6px;
-                        color:#2563eb;
-                        ">
-                        ${otp}
-                        </span>
-                    </div>
-
-                    <p style="color:#475569;">
-                        This OTP is valid for <strong>10 minutes</strong>.
-                        Do not share this code with anyone.
-                    </p>
-
-                    <p style="font-size:14px; color:#64748b;">
-                        If you did not request this verification, you can safely ignore this email.
-                    </p>
-
-                    <hr />
-
-                    <p style="font-size:12px; color:#94a3b8; text-align:center;">
-                        © ${new Date().getFullYear()} NextDrive Bihar. All rights reserved.
-                    </p>
-
-                    </div>
-                </div>
-                `
-                );
-
-            console.log('✅ Resend OTP email sent successfully');
-
-            res.status(200).json({ 
-                success: true,
-                message: "Verification code sent successfully!" 
-            });
-        } catch (emailError) {
-            console.error('❌ Resend email failed:', emailError);
-            res.status(500).json({ 
-                success: false,
-                message: "Failed to send verification email. Please try again.",
-                emailError: emailError.message
-            });
-        }
-
-    } catch (error) {
-        console.error('❌ Resend OTP error:', error);
-        res.status(500).json({ 
-            success: false,
-            message: "Failed to resend OTP. Please try again." 
-        });
-    }
-}
-
 
 
 export const login = async (req, res) => {
