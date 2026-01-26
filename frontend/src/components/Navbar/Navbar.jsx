@@ -289,7 +289,7 @@ const Navbar = () => {
         {/* Mobile Navigation Menu */}
         {isMenuOpen && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-25 z-40 md:hidden"
+            className="fixed inset-0 bg-gray-600 bg-opacity-50 z-40 md:hidden"
             onClick={closeMobileMenu}
             aria-hidden="true"
           />
