@@ -12,6 +12,9 @@ router.post('/login', authControllers.login);
 router.post('/verify-otp', authControllers.verifyOtp);
 router.post('/refresh-token', authControllers.refreshToken);
 
+// Test email endpoint (for debugging)
+router.post('/test-email', authControllers.testEmail);
+
 // Google OAuth routes (temporarily disabled)
 router.get('/google', authControllers.google);
 router.get('/google/callback', authControllers.googleCallback, authControllers.googleSuccess);

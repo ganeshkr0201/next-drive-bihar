@@ -395,12 +395,101 @@ export const login = async (req, res) => {
 
         // Check if email is verified
         if (!user.isVerified) {
-            return res.status(403).json({
-                success: false,
-                message: "Please verify your email before logging in",
-                requiresVerification: true,
-                email: user.email
-            });
+            console.log('⚠️ Login attempt with unverified email:', email);
+            
+            // Automatically send verification email if user tries to login without verification
+            try {
+                // Check if we can send OTP (rate limiting)
+                const now = new Date();
+                const lastSent = user.otpLastSentAt;
+                const timeDiff = lastSent ? now - lastSent : Infinity;
+                const thirtySeconds = 30 * 1000;
+
+                let emailSent = false;
+                let emailError = null;
+
+                // Only send email if enough time has passed or no OTP was sent before
+                if (!lastSent || timeDiff >= thirtySeconds) {
+                    // Generate new OTP
+                    const otp = generateOTP();
+                    const hashedOtp = await bcrypt.hash(otp, 10);
+
+                    // Update user with new OTP
+                    user.otpHash = hashedOtp;
+                    user.otpExpireAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+                    user.otpLastSentAt = now;
+                    user.otpResendCount = (user.otpResendCount || 0) + 1;
+
+                    await user.save();
+
+                    console.log('📧 Sending verification email during login attempt...');
+
+                    try {
+                        await sendEmail(
+                            email,
+                            "Verify Your Email – NextDrive Bihar",
+                            `Hello ${user.name},
+
+                            You tried to login but your email is not verified yet.
+
+                            Your OTP for email verification is: ${otp}
+
+                            This OTP is valid for 10 minutes.
+                            Please do not share this code with anyone.
+
+                            Best regards,
+                            NextDrive Bihar Team`,
+                            `
+                            <div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:30px">
+                                <div style="max-width:600px; margin:auto; background:#ffffff; padding:25px; border-radius:8px">
+                                    <h2 style="color:#1e293b; text-align:center;">Email Verification Required</h2>
+                                    <p>Hello <strong>${user.name}</strong>,</p>
+                                    <p>You tried to login but your email is not verified yet. Please use the OTP below to verify your email address.</p>
+                                    <div style="text-align:center; margin:30px 0;">
+                                        <span style="font-size:32px; font-weight:bold; letter-spacing:6px; color:#2563eb;">${otp}</span>
+                                    </div>
+                                    <p style="color:#475569;">This OTP is valid for <strong>10 minutes</strong>. Do not share this code with anyone.</p>
+                                    <hr />
+                                    <p style="font-size:12px; color:#94a3b8; text-align:center;">© ${new Date().getFullYear()} NextDrive Bihar. All rights reserved.</p>
+                                </div>
+                            </div>`
+                        );
+                        
+                        emailSent = true;
+                        console.log('✅ Verification email sent successfully during login');
+                        
+                    } catch (emailSendError) {
+                        console.error('❌ Failed to send verification email during login:', emailSendError);
+                        emailError = emailSendError.message;
+                    }
+                } else {
+                    const waitTime = Math.ceil((thirtySeconds - timeDiff) / 1000);
+                    console.log(`⏳ Rate limited: ${waitTime}s remaining`);
+                }
+
+                return res.status(403).json({
+                    success: false,
+                    message: emailSent 
+                        ? "Please verify your email before logging in. We've sent a new verification code to your email."
+                        : "Please verify your email before logging in. Use the 'Resend OTP' button if you need a new verification code.",
+                    requiresVerification: true,
+                    email: user.email,
+                    emailSent,
+                    emailError: emailError || undefined
+                });
+                
+            } catch (otpError) {
+                console.error('❌ Error handling unverified login:', otpError);
+                
+                return res.status(403).json({
+                    success: false,
+                    message: "Please verify your email before logging in. Use the 'Resend OTP' button to get a verification code.",
+                    requiresVerification: true,
+                    email: user.email,
+                    emailSent: false,
+                    emailError: "Failed to send verification email automatically"
+                });
+            }
         }
 
         // Generate JWT tokens
@@ -826,6 +915,56 @@ export const deleteAccount = async (req, res) => {
         res.status(500).json({ 
             success: false,
             message: "Failed to delete account. Please try again." 
+        });
+    }
+}
+
+// Test email endpoint for debugging
+export const testEmail = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required"
+            });
+        }
+
+        console.log('🧪 Testing email service for:', email);
+
+        // Test email sending
+        await sendEmail(
+            email,
+            "Test Email - NextDrive Bihar",
+            "This is a test email to verify email service is working.",
+            `
+            <div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:30px">
+                <div style="max-width:600px; margin:auto; background:#ffffff; padding:25px; border-radius:8px">
+                    <h2 style="color:#1e293b; text-align:center;">Email Service Test</h2>
+                    <p>This is a test email to verify that the email service is working correctly.</p>
+                    <p>If you received this email, the email service is functioning properly.</p>
+                    <p style="color:#475569;">Timestamp: ${new Date().toISOString()}</p>
+                    <hr />
+                    <p style="font-size:12px; color:#94a3b8; text-align:center;">© ${new Date().getFullYear()} NextDrive Bihar. All rights reserved.</p>
+                </div>
+            </div>
+            `
+        );
+
+        console.log('✅ Test email sent successfully');
+
+        res.json({
+            success: true,
+            message: "Test email sent successfully! Check your inbox."
+        });
+
+    } catch (error) {
+        console.error('❌ Test email failed:', error);
+        res.status(500).json({
+            success: false,
+            message: "Test email failed",
+            error: error.message
         });
     }
 }
