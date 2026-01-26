@@ -1128,5 +1128,4 @@ export const testEmail = async (req, res) => {
             }
         });
     }
-    }
-}
+};
