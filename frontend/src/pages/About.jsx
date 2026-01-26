@@ -14,7 +14,9 @@ const About = () => {
       number: '50+', 
       label: 'Tour Packages', 
       icon: (
-        <img src="/tour_logo.svg" alt="Tour Packages" className="w-8 h-8 mx-auto" />
+        <svg className="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
       ),
       color: 'green'
     },
@@ -46,7 +48,11 @@ const About = () => {
       title: 'Premium Car Rentals',
       description: 'Well-maintained vehicles with professional drivers for comfortable journeys across Bihar.',
       icon: (
-        <img src="/car_logo.svg" alt="Car Rental" className="w-12 h-12 mx-auto" />
+        <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto">
+          <svg className="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+          </svg>
+        </div>
       ),
       features: ['Professional Drivers', 'Clean Vehicles', '24/7 Support', 'Flexible Booking'],
       color: 'orange'
@@ -55,7 +61,11 @@ const About = () => {
       title: 'Curated Tour Packages',
       description: 'Expertly designed tours covering Bihar\'s rich heritage, culture, and natural beauty.',
       icon: (
-        <img src="/tour_logo.svg" alt="Tour Packages" className="w-12 h-12 mx-auto" />
+        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto">
+          <svg className="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+        </div>
       ),
       features: ['Expert Guides', 'Cultural Sites', 'Local Cuisine', 'Group Discounts'],
       color: 'blue'
@@ -64,9 +74,11 @@ const About = () => {
       title: 'Custom Itineraries',
       description: 'Personalized travel plans tailored to your interests, budget, and schedule.',
       icon: (
-        <svg className="w-12 h-12 text-green-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-        </svg>
+        <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto">
+          <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          </svg>
+        </div>
       ),
       features: ['Personalized Plans', 'Budget Friendly', 'Flexible Dates', 'Local Insights'],
       color: 'green'
@@ -172,8 +184,12 @@ const About = () => {
             <div className="mb-8">
               <div className="inline-flex items-center justify-center w-32 h-32 bg-white bg-opacity-15 backdrop-blur-md rounded-3xl mb-6 border border-white border-opacity-20 shadow-2xl">
                 <div className="relative">
-                  {/* Use the actual car logo */}
-                  <img src="/car_logo.svg" alt="NextDrive Bihar" className="w-16 h-16 text-white filter brightness-0 invert" />
+                  {/* Use a proper car icon that will display correctly */}
+                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center">
+                    <svg className="w-12 h-12 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                    </svg>
+                  </div>
                   {/* Decorative Elements */}
                   <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
                     <svg className="w-3 h-3 text-blue-800" fill="currentColor" viewBox="0 0 20 20">
@@ -202,18 +218,28 @@ const About = () => {
             
             {/* Service Badges */}
             <div className="flex flex-wrap justify-center gap-4 mb-8">
-              <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-3 border border-white border-opacity-20">
-                <img src="/tour_logo.svg" alt="Tours" className="w-5 h-5 filter brightness-0 invert" />
+              <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-3 border border-white border-opacity-20 hover:bg-opacity-25 transition-all duration-300">
+                <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                  </svg>
+                </div>
                 <span className="text-sm font-medium text-white">Heritage Tours</span>
               </div>
-              <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-3 border border-white border-opacity-20">
-                <img src="/car_logo.svg" alt="Car Rental" className="w-5 h-5 filter brightness-0 invert" />
+              <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-3 border border-white border-opacity-20 hover:bg-opacity-25 transition-all duration-300">
+                <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                  </svg>
+                </div>
                 <span className="text-sm font-medium text-white">Premium Rentals</span>
               </div>
-              <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-3 border border-white border-opacity-20">
-                <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
+              <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-3 border border-white border-opacity-20 hover:bg-opacity-25 transition-all duration-300">
+                <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                </div>
                 <span className="text-sm font-medium text-white">Custom Packages</span>
               </div>
             </div>
