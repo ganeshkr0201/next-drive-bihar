@@ -13,13 +13,20 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(false);
   
-  // Use synchronized data hooks
-  const { data: queries, refetch: refetchQueries } = useDataSync('queries', () => adminService.getQueries());
-  const { data: tourBookings, refetch: refetchTourBookings } = useDataSync('tourBookings', () => adminService.getTourBookings());
-  const { data: carBookings, refetch: refetchCarBookings } = useDataSync('carBookings', () => adminService.getCarBookings());
-  const { data: tourPackages, refetch: refetchTourPackages } = useDataSync('tourPackages', () => adminService.getTourPackages());
-  const { data: users, refetch: refetchUsers } = useDataSync('users', () => adminService.getUsers());
-  const { data: stats, refetch: refetchStats } = useDataSync('stats', () => adminService.getStats());
+  // Use synchronized data hooks with stable function references
+  const fetchQueries = useCallback(() => adminService.getQueries(), []);
+  const fetchTourBookings = useCallback(() => adminService.getTourBookings(), []);
+  const fetchCarBookings = useCallback(() => adminService.getCarBookings(), []);
+  const fetchTourPackages = useCallback(() => adminService.getTourPackages(), []);
+  const fetchUsers = useCallback(() => adminService.getUsers(), []);
+  const fetchStats = useCallback(() => adminService.getStats(), []);
+
+  const { data: queries, refetch: refetchQueries } = useDataSync('queries', fetchQueries);
+  const { data: tourBookings, refetch: refetchTourBookings } = useDataSync('tourBookings', fetchTourBookings);
+  const { data: carBookings, refetch: refetchCarBookings } = useDataSync('carBookings', fetchCarBookings);
+  const { data: tourPackages, refetch: refetchTourPackages } = useDataSync('tourPackages', fetchTourPackages);
+  const { data: users, refetch: refetchUsers } = useDataSync('users', fetchUsers);
+  const { data: stats, refetch: refetchStats } = useDataSync('stats', fetchStats);
   
   // Local state for filters and forms
   const [filteredQueries, setFilteredQueries] = useState([]);
@@ -52,6 +59,8 @@ const AdminDashboard = () => {
     sortBy: 'newest' // 'newest', 'oldest', 'most-bookings', 'least-bookings'
   });
 
+  // Local state for query responses to prevent text vanishing
+  const [queryResponses, setQueryResponses] = useState({});
   // Pagination state
   const [queryPagination, setQueryPagination] = useState({
     currentPage: 1,
@@ -428,14 +437,19 @@ const AdminDashboard = () => {
 
       showSuccess('Response sent successfully! Query marked as resolved and user has been notified.');
       
+      // Clear the local response state for this query
+      setQueryResponses(prev => {
+        const updated = { ...prev };
+        delete updated[queryId];
+        return updated;
+      });
+      
       // Update query in synchronized data
       updateItem('queries', queryId, {
         response: response.trim(),
         status: 'resolved',
         respondedAt: new Date(),
-        respondedBy: user,
-        tempResponse: '',
-        tempStatus: undefined
+        respondedBy: user
       });
       
       // Refresh stats
@@ -1230,15 +1244,18 @@ const AdminDashboard = () => {
                                   placeholder="Type your response here..."
                                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                                   rows="4"
-                                  value={query.tempResponse || ''}
+                                  value={queryResponses[query._id] || ''}
                                   onChange={(e) => {
-                                    updateItem('queries', query._id, { tempResponse: e.target.value });
+                                    setQueryResponses(prev => ({
+                                      ...prev,
+                                      [query._id]: e.target.value
+                                    }));
                                   }}
                                 />
                                 <div className="flex justify-end">
                                   <button
-                                    onClick={() => handleRespondToQuery(query._id, query.tempResponse || '')}
-                                    disabled={isLoading || !query.tempResponse?.trim()}
+                                    onClick={() => handleRespondToQuery(query._id, queryResponses[query._id] || '')}
+                                    disabled={isLoading || !queryResponses[query._id]?.trim()}
                                     className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors gap-2"
                                   >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

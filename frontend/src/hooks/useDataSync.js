@@ -26,7 +26,7 @@ export const useDataSync = (dataType, fetchFunction, dependencies = []) => {
     } finally {
       setIsLoading(false);
     }
-  }, [dataType, fetchFunction, data, lastUpdated, updateData]);
+  }, [dataType, data, lastUpdated, updateData]); // Remove fetchFunction from dependencies
 
   // Auto-fetch on mount and when dependencies change
   useEffect(() => {
