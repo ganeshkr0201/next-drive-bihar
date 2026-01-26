@@ -66,6 +66,13 @@ const userSchema = new mongoose.Schema({
     
 }, {timestamps: true})
 
+// Create indexes for better query performance
+userSchema.index({ email: 1 }); // Already unique, but explicit index
+userSchema.index({ role: 1, createdAt: -1 }); // For admin user listing
+userSchema.index({ googleId: 1 }); // For Google OAuth
+userSchema.index({ isVerified: 1 }); // For filtering verified users
+userSchema.index({ authProvider: 1 }); // For filtering by auth provider
+
 // Cascade delete middleware - Remove all user-related data when user is deleted
 userSchema.pre('findOneAndDelete', async function() {
     try {

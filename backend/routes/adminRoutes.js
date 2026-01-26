@@ -54,6 +54,9 @@ router.put('/car-bookings/:id/status', adminControllers.updateCarBookingStatus);
 // Get all users
 router.get('/users', adminControllers.getAllUsers);
 
+// Get users with pagination (alternative endpoint for better performance)
+router.get('/users/paginated', adminControllers.getUsersWithPagination);
+
 // Delete user
 router.delete('/users/:id', adminControllers.deleteUser);
 

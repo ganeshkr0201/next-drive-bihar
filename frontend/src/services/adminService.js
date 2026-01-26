@@ -214,7 +214,9 @@ class AdminService {
   // Get all users
   async getUsers() {
     try {
-      const response = await api.get('/admin/users');
+      const response = await api.get('/admin/users', {
+        timeout: 30000 // Increase timeout to 30 seconds for admin operations
+      });
       return response.data.users || [];
     } catch (error) {
       console.error('Failed to fetch users:', error);

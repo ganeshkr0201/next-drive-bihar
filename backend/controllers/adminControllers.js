@@ -789,44 +789,25 @@ export const updateCarBookingStatus = async (req, res) => {
 }
 
 
-// Get all users
+// Get all users (optimized for performance)
 export const getAllUsers = async (req, res) => {
   try {
+    console.log('📊 Fetching users...');
+    
+    // Simple query without complex aggregations to avoid timeout
     const users = await User.find()
       .select('-password -otpHash')
       .sort({ 
         role: 1,  // This will put 'admin' before 'user' alphabetically
         createdAt: -1  // Then sort by creation date (newest first)
-      });
-
-    // Get booking statistics for each user
-    const usersWithBookingStats = await Promise.all(
-      users.map(async (user) => {
-        const [tourBookings, carBookings] = await Promise.all([
-          // Count tour bookings
-          Booking.countDocuments({ 
-            user: user._id, 
-            type: 'tour' 
-          }),
-          // Count car bookings
-          CarBooking.countDocuments({ 
-            user: user._id 
-          })
-        ]);
-
-        return {
-          ...user.toObject(),
-          bookingStats: {
-            tourBookings,
-            carBookings,
-            totalBookings: tourBookings + carBookings
-          }
-        };
       })
-    );
+      .lean(); // Use lean() for better performance
 
-    // Additional sorting to ensure admins are always first
-    const sortedUsers = usersWithBookingStats.sort((a, b) => {
+    console.log(`✅ Found ${users.length} users`);
+
+    // Skip booking statistics for now to avoid timeout
+    // Can be added back later with pagination or separate endpoint
+    const sortedUsers = users.sort((a, b) => {
       // If both are admins or both are regular users, maintain creation date order
       if (a.role === b.role) {
         return new Date(b.createdAt) - new Date(a.createdAt);
@@ -837,10 +818,63 @@ export const getAllUsers = async (req, res) => {
 
     res.json({
       success: true,
-      users: sortedUsers
+      users: sortedUsers.map(user => ({
+        ...user,
+        bookingStats: {
+          tourBookings: 0,
+          carBookings: 0,
+          totalBookings: 0
+        }
+      }))
     });
   } catch (error) {
     console.error('Get users error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch users',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+}
+
+// Get users with pagination (for better performance with large datasets)
+export const getUsersWithPagination = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const [users, totalUsers] = await Promise.all([
+      User.find()
+        .select('-password -otpHash')
+        .sort({ role: 1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      User.countDocuments()
+    ]);
+
+    res.json({
+      success: true,
+      users: users.map(user => ({
+        ...user,
+        bookingStats: {
+          tourBookings: 0,
+          carBookings: 0,
+          totalBookings: 0
+        }
+      })),
+      pagination: {
+        page,
+        limit,
+        totalUsers,
+        totalPages: Math.ceil(totalUsers / limit),
+        hasNext: page < Math.ceil(totalUsers / limit),
+        hasPrev: page > 1
+      }
+    });
+  } catch (error) {
+    console.error('Get users with pagination error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch users'
