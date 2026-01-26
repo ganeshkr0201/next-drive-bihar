@@ -1,4 +1,17 @@
 import nodemailer from "nodemailer";
+import { google } from "googleapis";
+
+const OAuth2 = google.auth.OAuth2;
+
+const oauth2Client = new OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  "https://developers.google.com/oauthplayground"
+);
+
+oauth2Client.setCredentials({
+  refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+});
 
 export const sendEmail = async (to, subject, text, html) => {
     try {
@@ -9,22 +22,39 @@ export const sendEmail = async (to, subject, text, html) => {
         if (!process.env.EMAIL_USER) {
             throw new Error('EMAIL_USER environment variable not set');
         }
-        if (!process.env.EMAIL_PASSWORD) {
-            throw new Error('EMAIL_PASSWORD environment variable not set');
+        if (!process.env.GOOGLE_CLIENT_ID) {
+            throw new Error('GOOGLE_CLIENT_ID environment variable not set');
+        }
+        if (!process.env.GOOGLE_CLIENT_SECRET) {
+            throw new Error('GOOGLE_CLIENT_SECRET environment variable not set');
+        }
+        if (!process.env.GOOGLE_REFRESH_TOKEN) {
+            throw new Error('GOOGLE_REFRESH_TOKEN environment variable not set');
         }
 
         console.log('✅ Email environment variables are set');
-        console.log('📮 Creating email transporter with App Password...');
+        console.log('🔐 Getting OAuth2 access token...');
         
-        // Use Gmail with App Password (more reliable than OAuth2)
+        const accessToken = await oauth2Client.getAccessToken();
+        
+        if (!accessToken.token) {
+            throw new Error('Failed to obtain OAuth2 access token');
+        }
+        
+        console.log('✅ OAuth2 access token obtained');
+        console.log('📮 Creating email transporter...');
+        
         const transporter = nodemailer.createTransporter({
             service: "gmail",
             auth: {
+                type: "OAuth2",
                 user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASSWORD, // Gmail App Password
+                clientId: process.env.GOOGLE_CLIENT_ID,
+                clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+                refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+                accessToken: accessToken.token,
             },
-            timeout: 15000, // 15 second timeout
-            secure: true,
+            timeout: 10000, // 10 second timeout
         });
 
         console.log('✅ Email transporter created');
@@ -53,55 +83,16 @@ export const sendEmail = async (to, subject, text, html) => {
         });
         
         // Provide more specific error messages
-        if (err.message.includes('Invalid login')) {
-            throw new Error('Email authentication failed. Please check EMAIL_PASSWORD (Gmail App Password).');
+        if (err.message.includes('OAuth2')) {
+            throw new Error('Email authentication failed. Please check OAuth2 configuration.');
         } else if (err.message.includes('timeout')) {
             throw new Error('Email service timeout. Please try again.');
         } else if (err.message.includes('ENOTFOUND') || err.message.includes('ECONNREFUSED')) {
             throw new Error('Email service connection failed. Please check internet connection.');
-        } else if (err.message.includes('535')) {
-            throw new Error('Gmail authentication failed. Please check App Password.');
+        } else if (err.message.includes('Invalid login')) {
+            throw new Error('Email authentication failed. Please check email credentials.');
         } else {
             throw new Error(`Email sending failed: ${err.message}`);
         }
-    }
-}
-
-// Fallback email service using a different provider if Gmail fails
-export const sendEmailFallback = async (to, subject, text, html) => {
-    try {
-        console.log('📧 Attempting fallback email service...');
-        
-        // You can add other email providers here as fallback
-        // For now, we'll use a simple SMTP configuration
-        
-        const transporter = nodemailer.createTransporter({
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false,
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASSWORD,
-            },
-            tls: {
-                rejectUnauthorized: false
-            }
-        });
-
-        const mailOptions = {
-            from: `NextDrive Bihar <${process.env.EMAIL_USER}>`,
-            to,
-            subject,
-            text,
-            html
-        };
-
-        const result = await transporter.sendMail(mailOptions);
-        console.log('✅ Fallback email sent successfully:', result.messageId);
-        return result;
-        
-    } catch (err) {
-        console.error('❌ Fallback email also failed:', err.message);
-        throw err;
     }
 }

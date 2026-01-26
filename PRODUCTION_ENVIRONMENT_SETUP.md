@@ -18,15 +18,8 @@ CLIENT_URL=https://next-drive-bihar.vercel.app
 ### Email Configuration:
 ```bash
 EMAIL_USER=your_email@gmail.com
-EMAIL_PASSWORD=your_gmail_app_password
+GOOGLE_REFRESH_TOKEN=your_google_refresh_token
 ```
-
-**Important**: You need to generate a Gmail App Password:
-1. Go to your Google Account settings
-2. Enable 2-Factor Authentication
-3. Go to Security > App passwords
-4. Generate a new app password for "Mail"
-5. Use this 16-character password as EMAIL_PASSWORD
 
 ### Google OAuth Configuration (Temporarily Disabled):
 ```bash

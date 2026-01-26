@@ -2,26 +2,7 @@ import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 import passport from 'passport';
 import User from '../models/User.js';
-import { sendEmail, sendEmailFallback } from '../utils/sendEmail.js';
-
-// Helper function to send email with fallback
-const sendEmailWithFallback = async (to, subject, text, html) => {
-    try {
-        // Try primary email service first
-        return await sendEmail(to, subject, text, html);
-    } catch (primaryError) {
-        console.log('⚠️ Primary email service failed, trying fallback...');
-        try {
-            // Try fallback email service
-            return await sendEmailFallback(to, subject, text, html);
-        } catch (fallbackError) {
-            console.error('❌ Both email services failed');
-            console.error('Primary error:', primaryError.message);
-            console.error('Fallback error:', fallbackError.message);
-            throw new Error('Email service unavailable. Please try again later.');
-        }
-    }
-};
+import { sendEmail } from '../utils/sendEmail.js';
 import { generateOTP } from '../utils/generateOtp.js';
 import { cloudinaryUtils } from '../config/cloudinary.js';
 import { generateTokenPair, verifyToken } from '../utils/jwt.js';
@@ -85,7 +66,7 @@ export const register = async (req, res) => {
         try {
             console.log('📧 Sending verification email...');
             
-            await sendEmailWithFallback(
+            await sendEmail(
                 email,
                 "Verify Your Email – NextDrive Bihar",
 
@@ -282,7 +263,7 @@ export const resendOtp = async (req, res) => {
 
         // Send OTP email
         try {
-            await sendEmailWithFallback(
+            await sendEmail(
                 email,
                 "Verify Your Email – NextDrive Bihar",
 
@@ -845,49 +826,6 @@ export const deleteAccount = async (req, res) => {
         res.status(500).json({ 
             success: false,
             message: "Failed to delete account. Please try again." 
-        });
-    }
-}
-
-// Test email endpoint (remove in production)
-export const testEmail = async (req, res) => {
-    try {
-        const { email } = req.body;
-        
-        if (!email) {
-            return res.status(400).json({
-                success: false,
-                message: "Email is required"
-            });
-        }
-
-        console.log('🧪 Testing email service...');
-        
-        await sendEmailWithFallback(
-            email,
-            "Test Email - NextDrive Bihar",
-            "This is a test email to verify the email service is working.",
-            `
-            <div style="font-family: Arial, sans-serif; padding: 20px;">
-                <h2>Email Service Test</h2>
-                <p>This is a test email to verify that the NextDrive Bihar email service is working correctly.</p>
-                <p>If you received this email, the service is functioning properly.</p>
-                <p>Time: ${new Date().toISOString()}</p>
-            </div>
-            `
-        );
-
-        res.json({
-            success: true,
-            message: "Test email sent successfully!"
-        });
-
-    } catch (error) {
-        console.error('❌ Test email failed:', error);
-        res.status(500).json({
-            success: false,
-            message: "Test email failed",
-            error: error.message
         });
     }
 }
