@@ -108,3 +108,6 @@ backend/uploads/
 # Backup files
 *.bak
 *.backup
+
+# Local documentation (keep locally only)
+PROJECT_DOCUMENTATION.md
