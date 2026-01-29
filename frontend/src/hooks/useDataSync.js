@@ -12,8 +12,8 @@ export const useDataSync = (dataType, fetchFunction, dependencies = []) => {
   const fetchTimeoutRef = useRef(null);
   const lastFetchTimeRef = useRef(0);
   
-  // Minimum time between fetches (5 seconds)
-  const MIN_FETCH_INTERVAL = 5000;
+  // Reduced minimum time between fetches (2 seconds instead of 5)
+  const MIN_FETCH_INTERVAL = 2000;
 
   // Stable reference to fetchFunction to prevent infinite loops
   const stableFetchFunction = useCallback(fetchFunction, dependencies);
@@ -24,7 +24,7 @@ export const useDataSync = (dataType, fetchFunction, dependencies = []) => {
       return data[dataType] || [];
     }
 
-    // Rate limiting: prevent fetches too close together
+    // Rate limiting: prevent fetches too close together (but more lenient)
     const now = Date.now();
     const timeSinceLastFetch = now - lastFetchTimeRef.current;
     
@@ -33,10 +33,10 @@ export const useDataSync = (dataType, fetchFunction, dependencies = []) => {
       return data[dataType] || [];
     }
 
-    // Don't fetch if data exists and is recent (unless forced)
+    // More lenient caching - only use cache if data is very recent (30 seconds) and not forced
     if (!force && data[dataType]?.length > 0 && lastUpdated[dataType] && hasInitialFetch) {
       const dataAge = now - lastUpdated[dataType];
-      const MAX_DATA_AGE = 5 * 60 * 1000; // 5 minutes
+      const MAX_DATA_AGE = 30 * 1000; // Reduced from 5 minutes to 30 seconds
       
       if (dataAge < MAX_DATA_AGE) {
         console.log(`📋 Using cached ${dataType} data (age: ${Math.round(dataAge / 1000)}s)`);
@@ -79,15 +79,11 @@ export const useDataSync = (dataType, fetchFunction, dependencies = []) => {
     }
   }, [dataType, data, lastUpdated, updateData, stableFetchFunction, hasInitialFetch, isLoading]);
 
-  // Auto-fetch on mount only (with debounce)
+  // Auto-fetch on mount (immediate, no debounce for initial load)
   useEffect(() => {
     if (!hasInitialFetch && isMountedRef.current) {
-      // Debounce initial fetch to prevent multiple rapid calls
-      fetchTimeoutRef.current = setTimeout(() => {
-        if (isMountedRef.current && !hasInitialFetch) {
-          fetchData();
-        }
-      }, 100);
+      // Immediate fetch for initial load
+      fetchData();
     }
 
     return () => {
@@ -98,22 +94,12 @@ export const useDataSync = (dataType, fetchFunction, dependencies = []) => {
     };
   }, [fetchData, hasInitialFetch]);
 
-  // Refetch when data is invalidated (with debounce)
+  // Refetch when data is invalidated (immediate)
   useEffect(() => {
     if (lastUpdated[dataType] === null && hasInitialFetch && isMountedRef.current) {
-      fetchTimeoutRef.current = setTimeout(() => {
-        if (isMountedRef.current) {
-          fetchData(true);
-        }
-      }, 200);
+      // Immediate refetch when invalidated
+      fetchData(true);
     }
-
-    return () => {
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-        fetchTimeoutRef.current = null;
-      }
-    };
   }, [lastUpdated[dataType], fetchData, hasInitialFetch]);
 
   // Cleanup on unmount

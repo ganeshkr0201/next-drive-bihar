@@ -3,7 +3,7 @@ class ApiMonitor {
   constructor() {
     this.calls = new Map();
     this.isEnabled = import.meta.env.VITE_ENABLE_DEBUG_LOGS === 'true';
-    this.maxCallsPerMinute = 30; // Global limit across all endpoints
+    this.maxCallsPerMinute = 50; // Increased from 30 to 50
     this.windowMs = 60000; // 1 minute
   }
 
@@ -23,16 +23,20 @@ class ApiMonitor {
     recentCalls.push(now);
     this.calls.set(key, recentCalls);
     
-    // Log the call
-    console.log(`📡 API Call: ${key} (${recentCalls.length} calls in last minute)`);
+    // Only log if there are many calls
+    if (recentCalls.length > 10) {
+      console.log(`📡 API Call: ${key} (${recentCalls.length} calls in last minute)`);
+    }
     
-    // Warn if too many calls
-    if (recentCalls.length > 5) {
+    // Warn if too many calls (increased threshold)
+    if (recentCalls.length > 20) {
       console.warn(`⚠️ High frequency API calls detected for ${key}: ${recentCalls.length} calls in last minute`);
     }
     
-    // Check global call count
-    this.checkGlobalCallCount();
+    // Check global call count less frequently
+    if (recentCalls.length % 10 === 0) {
+      this.checkGlobalCallCount();
+    }
   }
 
   checkGlobalCallCount() {

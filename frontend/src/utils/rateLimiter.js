@@ -2,7 +2,7 @@
 class RateLimiter {
   constructor() {
     this.requests = new Map();
-    this.maxRequests = 5; // Reduced from 10 to 5 requests per minute
+    this.maxRequests = 15; // Increased from 5 to 15 requests per minute
     this.windowMs = 60000; // 1 minute window
   }
 
@@ -26,7 +26,10 @@ class RateLimiter {
     recentRequests.push(now);
     this.requests.set(key, recentRequests);
     
-    console.log(`✅ Rate limit OK for ${key}: ${recentRequests.length}/${this.maxRequests} requests in last minute`);
+    // Only log if debug is enabled
+    if (import.meta.env.VITE_ENABLE_DEBUG_LOGS === 'true') {
+      console.log(`✅ Rate limit OK for ${key}: ${recentRequests.length}/${this.maxRequests} requests in last minute`);
+    }
     return true;
   }
 
@@ -64,6 +67,15 @@ export const rateLimiter = new RateLimiter();
 // Wrapper function for API calls with rate limiting
 export const withRateLimit = (key, apiCall) => {
   return async (...args) => {
+    // Bypass rate limiting for admin routes in development
+    const isAdminRoute = key.startsWith('admin-');
+    const isDevelopment = import.meta.env.DEV;
+    
+    if (isAdminRoute && isDevelopment) {
+      console.log(`🚀 Bypassing rate limit for admin route: ${key}`);
+      return await apiCall(...args);
+    }
+    
     if (!rateLimiter.canMakeRequest(key)) {
       throw new Error(`Rate limit exceeded for ${key}. Please wait before making more requests.`);
     }

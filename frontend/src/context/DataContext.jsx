@@ -34,6 +34,7 @@ export const DataProvider = ({ children }) => {
 
   // Generic update function
   const updateData = useCallback((type, newData) => {
+    console.log(`📊 Updating ${type} data:`, newData?.length || 'N/A', 'items');
     setData(prev => ({
       ...prev,
       [type]: newData
@@ -46,6 +47,7 @@ export const DataProvider = ({ children }) => {
 
   // Add item to array
   const addItem = useCallback((type, item) => {
+    console.log(`➕ Adding item to ${type}:`, item._id || item.id || 'unknown');
     setData(prev => ({
       ...prev,
       [type]: [...prev[type], item]
@@ -58,6 +60,7 @@ export const DataProvider = ({ children }) => {
 
   // Update item in array
   const updateItem = useCallback((type, itemId, updatedItem) => {
+    console.log(`✏️ Updating ${type} item:`, itemId);
     setData(prev => ({
       ...prev,
       [type]: prev[type].map(item => 
@@ -72,6 +75,7 @@ export const DataProvider = ({ children }) => {
 
   // Remove item from array
   const removeItem = useCallback((type, itemId) => {
+    console.log(`🗑️ Removing ${type} item:`, itemId);
     setData(prev => ({
       ...prev,
       [type]: prev[type].filter(item => item._id !== itemId)
@@ -84,6 +88,7 @@ export const DataProvider = ({ children }) => {
 
   // Invalidate data (force refetch)
   const invalidateData = useCallback((type) => {
+    console.log(`🔄 Invalidating ${type} data`);
     setLastUpdated(prev => ({
       ...prev,
       [type]: null
@@ -92,6 +97,30 @@ export const DataProvider = ({ children }) => {
 
   // Invalidate all data
   const invalidateAllData = useCallback(() => {
+    console.log('🔄 Invalidating all data');
+    setLastUpdated({
+      users: null,
+      queries: null,
+      tourBookings: null,
+      carBookings: null,
+      tourPackages: null,
+      notifications: null,
+      stats: null
+    });
+  }, []);
+
+  // Clear all data (for logout)
+  const clearAllData = useCallback(() => {
+    console.log('🧹 Clearing all data');
+    setData({
+      users: [],
+      queries: [],
+      tourBookings: [],
+      carBookings: [],
+      tourPackages: [],
+      notifications: [],
+      stats: {}
+    });
     setLastUpdated({
       users: null,
       queries: null,
@@ -111,7 +140,8 @@ export const DataProvider = ({ children }) => {
     updateItem,
     removeItem,
     invalidateData,
-    invalidateAllData
+    invalidateAllData,
+    clearAllData
   };
 
   return (
