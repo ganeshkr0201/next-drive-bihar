@@ -183,20 +183,11 @@ const About = () => {
             {/* Company Logo */}
             <div className="mb-8">
               <div className="inline-flex items-center justify-center w-32 h-32 bg-white bg-opacity-15 backdrop-blur-md rounded-3xl mb-6 border border-white border-opacity-20 shadow-2xl">
-                <div className="relative">
-                  {/* Use a proper car icon that will display correctly */}
-                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center">
-                    <svg className="w-12 h-12 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
-                    </svg>
-                  </div>
-                  {/* Decorative Elements */}
-                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
-                    <svg className="w-3 h-3 text-blue-800" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
+                <img 
+                  src="/nextDriveLogo.png" 
+                  alt="NextDrive Bihar" 
+                  className="w-24 h-24 object-contain"
+                />
               </div>
               
               {/* Company Name */}

@@ -42,14 +42,9 @@ export const getDashboardStatistics = async (req, res) => {
 // Get all queries with filtering
 export const getQueriesWithFiltering = async (req, res) => {
   try {
-    const { status, category, filter } = req.query;
+    const { status, category } = req.query;
     let queries;
-
-    if (filter === 'active') {
-      queries = await Query.getActiveQueries();
-    } else if (filter === 'closed') {
-      queries = await Query.getClosedQueries();
-    } else if (status) {
+    if (status) {
       queries = await Query.getByStatus(status);
     } else if (category) {
       queries = await Query.getByCategory(category);
@@ -98,21 +93,17 @@ export const getQueriesWithFiltering = async (req, res) => {
 // Respond to a query
 export const respondToQuery = async (req, res) => {
   try {
-    console.log('📝 Respond to query endpoint hit:', req.params.id);
-    console.log('📝 Request body:', req.body);
     
     const { id } = req.params;
     const { response, status = 'resolved' } = req.body;
 
     if (!response || !response.trim()) {
-      console.log('❌ No response provided');
       return res.status(400).json({
         success: false,
         message: 'Response is required'
       });
     }
 
-    console.log('🔍 Finding query with ID:', id);
     const query = await Query.findById(id);
     
     if (!query) {
@@ -123,7 +114,6 @@ export const respondToQuery = async (req, res) => {
       });
     }
 
-    console.log('✅ Query found, updating...');
     const updatedQuery = await Query.findByIdAndUpdate(
       id,
       {
@@ -134,8 +124,6 @@ export const respondToQuery = async (req, res) => {
       },
       { new: true }
     ).populate('respondedBy', 'name email');
-
-    console.log('✅ Query updated successfully');
 
     // Simplified notification creation (skip if it fails)
     try {
@@ -151,7 +139,6 @@ export const respondToQuery = async (req, res) => {
           priority: 'high'
         });
         await notification.save();
-        console.log('✅ Notification created');
       }
     } catch (notificationError) {
       console.log('⚠️ Notification creation failed (non-critical):', notificationError.message);
@@ -958,59 +945,3 @@ export const deleteUser = async (req, res) => {
   }
 }
 
-
-// Create admin user (REMOVE IN PRODUCTION)
-export const adminUser = async (req, res) => {
-  try {
-    const { name, email, password, role = 'admin' } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Name, email, and password are required'
-      });
-    }
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'User with this email already exists'
-      });
-    }
-
-    // Hash password
-    const bcrypt = await import('bcrypt');
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
-    const newUser = new User({
-      name,
-      email,
-      password: hashedPassword,
-      role: role === 'admin' ? 'admin' : 'user',
-      isVerified: true,
-      authProvider: 'local'
-    });
-
-    await newUser.save();
-
-    res.status(201).json({
-      success: true,
-      message: `${role === 'admin' ? 'Admin' : 'User'} created successfully`,
-      user: {
-        _id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role
-      }
-    });
-  } catch (error) {
-    console.error('Create user error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create user'
-    });
-  }
-}

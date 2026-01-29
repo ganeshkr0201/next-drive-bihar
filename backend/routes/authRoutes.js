@@ -7,8 +7,8 @@ const router = express.Router();
 
 // Public routes (no authentication required)
 router.post('/register', authControllers.register);  
-router.post('/resend-otp', authControllers.resendOtp);
 router.post('/login', authControllers.login);
+router.post('/resend-otp', authControllers.resendOtp);
 router.post('/verify-otp', authControllers.verifyOtp);
 router.post('/refresh-token', authControllers.refreshToken);
 
@@ -17,7 +17,7 @@ router.post('/test-email', authControllers.testEmail);
 
 // Google OAuth routes (temporarily disabled)
 router.get('/google', authControllers.google);
-router.get('/google/callback', authControllers.googleCallback, authControllers.googleSuccess);
+router.get('/google/callback', authControllers.googleCallback);
 
 // Protected routes (require JWT authentication)
 router.get('/me', authenticateJWT, authControllers.getCurrentUser);

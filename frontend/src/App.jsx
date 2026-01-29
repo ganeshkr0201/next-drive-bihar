@@ -41,10 +41,8 @@ function App() {
             {/* Central gradient circle */}
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-5 animate-gradient-xy" />
             
-            {/* Additional floating shapes */}
+            {/* Additional floating circles only */}
             <div className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-r from-yellow-300 to-orange-300 rounded-full opacity-15 animate-float" style={{ animationDuration: '7s', animationDelay: '1s' }} />
-            <div className="absolute bottom-32 right-20 w-40 h-40 bg-gradient-to-r from-pink-300 to-red-300 rounded-lg opacity-12 animate-float" style={{ animationDuration: '9s', animationDelay: '3s' }} />
-            <div className="absolute top-40 right-32 w-24 h-24 bg-gradient-to-r from-indigo-300 to-purple-300 rounded-lg opacity-20 animate-float" style={{ animationDuration: '5s', animationDelay: '0.5s' }} />
           </div>
           
           <Navbar />

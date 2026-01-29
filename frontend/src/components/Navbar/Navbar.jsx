@@ -91,9 +91,11 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">ND</span>
-              </div>
+              <img 
+                src="/nextDriveLogo.png" 
+                alt="NextDrive Bihar" 
+                className="w-12 h-12 object-contain"
+              />
               <div>
                 <h1 className="text-xl font-bold text-gray-800">{envConfig.appName}</h1>
                 <p className="text-xs text-gray-600">Bihar</p>

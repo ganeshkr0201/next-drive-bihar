@@ -1,37 +1,5 @@
 import dotenv from 'dotenv';
-
-// Load environment variables FIRST before importing other modules
 dotenv.config();
-
-// Set NODE_ENV if not set
-if (!process.env.NODE_ENV) {
-    process.env.NODE_ENV = 'production';
-}
-
-// Validate critical environment variables
-const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET'];
-const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
-
-if (missingEnvVars.length > 0) {
-    console.error('❌ Missing required environment variables:', missingEnvVars);
-    console.error('💡 Make sure to set these in your Render dashboard Environment tab');
-    console.error('💡 JWT_SECRET is required for JWT authentication');
-} else {
-    console.log('✅ Required environment variables loaded');
-}
-
-// Optional environment variables check
-const optionalEnvVars = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'CLIENT_URL'];
-const missingOptionalVars = optionalEnvVars.filter(varName => !process.env[varName]);
-
-if (missingOptionalVars.length > 0) {
-    console.warn('⚠️ Missing optional environment variables:', missingOptionalVars);
-    console.warn('💡 Some features (like Google OAuth) may not work');
-}
-
-console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
-console.log(`🔗 Client URL: ${process.env.CLIENT_URL || 'https://next-drive-bihar.vercel.app'}`);
-console.log(`🔐 Authentication: JWT-based (stateless)`);
 
 import cors from 'cors';
 import express from 'express'
@@ -53,22 +21,21 @@ const PORT = process.env.PORT || 3000;
 connectToDB(process.env.MONGO_URI);
 
 // Get client URL from environment or use default
-const CLIENT_URL = process.env.CLIENT_URL || 'https://next-drive-bihar.vercel.app';
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
-// enabling cors - simplified for JWT
+// enabling cors
 app.use(cors({
     origin: [
-        'https://next-drive-bihar.vercel.app',      // Production frontend (correct URL)
-        'https://nextdrivebihar.vercel.app',        // Alternative frontend URL (if any)
-        'https://next-drive-bihar.onrender.com',    // Production backend (for OAuth)
-        CLIENT_URL,                                 // Dynamic client URL from env
-        'http://localhost:5173',                    // Development frontend
+        CLIENT_URL,                          
+        'http://localhost:5173',                    // Development frontend (Vite default)
         'http://localhost:5174',                    // Alternative dev port
-        'http://localhost:3000'                     // Development backend
+        'http://localhost:4000',                    // Backend port (for testing)
+        'http://127.0.0.1:5173',                    // Alternative localhost format
+        'http://127.0.0.1:5174',                    // Alternative localhost format
     ],
     credentials: false, // Not needed for JWT
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     optionsSuccessStatus: 200 // For legacy browser support
 }));
 
@@ -77,33 +44,39 @@ if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', 1);
 }
 
-// Initialize passport for Google OAuth (without sessions)
+// Initialize passport for Google OAuth
 app.use(passport.initialize());
 
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Add request logging for debugging in production
-if (process.env.NODE_ENV === 'production') {
-    app.use((req, res, next) => {
-        console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.get('Origin')} - Auth: ${req.get('Authorization') ? 'Bearer ***' : 'None'}`);
-        next();
-    });
-}
-
-// Static file serving removed - now using Cloudinary for all images
-
-
+// Add request logging for debugging
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.get('Origin')} - Auth: ${req.get('Authorization') ? 'Bearer ***' : 'None'}`);
+    next();
+});
 
 
 // ROUTES
 app.get('/', (req, res) => {
-    res.send({
-        success: "true",
-        msg: "api working"
-    })
-})
+    res.json({
+        success: true,
+        message: "NextDrive Bihar API is working",
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development',
+        port: PORT
+    });
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+    });
+});
 
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
@@ -112,5 +85,9 @@ app.use('/api/notifications', notificationRoutes);
 
 
 app.listen(PORT, () => {
-    console.log(`server running on port: ${PORT}`);
-})
+    console.log(`🚀 NextDrive Bihar Backend Server running on port: ${PORT}`);
+    console.log(`📍 Server URL: http://localhost:${PORT}`);
+    console.log(`🌐 Client URL: ${CLIENT_URL}`);
+    console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 Database: ${process.env.MONGO_URI ? 'Connected' : 'Not configured'}`);
+});

@@ -1,98 +1,125 @@
 import nodemailer from "nodemailer";
 import { google } from "googleapis";
 
+
 const OAuth2 = google.auth.OAuth2;
 
 const oauth2Client = new OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  "https://developers.google.com/oauthplayground"
+  process.env.GOOGLE_REDIRECT_URI // e.g. https://developers.google.com/oauthplayground
 );
 
+// Set refresh token
 oauth2Client.setCredentials({
   refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
 });
 
-export const sendEmail = async (to, subject, text, html) => {
-    try {
-        console.log('📧 Attempting to send email to:', to);
-        console.log('📧 Email service configuration check...');
-        
-        // Check if required environment variables are set
-        if (!process.env.EMAIL_USER) {
-            throw new Error('EMAIL_USER environment variable not set');
-        }
-        if (!process.env.GOOGLE_CLIENT_ID) {
-            throw new Error('GOOGLE_CLIENT_ID environment variable not set');
-        }
-        if (!process.env.GOOGLE_CLIENT_SECRET) {
-            throw new Error('GOOGLE_CLIENT_SECRET environment variable not set');
-        }
-        if (!process.env.GOOGLE_REFRESH_TOKEN) {
-            throw new Error('GOOGLE_REFRESH_TOKEN environment variable not set');
-        }
 
-        console.log('✅ Email environment variables are set');
-        console.log('🔐 Getting OAuth2 access token...');
-        
-        const accessToken = await oauth2Client.getAccessToken();
-        
-        if (!accessToken.token) {
-            throw new Error('Failed to obtain OAuth2 access token');
-        }
-        
-        console.log('✅ OAuth2 access token obtained');
-        console.log('📮 Creating email transporter...');
-        
-        const transporter = nodemailer.createTransporter({
-            service: "gmail",
-            auth: {
-                type: "OAuth2",
-                user: process.env.EMAIL_USER,
-                clientId: process.env.GOOGLE_CLIENT_ID,
-                clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-                refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
-                accessToken: accessToken.token,
-            },
-            timeout: 10000, // 10 second timeout
-        });
+const getAccessToken = async () => {
+  try {
+    const tokenResponse = await oauth2Client.getAccessToken();
 
-        console.log('✅ Email transporter created');
+    const accessToken =
+      typeof tokenResponse === "string"
+        ? tokenResponse
+        : tokenResponse?.token;
 
-        const mailOptions = {
-            from: `NextDrive Bihar <${process.env.EMAIL_USER}>`,
-            to,
-            subject,
-            text,
-            html
-        };
-
-        console.log('📤 Sending email...');
-        const result = await transporter.sendMail(mailOptions);
-        
-        console.log('✅ Email sent successfully:', result.messageId);
-        return result;
-        
-    } catch(err) {
-        console.error(`❌ Email Error Details:`, {
-            message: err.message,
-            code: err.code,
-            command: err.command,
-            response: err.response,
-            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-        });
-        
-        // Provide more specific error messages
-        if (err.message.includes('OAuth2')) {
-            throw new Error('Email authentication failed. Please check OAuth2 configuration.');
-        } else if (err.message.includes('timeout')) {
-            throw new Error('Email service timeout. Please try again.');
-        } else if (err.message.includes('ENOTFOUND') || err.message.includes('ECONNREFUSED')) {
-            throw new Error('Email service connection failed. Please check internet connection.');
-        } else if (err.message.includes('Invalid login')) {
-            throw new Error('Email authentication failed. Please check email credentials.');
-        } else {
-            throw new Error(`Email sending failed: ${err.message}`);
-        }
+    if (!accessToken) {
+      throw new Error("Failed to generate OAuth2 access token");
     }
-}
+
+    return accessToken;
+  } catch (error) {
+    console.error("❌ OAuth2 token error:", error.message);
+    throw new Error("OAuth2 authentication failed - refresh token may be expired");
+  }
+};
+
+
+
+let transporter;
+
+const getTransporter = async () => {
+  if (transporter) return transporter;
+
+  const accessToken = await getAccessToken();
+
+  transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      type: "OAuth2",
+      user: process.env.EMAIL_USER,
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+      accessToken,
+    },
+    tls: {
+      rejectUnauthorized: true,
+    },
+    timeout: 10000, // 10s
+  });
+
+  // Verify SMTP connection once
+  await transporter.verify();
+  console.log('✅ SMTP connection verified');
+
+  return transporter;
+};
+
+// send email
+export const sendEmail = async (to, subject, text, html) => {
+  try {
+    // Validate env variables
+    const requiredEnv = [
+      "EMAIL_USER",
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+      "GOOGLE_REFRESH_TOKEN",
+      "GOOGLE_REDIRECT_URI",
+    ];
+
+    for (const key of requiredEnv) {
+      if (!process.env[key]) {
+        throw new Error(`Missing environment variable: ${key}`);
+      }
+    }
+
+    if (!to || !subject) {
+      throw new Error("Email 'to' and 'subject' are required");
+    }
+
+    const mailTransporter = await getTransporter();
+
+    const mailOptions = { 
+      from: `NextDrive Bihar <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      text,
+      html,
+    };
+
+    const result = await mailTransporter.sendMail(mailOptions);
+
+    console.log("📧 Email sent:", result.messageId);
+    return result;
+
+  } catch (error) {
+    console.error("❌ Email Send Error", {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+    });
+
+    if (error.message.includes("OAuth")) {
+      throw new Error("Email authentication failed");
+    }
+
+    if (error.message.includes("timeout")) {
+      throw new Error("Email service timeout");
+    }
+
+    throw new Error("Unable to send email at this time");
+  }
+};

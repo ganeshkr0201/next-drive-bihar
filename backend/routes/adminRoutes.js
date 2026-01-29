@@ -60,7 +60,5 @@ router.get('/users/paginated', adminControllers.getUsersWithPagination);
 // Delete user
 router.delete('/users/:id', adminControllers.deleteUser);
 
-// Create admin user (REMOVE IN PRODUCTION) - no auth required for initial setup
-router.post('/create-admin', adminControllers.adminUser);
 
 export default router;

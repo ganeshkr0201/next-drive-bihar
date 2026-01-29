@@ -1,35 +1,10 @@
 import passport from "passport";
 import dotenv from "dotenv";
-import { Strategy as LocalStrategy } from "passport-local";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import bcrypt from "bcrypt";
 import User from "../models/User.js";
 
 // Load environment variables
 dotenv.config();
-
-//  LOCAL STRATEGY (not used with JWT, but keeping for compatibility)
-passport.use(new LocalStrategy(
-    {usernameField: "email"},                           // options
-    async (email, password, done) => {                  // verify-callback
-        try {
-            const user = await User.findOne({ email });
-            if(!user) return done(null, false, { message: "User not found"});
-
-            if(!user.password) return done(null, false, { message: "Please login using Google"});
-
-            const isMatch = await bcrypt.compare(password, user.password);
-            if(!isMatch) return done(null, false, { message: "Incorrect password"});
-            // Check if email is verified
-            if(!user.isVerified) return done(null, false, { message: "Please verify your email before logging in"});
-
-            return done(null, user);
-        }
-        catch(err) {
-            return done(err);
-        }
-    }
-));
 
 // GOOGLE STRATEGY - Updated for JWT (no sessions)
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_AUTH_CALLBACK) {
@@ -78,17 +53,3 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
     console.warn('⚠️ Google OAuth not configured - missing environment variables');
     console.warn('Required: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_AUTH_CALLBACK');
 }
-
-// Passport serialize/deserialize - not used with JWT but required for passport
-passport.serializeUser((user, done) => {
-    done(null, user.id);
-})
-
-passport.deserializeUser(async (id, done) => {
-    try {
-        const user = await User.findById(id);
-        done(null, user);
-    } catch (error) {
-        done(error, null);
-    }
-})

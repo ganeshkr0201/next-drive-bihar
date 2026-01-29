@@ -109,9 +109,11 @@ const LoginPage = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Logo */}
         <Link to="/" className="flex items-center justify-center space-x-2 mb-6">
-          <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-green-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xl">ND</span>
-          </div>
+          <img 
+            src="/nextDriveLogo.png" 
+            alt="NextDrive Bihar" 
+            className="w-16 h-16 object-contain"
+          />
           <div>
             <h1 className="text-2xl font-bold text-gray-800">NextDrive Bihar</h1>
           </div>
