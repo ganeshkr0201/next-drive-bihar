@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { setupApiMonitoring } from '../utils/apiMonitor.js';
 
 // Create axios instance with JWT configuration
 const api = axios.create({
@@ -8,6 +9,9 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Setup API monitoring
+setupApiMonitoring(api);
 
 // Request interceptor to add JWT token to requests
 api.interceptors.request.use(

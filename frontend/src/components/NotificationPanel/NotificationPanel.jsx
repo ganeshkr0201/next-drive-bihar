@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useDebounceCallback } from '../../hooks/useDebounce';
 import notificationService from '../../services/notificationService';
 
 const NotificationPanel = () => {
@@ -9,6 +10,11 @@ const NotificationPanel = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const panelRef = useRef(null);
+  const lastFetchTimeRef = useRef(0);
+  const pollIntervalRef = useRef(null);
+
+  // Minimum time between API calls (5 seconds)
+  const MIN_FETCH_INTERVAL = 5000;
 
   // Close panel when clicking outside
   useEffect(() => {
@@ -24,58 +30,116 @@ const NotificationPanel = () => {
     };
   }, []);
 
-  // Load notifications when panel opens and mark all as read
-  useEffect(() => {
-    if (isOpen && user) {
-      loadNotifications();
+  // Debounced API calls to prevent excessive requests
+  const debouncedLoadNotifications = useDebounceCallback(async () => {
+    const now = Date.now();
+    if (now - lastFetchTimeRef.current < MIN_FETCH_INTERVAL) {
+      console.log('⏳ Notifications fetch rate limited');
+      return;
     }
-  }, [isOpen, user]);
 
-  // Auto-mark all notifications as read when panel is opened (separate effect)
-  useEffect(() => {
-    if (isOpen && user && unreadCount > 0) {
-      // Use a timeout to avoid immediate execution and potential loops
-      const timeoutId = setTimeout(() => {
-        markAllAsRead();
-      }, 500);
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [isOpen, user]); // Remove unreadCount from dependencies to prevent loop
-
-  // Load unread count on component mount
-  useEffect(() => {
-    if (user) {
-      loadUnreadCount();
-      // Set up polling for new notifications every 30 seconds
-      const interval = setInterval(loadUnreadCount, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [user]);
-
-  const loadNotifications = async () => {
     setIsLoading(true);
+    lastFetchTimeRef.current = now;
+    
     try {
+      console.log('🔔 Loading notifications...');
       const data = await notificationService.getNotifications();
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
+      console.log(`✅ Loaded ${data.notifications?.length || 0} notifications`);
     } catch (error) {
-      console.error('Failed to load notifications:', error);
+      console.error('❌ Failed to load notifications:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, 300);
 
-  const loadUnreadCount = async () => {
+  const debouncedLoadUnreadCount = useDebounceCallback(async () => {
+    const now = Date.now();
+    if (now - lastFetchTimeRef.current < MIN_FETCH_INTERVAL) {
+      console.log('⏳ Unread count fetch rate limited');
+      return;
+    }
+
     try {
+      console.log('🔢 Loading unread count...');
       const data = await notificationService.getUnreadCount();
       setUnreadCount(data.count || 0);
+      console.log(`✅ Unread count: ${data.count || 0}`);
     } catch (error) {
-      console.error('Failed to load unread count:', error);
+      console.error('❌ Failed to load unread count:', error);
     }
-  };
+  }, 500);
 
-  const markAsRead = async (notificationId) => {
+  // Load notifications when panel opens
+  useEffect(() => {
+    if (isOpen && user) {
+      debouncedLoadNotifications();
+    }
+  }, [isOpen, user, debouncedLoadNotifications]);
+
+  // Auto-mark all notifications as read when panel is opened
+  useEffect(() => {
+    if (isOpen && user && unreadCount > 0) {
+      const timeoutId = setTimeout(() => {
+        markAllAsRead();
+      }, 1000); // Increased delay to prevent immediate execution
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isOpen, user]); // Removed unreadCount to prevent loop
+
+  // Load unread count on component mount and set up controlled polling
+  useEffect(() => {
+    if (user) {
+      // Initial load
+      debouncedLoadUnreadCount();
+      
+      // Set up controlled polling - only when user is active and not in admin dashboard
+      const startPolling = () => {
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+        }
+        
+        // Only poll if not on admin dashboard (to prevent conflicts)
+        const isAdminDashboard = window.location.pathname.includes('/admin');
+        if (!isAdminDashboard) {
+          pollIntervalRef.current = setInterval(() => {
+            // Only poll if document is visible and user is active
+            if (!document.hidden && document.hasFocus()) {
+              debouncedLoadUnreadCount();
+            }
+          }, 60000); // Increased to 60 seconds
+        }
+      };
+
+      startPolling();
+
+      // Handle visibility change to pause/resume polling
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+        } else {
+          startPolling();
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      return () => {
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+        }
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
+    }
+  }, [user, debouncedLoadUnreadCount]);
+
+  const markAsRead = useCallback(async (notificationId) => {
     try {
       await notificationService.markAsRead(notificationId);
       setNotifications(prev => 
@@ -89,9 +153,9 @@ const NotificationPanel = () => {
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
     }
-  };
+  }, []);
 
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
     try {
       await notificationService.markAllAsRead();
       setNotifications(prev => 
@@ -101,9 +165,9 @@ const NotificationPanel = () => {
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
     }
-  };
+  }, []);
 
-  const deleteNotification = async (notificationId) => {
+  const deleteNotification = useCallback(async (notificationId) => {
     try {
       await notificationService.deleteNotification(notificationId);
       setNotifications(prev => prev.filter(notif => notif._id !== notificationId));
@@ -115,7 +179,7 @@ const NotificationPanel = () => {
     } catch (error) {
       console.error('Failed to delete notification:', error);
     }
-  };
+  }, [notifications]);
 
   const getNotificationIcon = (type) => {
     switch (type) {

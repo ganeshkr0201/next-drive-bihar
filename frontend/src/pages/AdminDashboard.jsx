@@ -21,12 +21,12 @@ const AdminDashboard = () => {
   const fetchUsers = useCallback(() => adminService.getUsers(), []);
   const fetchStats = useCallback(() => adminService.getStats(), []);
 
-  const { data: queries, refetch: refetchQueries } = useDataSync('queries', fetchQueries);
-  const { data: tourBookings, refetch: refetchTourBookings } = useDataSync('tourBookings', fetchTourBookings);
-  const { data: carBookings, refetch: refetchCarBookings } = useDataSync('carBookings', fetchCarBookings);
-  const { data: tourPackages, refetch: refetchTourPackages } = useDataSync('tourPackages', fetchTourPackages);
-  const { data: users, refetch: refetchUsers } = useDataSync('users', fetchUsers);
-  const { data: stats, refetch: refetchStats } = useDataSync('stats', fetchStats);
+  const { data: queries, refetch: refetchQueries } = useDataSync('queries', fetchQueries, []);
+  const { data: tourBookings, refetch: refetchTourBookings } = useDataSync('tourBookings', fetchTourBookings, []);
+  const { data: carBookings, refetch: refetchCarBookings } = useDataSync('carBookings', fetchCarBookings, []);
+  const { data: tourPackages, refetch: refetchTourPackages } = useDataSync('tourPackages', fetchTourPackages, []);
+  const { data: users, refetch: refetchUsers } = useDataSync('users', fetchUsers, []);
+  const { data: stats, refetch: refetchStats } = useDataSync('stats', fetchStats, []);
   
   // Local state for filters and forms
   const [filteredQueries, setFilteredQueries] = useState([]);

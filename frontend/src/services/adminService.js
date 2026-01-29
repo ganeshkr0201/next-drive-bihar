@@ -3,84 +3,104 @@
 
 import api from '../config/axios.js';
 import envConfig from '../config/env.js';
+import { withRateLimit } from '../utils/rateLimiter.js';
 
 class AdminService {
   // Get dashboard statistics
   async getStats() {
-    try {
-      const response = await api.get('/admin/stats');
-      return response.data.stats || {
-        totalQueries: 0,
-        totalTourBookings: 0,
-        totalCarBookings: 0,
-        totalTourPackages: 0,
-        totalUsers: 0
-      };
-    } catch (error) {
-      if (envConfig.enableDebugLogs) {
-        console.error('Failed to fetch stats:', error);
+    return withRateLimit('admin-stats', async () => {
+      try {
+        console.log('📊 Fetching admin stats...');
+        const response = await api.get('/admin/stats');
+        console.log('✅ Admin stats fetched successfully');
+        return response.data.stats || {
+          totalQueries: 0,
+          totalTourBookings: 0,
+          totalCarBookings: 0,
+          totalTourPackages: 0,
+          totalUsers: 0
+        };
+      } catch (error) {
+        if (envConfig.enableDebugLogs) {
+          console.error('❌ Failed to fetch stats:', error);
+        }
+        return {
+          totalQueries: 0,
+          totalTourBookings: 0,
+          totalCarBookings: 0,
+          totalTourPackages: 0,
+          totalUsers: 0
+        };
       }
-      return {
-        totalQueries: 0,
-        totalTourBookings: 0,
-        totalCarBookings: 0,
-        totalTourPackages: 0,
-        totalUsers: 0
-      };
-    }
+    })();
   }
 
   // Get all customer queries
   async getQueries(params = {}) {
-    try {
-      const response = await api.get('/admin/queries', { params });
-      // Return just the queries array for data synchronization
-      return response.data.queries || [];
-    } catch (error) {
-      if (envConfig.enableDebugLogs) {
-        console.error('Failed to fetch queries:', error);
+    return withRateLimit('admin-queries', async () => {
+      try {
+        console.log('📋 Fetching queries...');
+        const response = await api.get('/admin/queries', { params });
+        console.log(`✅ Fetched ${response.data.queries?.length || 0} queries`);
+        return response.data.queries || [];
+      } catch (error) {
+        if (envConfig.enableDebugLogs) {
+          console.error('❌ Failed to fetch queries:', error);
+        }
+        return [];
       }
-      return [];
-    }
+    })();
   }
 
   // Get all tour bookings
   async getTourBookings() {
-    try {
-      const response = await api.get('/admin/tour-bookings');
-      return response.data.bookings || [];
-    } catch (error) {
-      if (envConfig.enableDebugLogs) {
-        console.error('Failed to fetch tour bookings:', error);
+    return withRateLimit('admin-tour-bookings', async () => {
+      try {
+        console.log('🎫 Fetching tour bookings...');
+        const response = await api.get('/admin/tour-bookings');
+        console.log(`✅ Fetched ${response.data.bookings?.length || 0} tour bookings`);
+        return response.data.bookings || [];
+      } catch (error) {
+        if (envConfig.enableDebugLogs) {
+          console.error('❌ Failed to fetch tour bookings:', error);
+        }
+        return [];
       }
-      return [];
-    }
+    })();
   }
 
   // Get all car bookings
   async getCarBookings() {
-    try {
-      const response = await api.get('/admin/car-bookings');
-      return response.data.bookings || [];
-    } catch (error) {
-      if (envConfig.enableDebugLogs) {
-        console.error('Failed to fetch car bookings:', error);
+    return withRateLimit('admin-car-bookings', async () => {
+      try {
+        console.log('🚗 Fetching car bookings...');
+        const response = await api.get('/admin/car-bookings');
+        console.log(`✅ Fetched ${response.data.bookings?.length || 0} car bookings`);
+        return response.data.bookings || [];
+      } catch (error) {
+        if (envConfig.enableDebugLogs) {
+          console.error('❌ Failed to fetch car bookings:', error);
+        }
+        return [];
       }
-      return [];
-    }
+    })();
   }
 
   // Get all tour packages
   async getTourPackages() {
-    try {
-      const response = await api.get('/admin/tour-packages');
-      return response.data.packages || [];
-    } catch (error) {
-      if (envConfig.enableDebugLogs) {
-        console.error('Failed to fetch tour packages:', error);
+    return withRateLimit('admin-tour-packages', async () => {
+      try {
+        console.log('📦 Fetching tour packages...');
+        const response = await api.get('/admin/tour-packages');
+        console.log(`✅ Fetched ${response.data.packages?.length || 0} tour packages`);
+        return response.data.packages || [];
+      } catch (error) {
+        if (envConfig.enableDebugLogs) {
+          console.error('❌ Failed to fetch tour packages:', error);
+        }
+        return [];
       }
-      return [];
-    }
+    })();
   }
 
   // Create new tour package
@@ -213,15 +233,17 @@ class AdminService {
 
   // Get all users
   async getUsers() {
-    try {
-      const response = await api.get('/admin/users', {
-        timeout: 30000 // Increase timeout to 30 seconds for admin operations
-      });
-      return response.data.users || [];
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
-      return [];
-    }
+    return withRateLimit('admin-users', async () => {
+      try {
+        const response = await api.get('/admin/users', {
+          timeout: 30000 // Increase timeout to 30 seconds for admin operations
+        });
+        return response.data.users || [];
+      } catch (error) {
+        console.error('Failed to fetch users:', error);
+        return [];
+      }
+    })();
   }
 
   // Delete user
