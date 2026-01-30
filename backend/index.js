@@ -89,5 +89,4 @@ app.listen(PORT, () => {
     console.log(`📍 Server URL: http://localhost:${PORT}`);
     console.log(`🌐 Client URL: ${CLIENT_URL}`);
     console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 Database: ${process.env.MONGO_URI ? 'Connected' : 'Not configured'}`);
 });

@@ -10,9 +10,7 @@ class AdminService {
   async getStats() {
     return withRateLimit('admin-stats', async () => {
       try {
-        console.log('📊 Fetching admin stats...');
         const response = await api.get('/admin/stats');
-        console.log('✅ Admin stats fetched successfully');
         return response.data.stats || {
           totalQueries: 0,
           totalTourBookings: 0,
@@ -22,7 +20,7 @@ class AdminService {
         };
       } catch (error) {
         if (envConfig.enableDebugLogs) {
-          console.error('❌ Failed to fetch stats:', error);
+          console.error('Failed to fetch stats:', error);
         }
         return {
           totalQueries: 0,
@@ -39,13 +37,12 @@ class AdminService {
   async getQueries(params = {}) {
     return withRateLimit('admin-queries', async () => {
       try {
-        console.log('📋 Fetching queries...');
         const response = await api.get('/admin/queries', { params });
-        console.log(`✅ Fetched ${response.data.queries?.length || 0} queries`);
+        // Return just the queries array for data synchronization
         return response.data.queries || [];
       } catch (error) {
         if (envConfig.enableDebugLogs) {
-          console.error('❌ Failed to fetch queries:', error);
+          console.error('Failed to fetch queries:', error);
         }
         return [];
       }
@@ -56,13 +53,11 @@ class AdminService {
   async getTourBookings() {
     return withRateLimit('admin-tour-bookings', async () => {
       try {
-        console.log('🎫 Fetching tour bookings...');
         const response = await api.get('/admin/tour-bookings');
-        console.log(`✅ Fetched ${response.data.bookings?.length || 0} tour bookings`);
         return response.data.bookings || [];
       } catch (error) {
         if (envConfig.enableDebugLogs) {
-          console.error('❌ Failed to fetch tour bookings:', error);
+          console.error('Failed to fetch tour bookings:', error);
         }
         return [];
       }
@@ -73,13 +68,11 @@ class AdminService {
   async getCarBookings() {
     return withRateLimit('admin-car-bookings', async () => {
       try {
-        console.log('🚗 Fetching car bookings...');
         const response = await api.get('/admin/car-bookings');
-        console.log(`✅ Fetched ${response.data.bookings?.length || 0} car bookings`);
         return response.data.bookings || [];
       } catch (error) {
         if (envConfig.enableDebugLogs) {
-          console.error('❌ Failed to fetch car bookings:', error);
+          console.error('Failed to fetch car bookings:', error);
         }
         return [];
       }
@@ -90,13 +83,11 @@ class AdminService {
   async getTourPackages() {
     return withRateLimit('admin-tour-packages', async () => {
       try {
-        console.log('📦 Fetching tour packages...');
         const response = await api.get('/admin/tour-packages');
-        console.log(`✅ Fetched ${response.data.packages?.length || 0} tour packages`);
         return response.data.packages || [];
       } catch (error) {
         if (envConfig.enableDebugLogs) {
-          console.error('❌ Failed to fetch tour packages:', error);
+          console.error('Failed to fetch tour packages:', error);
         }
         return [];
       }

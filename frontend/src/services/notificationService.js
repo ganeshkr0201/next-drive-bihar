@@ -1,31 +1,36 @@
 import api from '../config/axios';
 import envConfig from '../config/env';
+import { withRateLimit } from '../utils/rateLimiter';
 
 const notificationService = {
   // Get user notifications
   getNotifications: async (limit = envConfig.notificationLimit) => {
-    try {
-      const response = await api.get(`/api/notifications?limit=${limit}`);
-      return response.data;
-    } catch (error) {
-      if (envConfig.enableDebugLogs) {
-        console.error('Get notifications error:', error);
+    return withRateLimit('notifications', async () => {
+      try {
+        const response = await api.get(`/api/notifications?limit=${limit}`);
+        return response.data;
+      } catch (error) {
+        if (envConfig.enableDebugLogs) {
+          console.error('Get notifications error:', error);
+        }
+        throw error.response?.data || { message: 'Failed to fetch notifications' };
       }
-      throw error.response?.data || { message: 'Failed to fetch notifications' };
-    }
+    })();
   },
 
   // Get unread notifications count
   getUnreadCount: async () => {
-    try {
-      const response = await api.get('/api/notifications/unread-count');
-      return response.data;
-    } catch (error) {
-      if (envConfig.enableDebugLogs) {
-        console.error('Get unread count error:', error);
+    return withRateLimit('notifications-unread-count', async () => {
+      try {
+        const response = await api.get('/api/notifications/unread-count');
+        return response.data;
+      } catch (error) {
+        if (envConfig.enableDebugLogs) {
+          console.error('Get unread count error:', error);
+        }
+        throw error.response?.data || { message: 'Failed to fetch unread count' };
       }
-      throw error.response?.data || { message: 'Failed to fetch unread count' };
-    }
+    })();
   },
 
   // Mark notification as read

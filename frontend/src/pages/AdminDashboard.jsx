@@ -1,36 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { useData } from '../context/DataContext';
-import { useDataSync } from '../hooks/useDataSync';
-import { useRouteRefresh } from '../hooks/useRouteRefresh';
+import { useAdminData } from '../hooks/useAdminData';
 import adminService from '../services/adminService';
 import notificationService from '../services/notificationService';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
-  const { updateItem, removeItem, addItem, invalidateData } = useData();
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(false);
   
-  // Force refresh data when navigating to admin dashboard
-  useRouteRefresh();
-  
-  // Use synchronized data hooks with stable function references
-  const fetchQueries = useCallback(() => adminService.getQueries(), []);
-  const fetchTourBookings = useCallback(() => adminService.getTourBookings(), []);
-  const fetchCarBookings = useCallback(() => adminService.getCarBookings(), []);
-  const fetchTourPackages = useCallback(() => adminService.getTourPackages(), []);
-  const fetchUsers = useCallback(() => adminService.getUsers(), []);
-  const fetchStats = useCallback(() => adminService.getStats(), []);
+  // Use the new admin data hook
+  const {
+    data,
+    loading,
+    errors,
+    refreshData,
+    updateItem,
+    removeItem,
+    addItem
+  } = useAdminData(activeTab);
 
-  const { data: queries, refetch: refetchQueries } = useDataSync('queries', fetchQueries, []);
-  const { data: tourBookings, refetch: refetchTourBookings } = useDataSync('tourBookings', fetchTourBookings, []);
-  const { data: carBookings, refetch: refetchCarBookings } = useDataSync('carBookings', fetchCarBookings, []);
-  const { data: tourPackages, refetch: refetchTourPackages } = useDataSync('tourPackages', fetchTourPackages, []);
-  const { data: users, refetch: refetchUsers } = useDataSync('users', fetchUsers, []);
-  const { data: stats, refetch: refetchStats } = useDataSync('stats', fetchStats, []);
+  // Destructure data for easier access
+  const { queries, tourBookings, carBookings, tourPackages, users, stats } = data;
   
   // Local state for filters and forms
   const [filteredQueries, setFilteredQueries] = useState([]);
@@ -323,8 +316,8 @@ const AdminDashboard = () => {
       });
       
       // Refresh tour packages data
-      refetchTourPackages();
-      refetchStats();
+      refreshData('tourPackages');
+      refreshData('stats');
     } catch (error) {
       showError(error.message || 'Failed to create tour package');
     } finally {
@@ -350,14 +343,14 @@ const AdminDashboard = () => {
       await adminService.deleteUser(userId);
       showSuccess('User deleted successfully');
       
-      // Remove user from synchronized data
+      // Remove user from data
       removeItem('users', userId);
       
       // Update filtered users
       setFilteredUsers(prev => prev.filter(user => user._id !== userId));
       
       // Refresh stats
-      refetchStats();
+      refreshData('stats');
     } catch (error) {
       showError(error.message || 'Failed to delete user');
     } finally {
@@ -388,11 +381,11 @@ const AdminDashboard = () => {
       await adminService.deleteTourPackage(packageId);
       showSuccess('Tour package deleted successfully');
       
-      // Remove package from synchronized data
+      // Remove package from data
       removeItem('tourPackages', packageId);
       
       // Refresh stats
-      refetchStats();
+      refreshData('stats');
     } catch (error) {
       showError(error.message || 'Failed to delete tour package');
     } finally {
@@ -448,7 +441,7 @@ const AdminDashboard = () => {
         return updated;
       });
       
-      // Update query in synchronized data
+      // Update query in data
       updateItem('queries', queryId, {
         response: response.trim(),
         status: 'resolved',
@@ -457,7 +450,7 @@ const AdminDashboard = () => {
       });
       
       // Refresh stats
-      refetchStats();
+      refreshData('stats');
     } catch (error) {
       console.error('❌ Failed to respond to query:', error);
       showError(error.message || 'Failed to send response');
@@ -531,30 +524,8 @@ const AdminDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-gray-600 mt-2">Welcome back, {user?.name}! Manage your NextDrive Bihar platform.</p>
-            </div>
-            <button
-              onClick={() => {
-                console.log('🔄 Manual refresh triggered');
-                refetchQueries();
-                refetchTourBookings();
-                refetchCarBookings();
-                refetchTourPackages();
-                refetchUsers();
-                refetchStats();
-                showSuccess('Data refreshed successfully!');
-              }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span>Refresh Data</span>
-            </button>
-          </div>
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-2">Welcome back, {user?.name}! Manage your NextDrive Bihar platform.</p>
         </div>
 
         {/* Tabs */}
