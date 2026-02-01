@@ -44,8 +44,8 @@ app.use(cors({
         'http://localhost:5173',                    // Development frontend (Vite default)
         'http://localhost:5174',                    // Alternative dev port
         'http://localhost:4000',                    // Backend port (for testing)
-        'http://127.0.0.1:5173',                    // Alternative localhost format
-        'http://127.0.0.1:5174',                    // Alternative localhost format
+        'https://nextdrivebihar.com',                    // production domain
+        'https://www.nextdrivebihar.com',                    // production url
     ],
     credentials: false, // Not needed for JWT
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
