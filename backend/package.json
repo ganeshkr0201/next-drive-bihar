@@ -8,9 +8,12 @@
   "main": "index.js",
   "scripts": {
     "test": "nodemon index.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    "test-upstash": "node test-upstash.js",
+    "setup-upstash": "node setup-upstash.js"
   },
   "dependencies": {
+    "@upstash/redis": "^1.36.1",
     "bcrypt": "^6.0.0",
     "cloudinary": "^1.41.3",
     "cors": "^2.8.5",

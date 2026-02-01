@@ -2,6 +2,7 @@ import express from 'express';
 import { tourUpload } from '../config/cloudinary.js';
 import { authenticateJWT, requireAdmin } from '../middlewares/auth.js';
 import * as adminControllers from '../controllers/adminControllers.js';
+import { statsCache, invalidateCacheAfter } from '../middlewares/cache.js';
 
 const router = express.Router();
 
@@ -9,22 +10,25 @@ const router = express.Router();
 router.use(authenticateJWT);
 router.use(requireAdmin);
 
-// Get dashboard statistics
-router.get('/stats', adminControllers.getDashboardStatistics);
+// Get dashboard statistics with caching (5 minutes)
+router.get('/stats', statsCache, adminControllers.getDashboardStatistics);
 
-// Get all queries with filtering
+// Get all queries with filtering (no cache - real-time data needed)
 router.get('/queries', adminControllers.getQueriesWithFiltering);
 
-// Respond to a query
-router.patch('/queries/:id/respond', adminControllers.respondToQuery);
+// Respond to a query (invalidate stats cache after successful response)
+router.patch('/queries/:id/respond', 
+    invalidateCacheAfter(['admin_stats']), 
+    adminControllers.respondToQuery
+);
 
-// Get all tour bookings
+// Get all tour bookings (no cache - real-time data needed)
 router.get('/tour-bookings', adminControllers.getAllTourBookings);
 
-// Get all car bookings
+// Get all car bookings (no cache - real-time data needed)
 router.get('/car-bookings', adminControllers.getAllCarBookings);
 
-// Get all tour packages
+// Get all tour packages (no cache for admin - they need real-time data)
 router.get('/tour-packages', adminControllers.getAllTourPackages);
 
 // Create new tour package

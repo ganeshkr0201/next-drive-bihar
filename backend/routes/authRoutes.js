@@ -5,7 +5,7 @@ import * as authControllers from '../controllers/authControllers.js';
 
 const router = express.Router();
 
-// Public routes (no authentication required)
+// Public routes (temporarily without rate limiting until Redis is stable)
 router.post('/register', authControllers.register);  
 router.post('/login', authControllers.login);
 router.post('/resend-otp', authControllers.resendOtp);
@@ -15,7 +15,7 @@ router.post('/refresh-token', authControllers.refreshToken);
 // Test email endpoint (for debugging)
 router.post('/test-email', authControllers.testEmail);
 
-// Google OAuth routes (temporarily disabled)
+// Google OAuth routes
 router.get('/google', authControllers.google);
 router.get('/google/callback', authControllers.googleCallback);
 

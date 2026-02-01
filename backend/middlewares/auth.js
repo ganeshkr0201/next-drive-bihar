@@ -18,7 +18,7 @@ export const authenticateJWT = async (req, res, next) => {
     const decoded = verifyToken(token);
     
     // Get user from database to ensure they still exist and are active
-    const user = await User.findById(decoded.id).select('-password -otpHash');
+    const user = await User.findById(decoded.id).select('-password');
     
     if (!user) {
       return res.status(401).json({
@@ -64,7 +64,7 @@ export const optionalJWT = async (req, res, next) => {
 
     if (token) {
       const decoded = verifyToken(token);
-      const user = await User.findById(decoded.id).select('-password -otpHash');
+      const user = await User.findById(decoded.id).select('-password');
       
       if (user && user.isVerified) {
         req.user = user;

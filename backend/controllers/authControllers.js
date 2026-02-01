@@ -6,6 +6,7 @@ import { sendEmail } from '../utils/sendEmail.js';
 import { generateOTP } from '../utils/generateOtp.js';
 import { cloudinaryUtils } from '../config/cloudinary.js';
 import { generateTokenPair, verifyToken } from '../utils/jwt.js';
+import redisOTPManager from '../utils/redisOtp.js';
 
 
 
@@ -38,17 +39,23 @@ export const register = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const otp = generateOTP();
-        const hashedOtp = await bcrypt.hash(otp, 10);
+
+        // Generate and store OTP in Redis
+        const otpResult = await redisOTPManager.generateAndStoreOTP(email);
+        
+        if (!otpResult.success) {
+            return res.status(500).json({
+                success: false,
+                message: "Failed to generate verification code. Please try again."
+            });
+        }
 
         const user = await User.create({
             name,
             email,
             password: hashedPassword,
-            otpHash: hashedOtp,
-            otpExpireAt: Date.now() + 10 * 60 * 1000,
-            otpLastSentAt: new Date(),
-            otpResendCount: 1
+            // Remove MongoDB OTP fields since we're using Redis
+            isVerified: false
         });
 
         try {
@@ -58,7 +65,7 @@ export const register = async (req, res) => {
                 `Hello ${user.name},
 
                 Thank you for registering with NextDrive Bihar.
-                Your OTP for email verification is: ${otp}
+                Your OTP for email verification is: ${otpResult.otp}
                 This OTP is valid for 10 minutes.
 
                 Best regards,
@@ -69,7 +76,7 @@ export const register = async (req, res) => {
                         <p>Hello <strong>${user.name}</strong>,</p>
                         <p>Thank you for registering with <strong>NextDrive Bihar</strong>. Please use the OTP below to verify your email address.</p>
                         <div style="text-align:center; margin:30px 0;">
-                            <span style="font-size:32px; font-weight:bold; letter-spacing:6px; color:#2563eb;">${otp}</span>
+                            <span style="font-size:32px; font-weight:bold; letter-spacing:6px; color:#2563eb;">${otpResult.otp}</span>
                         </div>
                         <p style="color:#475569;">This OTP is valid for <strong>10 minutes</strong>. Do not share this code with anyone.</p>
                         <p style="font-size:14px; color:#64748b;">If you did not request this verification, you can safely ignore this email.</p>
@@ -116,6 +123,7 @@ export const register = async (req, res) => {
             requiresVerification: true
         });
     } catch (error) {
+        console.error('Registration error:', error);
         res.status(500).json({ 
             success: false,
             message: "Registration failed. Please try again." 
@@ -167,49 +175,40 @@ export const login = async (req, res) => {
             
             // Automatically send verification email if user tries to login without verification
             try {
-                // Check if we can send OTP (rate limiting)
-                const now = new Date();
-                const lastSent = user.otpLastSentAt;
-                const timeDiff = lastSent ? now - lastSent : Infinity;
-                const thirtySeconds = 30 * 1000;
-
+                // Check if we can resend OTP using Redis rate limiting
+                const canResend = await redisOTPManager.canResendOTP(email);
+                
                 let emailSent = false;
                 let emailError = null;
 
-                // Only send email if enough time has passed or no OTP was sent before
-                if (!lastSent || timeDiff >= thirtySeconds) {
-                    // Generate new OTP
-                    const otp = generateOTP();
-                    const hashedOtp = await bcrypt.hash(otp, 10);
+                if (canResend.canResend) {
+                    // Generate and store OTP in Redis
+                    const otpResult = await redisOTPManager.generateAndStoreOTP(email);
+                    
+                    if (otpResult.success) {
+                        // Set resend cooldown
+                        await redisOTPManager.setResendCooldown(email);
 
-                    // Update user with new OTP
-                    user.otpHash = hashedOtp;
-                    user.otpExpireAt = Date.now() + 10 * 60 * 1000; // 10 minutes
-                    user.otpLastSentAt = now;
-                    user.otpResendCount = (user.otpResendCount || 0) + 1;
+                        console.log('📧 Sending verification email during login attempt...');
 
-                    await user.save();
+                        try {
+                            await sendEmail(
+                                email,
+                                "Verify Your Email – NextDrive Bihar",
+                                `Hello ${user.name},
 
-                    console.log('📧 Sending verification email during login attempt...');
+                                You tried to login but your email is not verified yet.
 
-                    try {
-                        await sendEmail(
-                            email,
-                            "Verify Your Email – NextDrive Bihar",
-                            `Hello ${user.name},
+                                Your OTP for email verification is: ${otpResult.otp}
 
-                            You tried to login but your email is not verified yet.
+                                This OTP is valid for 10 minutes.
+                                Please do not share this code with anyone.
 
-                            Your OTP for email verification is: ${otp}
-
-                            This OTP is valid for 10 minutes.
-                            Please do not share this code with anyone.
-
-                            Best regards,
-                            NextDrive Bihar Team`,
-                            `
-                            <div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:30px">
-                                <div style="max-width:600px; margin:auto; background:#ffffff; padding:25px; border-radius:8px">
+                                Best regards,
+                                NextDrive Bihar Team`,
+                                `
+                                <div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:30px">
+                                    <div style="max-width:600px; margin:auto; background:#ffffff; padding:25px; border-radius:8px">
                                     <h2 style="color:#1e293b; text-align:center;">Email Verification Required</h2>
                                     <p>Hello <strong>${user.name}</strong>,</p>
                                     <p>You tried to login but your email is not verified yet. Please use the OTP below to verify your email address.</p>
@@ -223,28 +222,34 @@ export const login = async (req, res) => {
                             </div>`
                         );
                         
-                        emailSent = true;
-                        console.log('✅ Verification email sent successfully during login');
-                        
-                    } catch (emailSendError) {
-                        console.error('❌ Failed to send verification email during login:', emailSendError);
-                        emailError = emailSendError.message;
-                    }
-                } else {
-                    const waitTime = Math.ceil((thirtySeconds - timeDiff) / 1000);
-                    console.log(`⏳ Rate limited: ${waitTime}s remaining`);
-                }
+                                        emailSent = true;
+                                        console.log('✅ Verification email sent successfully during login');
+                                        
+                                    } catch (emailSendError) {
+                                        console.error('❌ Failed to send verification email during login:', emailSendError);
+                                        emailError = emailSendError.message;
+                                    }
+                                } else {
+                                    console.log('❌ Failed to generate OTP:', otpResult.error);
+                                    emailError = 'Failed to generate verification code';
+                                }
+                            } else {
+                                console.log(`⏳ Rate limited: ${canResend.cooldownRemaining}s remaining`);
+                            }
 
-                return res.status(403).json({
-                    success: false,
-                    message: emailSent 
-                        ? "Please verify your email before logging in. We've sent a new verification code to your email."
-                        : "Please verify your email before logging in. Use the 'Resend OTP' button if you need a new verification code.",
-                    requiresVerification: true,
-                    email: user.email,
-                    emailSent,
-                    emailError: emailError || undefined
-                });
+                            return res.status(403).json({
+                                success: false,
+                                message: emailSent 
+                                    ? "Please verify your email before logging in. We've sent a new verification code to your email."
+                                    : canResend.canResend 
+                                        ? "Please verify your email before logging in. Use the 'Resend OTP' button if you need a verification code."
+                                        : `Please verify your email before logging in. You can request a new OTP in ${canResend.cooldownRemaining} seconds.`,
+                                requiresVerification: true,
+                                email: user.email,
+                                emailSent,
+                                emailError: emailError || undefined,
+                                cooldownRemaining: canResend.cooldownRemaining || 0
+                            });
                 
             } catch (otpError) {
                 console.error('❌ Error handling unverified login:', otpError);
@@ -325,45 +330,27 @@ export const resendOtp = async (req, res) => {
             });
         }
 
-        // Check if user can resend OTP (limit to prevent spam)
-        const now = new Date();
-        const lastSent = user.otpLastSentAt;
-        const timeDiff = now - lastSent;
-        const thirtySeconds = 30 * 1000; // 30 seconds
-
-        if (timeDiff < thirtySeconds) {
-            const waitTime = Math.ceil((thirtySeconds - timeDiff) / 1000);
+        // Check resend cooldown using Redis
+        const cooldownCheck = await redisOTPManager.canResendOTP(email);
+        if (!cooldownCheck.canResend) {
             return res.status(429).json({ 
                 success: false,
-                message: `Please wait ${waitTime} seconds before requesting another OTP`
+                message: cooldownCheck.message
             });
         }
 
-        // Check resend count (max 10 per hour)
-        if (user.otpResendCount >= 10) {
-            const oneHour = 60 * 60 * 1000;
-            if (timeDiff < oneHour) {
-                return res.status(429).json({ 
-                    success: false,
-                    message: "Maximum OTP requests reached. Please try again after an hour." 
-                });
-            } else {
-                // Reset count after an hour
-                user.otpResendCount = 0;
-            }
+        // Generate and store new OTP in Redis
+        const otpResult = await redisOTPManager.generateAndStoreOTP(email);
+        
+        if (!otpResult.success) {
+            return res.status(500).json({
+                success: false,
+                message: "Failed to generate verification code. Please try again."
+            });
         }
 
-        // Generate new OTP
-        const otp = generateOTP();
-        const hashedOtp = await bcrypt.hash(otp, 10);
-
-        user.otpHash = hashedOtp;
-        user.otpExpireAt = Date.now() + 10 * 60 * 1000; // 10 minutes
-        user.otpLastSentAt = now;
-        user.otpResendCount += 1;
-
-        await user.save();
-
+        // Set resend cooldown
+        await redisOTPManager.setResendCooldown(email);
 
         // Send OTP email
         try {
@@ -376,7 +363,7 @@ export const resendOtp = async (req, res) => {
 
                 Thank you for registering with NextDrive Bihar.
 
-                Your OTP for email verification is: ${otp}
+                Your OTP for email verification is: ${otpResult.otp}
 
                 This OTP is valid for 10 minutes.
                 Please do not share this code with anyone.
@@ -410,7 +397,7 @@ export const resendOtp = async (req, res) => {
                         letter-spacing:6px;
                         color:#2563eb;
                         ">
-                        ${otp}
+                        ${otpResult.otp}
                         </span>
                     </div>
 
@@ -539,7 +526,7 @@ export const refreshToken = async (req, res) => {
         const decoded = verifyToken(refreshToken);
         
         // Get user from database
-        const user = await User.findById(decoded.id).select('-password -otpHash');
+        const user = await User.findById(decoded.id).select('-password');
         
         if (!user || !user.isVerified) {
             return res.status(401).json({
@@ -603,32 +590,26 @@ export const verifyOtp = async (req, res) => {
             });
         }
 
-        // Check if OTP has expired
-        if (Date.now() > user.otpExpireAt) {
-            return res.status(400).json({ 
+        // Verify OTP using Redis
+        const verificationResult = await redisOTPManager.verifyOTP(email, otp);
+
+        if (!verificationResult.success) {
+            const statusCode = verificationResult.code === 'OTP_NOT_FOUND' ? 400 : 
+                              verificationResult.code === 'MAX_ATTEMPTS_EXCEEDED' ? 429 : 400;
+            
+            return res.status(statusCode).json({ 
                 success: false,
-                message: "OTP has expired. Please request a new one." 
+                message: verificationResult.error,
+                code: verificationResult.code,
+                remainingAttempts: verificationResult.remainingAttempts
             });
         }
 
-        // Verify OTP
-        const isOtpValid = await bcrypt.compare(otp, user.otpHash);
-
-        if (!isOtpValid) {
-            return res.status(400).json({ 
-                success: false,
-                message: "Invalid OTP. Please try again." 
-            });
-        }
-
-        // Mark user as verified and clear OTP data
+        // Mark user as verified
         user.isVerified = true;
-        user.otpHash = undefined;
-        user.otpExpireAt = undefined;
-        user.otpLastSentAt = undefined;
-        user.otpResendCount = undefined;
-
         await user.save();
+
+        console.log(`✅ User ${email} verified successfully`);
 
         // Prepare user response
         const userResponse = {
@@ -674,7 +655,6 @@ export const verifyOtp = async (req, res) => {
 
 
 export const getCurrentUser = (req, res) => {
-    // This endpoint now requires JWT authentication middleware
     if (req.user) {
         res.json({ 
             success: true, 

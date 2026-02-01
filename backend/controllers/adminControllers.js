@@ -783,7 +783,7 @@ export const getAllUsers = async (req, res) => {
     
     // Simple query without complex aggregations to avoid timeout
     const users = await User.find()
-      .select('-password -otpHash')
+      .select('-password')
       .sort({ 
         role: 1,  // This will put 'admin' before 'user' alphabetically
         createdAt: -1  // Then sort by creation date (newest first)
@@ -833,7 +833,7 @@ export const getUsersWithPagination = async (req, res) => {
 
     const [users, totalUsers] = await Promise.all([
       User.find()
-        .select('-password -otpHash')
+        .select('-password')
         .sort({ role: 1, createdAt: -1 })
         .skip(skip)
         .limit(limit)

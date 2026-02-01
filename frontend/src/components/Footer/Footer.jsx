@@ -9,15 +9,15 @@ const Footer = () => {
           <div className="col-span-1 lg:col-span-2">
             <div className="flex items-center space-x-3 mb-4">
               <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-green-500/20 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/10">
+                <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-lg border border-gray-200">
                   <img 
                     src="/nextDriveLogo.png" 
                     alt="NextDrive Bihar" 
-                    className="w-12 h-12 object-contain filter drop-shadow-lg"
+                    className="w-12 h-12 object-contain"
                   />
                 </div>
                 {/* Subtle glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-green-400/10 rounded-xl blur-sm -z-10"></div>
+                <div className="absolute inset-0 bg-white/20 rounded-xl blur-sm -z-10"></div>
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">NextDrive Bihar</h2>

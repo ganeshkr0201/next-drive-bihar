@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
-import api from '../config/axios.js';
+import authService from '../services/authService';
 import envConfig from '../config/env';
 
 const EmailVerification = () => {
@@ -46,22 +46,19 @@ const EmailVerification = () => {
     setIsLoading(true);
 
     try {
-      const response = await api.post('/auth/verify-otp', {
-        email,
-        otp,
-        autoLogin: fromLogin || fromRegistration // Auto-login for both login and registration
-      });
+      // Use auth service instead of direct API call
+      const response = await authService.verifyOtp(email, otp, fromLogin || fromRegistration);
 
-      if (response.data.autoLogin && response.data.user) {
+      if (response.autoLogin && response.user) {
         // User was automatically logged in
         if (fromRegistration) {
-          showSuccess('Welcome to NextDrive Bihar! Your account has been verified and you are now logged in.');
+          showSuccess('🎉 Welcome to NextDrive Bihar! Your account has been verified and you are now logged in.');
         } else {
           showSuccess('Email verified and logged in successfully!');
         }
         
         // Update auth context with user data
-        setUser(response.data.user);
+        setUser(response.user);
         
         // Redirect to dashboard
         setTimeout(() => {
@@ -77,7 +74,7 @@ const EmailVerification = () => {
       }
 
     } catch (error) {
-      const message = error.response?.data?.message || 'Verification failed. Please try again.';
+      const message = error.message || 'Verification failed. Please try again.';
       showError(message);
     } finally {
       setIsLoading(false);
@@ -90,14 +87,15 @@ const EmailVerification = () => {
     setIsResending(true);
 
     try {
-      const response = await api.post('/auth/resend-otp', { email });
+      // Use auth service instead of direct API call
+      const response = await authService.resendOtp(email);
       
       showSuccess('Verification code sent successfully!');
-      setCountdown(envConfig.otpResendCooldown); // Configurable countdown
+      setCountdown(envConfig.otpResendCooldown || 30); // Configurable countdown with fallback
       setOtp(''); // Clear current OTP
 
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to resend verification code.';
+      const message = error.message || 'Failed to resend verification code.';
       showError(message);
     } finally {
       setIsResending(false);

@@ -37,18 +37,18 @@ const NotificationPanel = () => {
       // Use a timeout to avoid immediate execution and potential loops
       const timeoutId = setTimeout(() => {
         markAllAsRead();
-      }, 1000); // Increased timeout to 1 second
+      }, 500);
       
       return () => clearTimeout(timeoutId);
     }
-  }, [isOpen, user]); // Removed unreadCount dependency to prevent infinite loop
+  }, [isOpen, user]); // Remove unreadCount from dependencies to prevent loop
 
-  // Load unread count on component mount with rate limiting
+  // Load unread count on component mount
   useEffect(() => {
     if (user) {
       loadUnreadCount();
-      // Reduced polling frequency to every 2 minutes to prevent excessive calls
-      const interval = setInterval(loadUnreadCount, 120000);
+      // Set up polling for new notifications every 30 seconds
+      const interval = setInterval(loadUnreadCount, 30000);
       return () => clearInterval(interval);
     }
   }, [user]);

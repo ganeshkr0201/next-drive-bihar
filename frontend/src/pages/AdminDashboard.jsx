@@ -1,29 +1,32 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { useAdminData } from '../hooks/useAdminData';
+import { useData } from '../context/DataContext';
+import { useDataSync } from '../hooks/useDataSync';
 import adminService from '../services/adminService';
 import notificationService from '../services/notificationService';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
+  const { updateItem, removeItem, addItem, invalidateData } = useData();
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(false);
   
-  // Use the new admin data hook
-  const {
-    data,
-    loading,
-    errors,
-    refreshData,
-    updateItem,
-    removeItem,
-    addItem
-  } = useAdminData(activeTab);
+  // Use synchronized data hooks with stable function references
+  const fetchQueries = useCallback(() => adminService.getQueries(), []);
+  const fetchTourBookings = useCallback(() => adminService.getTourBookings(), []);
+  const fetchCarBookings = useCallback(() => adminService.getCarBookings(), []);
+  const fetchTourPackages = useCallback(() => adminService.getTourPackages(), []);
+  const fetchUsers = useCallback(() => adminService.getUsers(), []);
+  const fetchStats = useCallback(() => adminService.getStats(), []);
 
-  // Destructure data for easier access
-  const { queries, tourBookings, carBookings, tourPackages, users, stats } = data;
+  const { data: queries, refetch: refetchQueries } = useDataSync('queries', fetchQueries, []);
+  const { data: tourBookings, refetch: refetchTourBookings } = useDataSync('tourBookings', fetchTourBookings, []);
+  const { data: carBookings, refetch: refetchCarBookings } = useDataSync('carBookings', fetchCarBookings, []);
+  const { data: tourPackages, refetch: refetchTourPackages } = useDataSync('tourPackages', fetchTourPackages, []);
+  const { data: users, refetch: refetchUsers } = useDataSync('users', fetchUsers, []);
+  const { data: stats, refetch: refetchStats } = useDataSync('stats', fetchStats, []);
   
   // Local state for filters and forms
   const [filteredQueries, setFilteredQueries] = useState([]);
@@ -316,8 +319,8 @@ const AdminDashboard = () => {
       });
       
       // Refresh tour packages data
-      refreshData('tourPackages');
-      refreshData('stats');
+      refetchTourPackages();
+      refetchStats();
     } catch (error) {
       showError(error.message || 'Failed to create tour package');
     } finally {
@@ -343,14 +346,14 @@ const AdminDashboard = () => {
       await adminService.deleteUser(userId);
       showSuccess('User deleted successfully');
       
-      // Remove user from data
+      // Remove user from synchronized data
       removeItem('users', userId);
       
       // Update filtered users
       setFilteredUsers(prev => prev.filter(user => user._id !== userId));
       
       // Refresh stats
-      refreshData('stats');
+      refetchStats();
     } catch (error) {
       showError(error.message || 'Failed to delete user');
     } finally {
@@ -381,11 +384,11 @@ const AdminDashboard = () => {
       await adminService.deleteTourPackage(packageId);
       showSuccess('Tour package deleted successfully');
       
-      // Remove package from data
+      // Remove package from synchronized data
       removeItem('tourPackages', packageId);
       
       // Refresh stats
-      refreshData('stats');
+      refetchStats();
     } catch (error) {
       showError(error.message || 'Failed to delete tour package');
     } finally {
@@ -441,7 +444,7 @@ const AdminDashboard = () => {
         return updated;
       });
       
-      // Update query in data
+      // Update query in synchronized data
       updateItem('queries', queryId, {
         response: response.trim(),
         status: 'resolved',
@@ -450,7 +453,7 @@ const AdminDashboard = () => {
       });
       
       // Refresh stats
-      refreshData('stats');
+      refetchStats();
     } catch (error) {
       console.error('❌ Failed to respond to query:', error);
       showError(error.message || 'Failed to send response');

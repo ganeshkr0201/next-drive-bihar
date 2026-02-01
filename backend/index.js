@@ -9,16 +9,30 @@ import passport from 'passport';
 import './config/passport.js'
 
 import connectToDB from './config/database.js';
+import redisManager from './config/redis.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import publicRoutes from './routes/publicRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
-// connecting database
-connectToDB(process.env.MONGO_URI);
+// Initialize services
+const initializeServices = async () => {
+  try {
+    // Connect to database
+    await connectToDB(process.env.MONGO_URI);
+    console.log('✅ Database connected successfully');
+
+    // Initialize Redis connection
+    await redisManager.connect();
+    console.log('🎯 Redis initialized successfully');
+  } catch (error) {
+    console.warn('⚠️ Service initialization failed:', error.message);
+    console.warn('⚠️ Continuing without Redis cache - performance may be affected');
+  }
+};
 
 // Get client URL from environment or use default
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
@@ -53,10 +67,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Add request logging for debugging
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.get('Origin')} - Auth: ${req.get('Authorization') ? 'Bearer ***' : 'None'}`);
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
     next();
 });
-
 
 // ROUTES
 app.get('/', (req, res) => {
@@ -65,16 +78,24 @@ app.get('/', (req, res) => {
         message: "NextDrive Bihar API is working",
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development',
-        port: PORT
+        port: PORT,
+        redis: redisManager.isConnected ? 'Connected' : 'Disconnected'
     });
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
+// Health check endpoint with Redis status
+app.get('/health', async (req, res) => {
+    const redisHealth = await redisManager.healthCheck();
+    
     res.json({
         status: 'healthy',
         uptime: process.uptime(),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        redis: redisHealth,
+        memory: {
+            used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
+            total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + ' MB'
+        }
     });
 });
 
@@ -83,10 +104,31 @@ app.use('/admin', adminRoutes);
 app.use('/api', publicRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-
-app.listen(PORT, () => {
-    console.log(`🚀 NextDrive Bihar Backend Server running on port: ${PORT}`);
-    console.log(`📍 Server URL: http://localhost:${PORT}`);
-    console.log(`🌐 Client URL: ${CLIENT_URL}`);
-    console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+    console.log('🛑 SIGTERM received, shutting down gracefully');
+    await redisManager.disconnect();
+    process.exit(0);
 });
+
+process.on('SIGINT', async () => {
+    console.log('🛑 SIGINT received, shutting down gracefully');
+    await redisManager.disconnect();
+    process.exit(0);
+});
+
+// Initialize services and start server
+const startServer = async () => {
+    await initializeServices();
+    
+    app.listen(PORT, () => {
+        console.log(`🚀 NextDrive Bihar Backend Server running on port: ${PORT}`);
+        console.log(`📍 Server URL: http://localhost:${PORT}`);
+        console.log(`🌐 Client URL: ${CLIENT_URL}`);
+        console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`🔗 Database: Connected`);
+        console.log(`🎯 Redis: ${redisManager.isConnected ? 'Connected' : 'Disconnected'}`);
+    });
+};
+
+startServer().catch(console.error);

@@ -47,20 +47,6 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-
-    otpHash: {
-        type: String
-    },
-    otpExpireAt: {
-        type: Date
-    },
-    otpResendCount: {
-        type: Number,
-        default: 0
-    },
-    otpLastSentAt: {
-        type: Date
-    },
     
 }, {timestamps: true})
 
