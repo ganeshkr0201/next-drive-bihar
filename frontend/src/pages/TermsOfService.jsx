@@ -7,7 +7,7 @@ const TermsOfService = () => {
           
           <div className="prose max-w-none">
             <p className="text-gray-600 mb-6">
-              <strong>Last updated:</strong> January 2024
+              <strong>Last updated:</strong> January 2026
             </p>
             
             <section className="mb-8">
