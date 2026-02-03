@@ -155,7 +155,6 @@ const Contact = () => {
                 <div>
                   <h3 className="font-semibold text-gray-800">Email</h3>
                   <p className="text-gray-600">nextdrivebihar@gmail.com</p>
-                  <p className="text-gray-600">support@nextdrivebihar.com</p>
                 </div>
               </div>
             </div>

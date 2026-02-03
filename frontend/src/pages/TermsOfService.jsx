@@ -95,7 +95,7 @@ const TermsOfService = () => {
               </p>
               <div className="mt-4 p-4 bg-gray-50 rounded-md">
                 <p className="text-gray-700">
-                  <strong>Email:</strong> legal@nextdrivebihar.com<br />
+                  <strong>Email:</strong> nextdrivebihar@gmail.com<br />
                   <strong>Phone:</strong> +91 87090 83341<br />
                   <strong>Address:</strong> Bihar Sharif, Nalanda, Bihar 803101, India
                 </p>
