@@ -430,7 +430,7 @@ const UserProfile = () => {
                       value={formData.phone}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      placeholder="Enter 10-digit phone number (e.g., 9876543210)"
+                      placeholder="Enter 10-digit phone number (e.g., 8709083341)"
                       pattern="[0-9]{10}"
                       maxLength="10"
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 ${

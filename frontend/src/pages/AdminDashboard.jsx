@@ -1907,7 +1907,7 @@ const AdminDashboard = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Locations (one per line)</label>
                     <textarea
                       rows={3}
-                      placeholder="Patna Railway Station&#10;Patna Airport&#10;Gaya Railway Station&#10;Hotel pickup available"
+                      placeholder="Bihar Sharif Railway Station&#10;Patna Airport&#10;Gaya Railway Station&#10;Hotel pickup available"
                       value={tourPackageForm.pickupLocations}
                       onChange={(e) => setTourPackageForm(prev => ({ ...prev, pickupLocations: e.target.value }))}
                       className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -1919,7 +1919,7 @@ const AdminDashboard = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Drop Locations (one per line)</label>
                     <textarea
                       rows={3}
-                      placeholder="Patna Railway Station&#10;Patna Airport&#10;Gaya Railway Station&#10;Hotel drop available"
+                      placeholder="Bihar Sharif Railway Station&#10;Patna Airport&#10;Gaya Railway Station&#10;Hotel drop available"
                       value={tourPackageForm.dropLocations}
                       onChange={(e) => setTourPackageForm(prev => ({ ...prev, dropLocations: e.target.value }))}
                       className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

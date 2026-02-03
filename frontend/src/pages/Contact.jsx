@@ -126,8 +126,8 @@ const Contact = () => {
                 <div>
                   <h3 className="font-semibold text-gray-800">Address</h3>
                   <p className="text-gray-600">
-                    123 Gandhi Maidan<br />
-                    Patna, Bihar 800001<br />
+                    Bihar Sharif<br />
+                    Nalanda, Bihar 803101<br />
                     India
                   </p>
                 </div>
@@ -141,7 +141,7 @@ const Contact = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800">Phone</h3>
-                  <p className="text-gray-600">+91 98765 43210</p>
+                  <p className="text-gray-600">+91 87090 83341</p>
                   <p className="text-gray-600">+91 87654 32109</p>
                 </div>
               </div>
@@ -154,7 +154,7 @@ const Contact = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800">Email</h3>
-                  <p className="text-gray-600">info@nextdrivebihar.com</p>
+                  <p className="text-gray-600">nextdrivebihar@gmail.com</p>
                   <p className="text-gray-600">support@nextdrivebihar.com</p>
                 </div>
               </div>
@@ -186,7 +186,7 @@ const Contact = () => {
                 </a>
                 
                 <a
-                  href="https://wa.me/919876543210"
+                  href="https://wa.me/918709083341"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-green-500 hover:bg-green-600 text-white p-3 rounded-full transition-colors"

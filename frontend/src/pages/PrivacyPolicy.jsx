@@ -81,8 +81,8 @@ const PrivacyPolicy = () => {
               <div className="mt-4 p-4 bg-gray-50 rounded-md">
                 <p className="text-gray-700">
                   <strong>Email:</strong> privacy@nextdrivebihar.com<br />
-                  <strong>Phone:</strong> +91 98765 43210<br />
-                  <strong>Address:</strong> 123 Gandhi Maidan, Patna, Bihar 800001, India
+                  <strong>Phone:</strong> +91 87090 83341<br />
+                  <strong>Address:</strong> Bihar Sharif, Nalanda, Bihar 803101, India
                 </p>
               </div>
             </section>
