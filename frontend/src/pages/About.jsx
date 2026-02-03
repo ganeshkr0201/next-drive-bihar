@@ -130,7 +130,7 @@ const About = () => {
 
   const team = [
     {
-      name: 'Rajesh Kumar',
+      name: 'Avinash Kumar',
       role: 'Founder & CEO',
       description: 'Passionate about Bihar\'s heritage with 10+ years in tourism industry.',
       avatar: (
