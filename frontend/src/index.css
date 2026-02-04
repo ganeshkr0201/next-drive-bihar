@@ -184,9 +184,22 @@
 .transition-professional {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-    transform: translate(-5%, 20%);
+
+/* Additional gradient animation keyframes */
+@keyframes gradient-xy-extended {
+  0%, 100% {
+    transform: translate(0%, 0%);
+  }
+  25% {
+    transform: translate(10%, 10%);
+  }
+  50% {
+    transform: translate(20%, 5%);
   }
   75% {
+    transform: translate(-5%, 20%);
+  }
+  100% {
     transform: translate(-20%, 10%);
   }
 }
