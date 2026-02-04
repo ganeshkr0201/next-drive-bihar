@@ -2,39 +2,144 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Favicon configuration for optimal display -->
-    <link rel="icon" href="/favicon.png" type="image/png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="shortcut icon" href="/favicon.png" type="image/png" />
-    <!-- Apple Touch Icon for iOS devices -->
-    <link rel="apple-touch-icon" href="/favicon.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png" />
-    <!-- Android Chrome -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/favicon.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />
+    
+    <!-- Primary favicon with larger sizes for better visibility -->
+    <link rel="icon" type="image/png" sizes="48x48" href="/nextDriveLogo.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/nextDriveLogo.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/nextDriveLogo.png" />
+    
+    <!-- Standard favicon fallback -->
+    <link rel="shortcut icon" href="/nextDriveLogo.png" type="image/png" />
+    <link rel="icon" href="/nextDriveLogo.png" type="image/png" />
+    
+    <!-- Apple Touch Icons for iOS devices and Safari -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/nextDriveLogo.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/nextDriveLogo.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/nextDriveLogo.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/nextDriveLogo.png" />
+    <link rel="apple-touch-icon" sizes="114x114" href="/nextDriveLogo.png" />
+    <link rel="apple-touch-icon" sizes="76x76" href="/nextDriveLogo.png" />
+    <link rel="apple-touch-icon" sizes="72x72" href="/nextDriveLogo.png" />
+    <link rel="apple-touch-icon" sizes="60x60" href="/nextDriveLogo.png" />
+    <link rel="apple-touch-icon" sizes="57x57" href="/nextDriveLogo.png" />
+    <link rel="apple-touch-icon" href="/nextDriveLogo.png" />
+    
+    <!-- Android Chrome and PWA icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/nextDriveLogo.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/nextDriveLogo.png" />
+    
+    <!-- Microsoft Windows tiles -->
+    <meta name="msapplication-TileImage" content="/nextDriveLogo.png" />
+    <meta name="msapplication-TileColor" content="#3B82F6" />
+    <meta name="msapplication-square70x70logo" content="/nextDriveLogo.png" />
+    <meta name="msapplication-square150x150logo" content="/nextDriveLogo.png" />
+    <meta name="msapplication-wide310x150logo" content="/nextDriveLogo.png" />
+    <meta name="msapplication-square310x310logo" content="/nextDriveLogo.png" />
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NextDrive Bihar - Tour & Car Rental Services</title>
     
-    <!-- Additional meta tags for better SEO and branding -->
-    <meta name="description" content="Discover Bihar with NextDrive - Premium car rental services and expertly curated tour packages. Your journey to explore Bihar's rich heritage starts here." />
+    <!-- SEO optimized title and meta tags -->
+    <title>NextDrive Bihar - Premium Car Rental & Tour Packages in Bihar</title>
+    <meta name="description" content="Discover Bihar with NextDrive - Premium car rental services and expertly curated tour packages. Explore Bodh Gaya, Nalanda, Rajgir and more with professional drivers and local guides." />
+    <meta name="keywords" content="Bihar tour packages, car rental Bihar, Bodh Gaya tours, Nalanda tours, Rajgir tours, Bihar travel, car hire Bihar, tour operator Bihar" />
+    <meta name="author" content="NextDrive Bihar" />
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow" />
+    
+    <!-- Open Graph meta tags for social media -->
+    <meta property="og:title" content="NextDrive Bihar - Premium Car Rental & Tour Packages" />
+    <meta property="og:description" content="Discover Bihar with NextDrive - Premium car rental services and expertly curated tour packages across Bihar's magnificent destinations." />
+    <meta property="og:image" content="/nextDriveLogo.png" />
+    <meta property="og:url" content="https://next-drive-bihar.vercel.app" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="NextDrive Bihar" />
+    
+    <!-- Twitter Card meta tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="NextDrive Bihar - Premium Car Rental & Tour Packages" />
+    <meta name="twitter:description" content="Discover Bihar with NextDrive - Premium car rental services and expertly curated tour packages." />
+    <meta name="twitter:image" content="/nextDriveLogo.png" />
+    
+    <!-- Theme and branding -->
     <meta name="theme-color" content="#3B82F6" />
-    <meta name="msapplication-TileColor" content="#3B82F6" />
-    <meta name="msapplication-TileImage" content="/favicon.png" />
+    <meta name="msapplication-navbutton-color" content="#3B82F6" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="NextDrive Bihar" />
     
-    <!-- Web App Manifest -->
+    <!-- Web App Manifest for PWA -->
     <link rel="manifest" href="/site.webmanifest" />
     
-    <!-- Inline styles for favicon optimization -->
+    <!-- Canonical URL for SEO -->
+    <link rel="canonical" href="https://next-drive-bihar.vercel.app" />
+    
+    <!-- Favicon optimization styles -->
     <style>
-      /* Ensure favicon displays properly in all browsers */
+      /* Optimize favicon display for better visibility */
       link[rel="icon"] {
         image-rendering: -webkit-optimize-contrast;
         image-rendering: crisp-edges;
+        image-rendering: pixelated;
+      }
+      
+      /* Ensure favicon loads with proper dimensions */
+      link[rel="shortcut icon"] {
+        width: 48px;
+        height: 48px;
+      }
+      
+      /* Browser-specific favicon optimizations */
+      @media (prefers-color-scheme: dark) {
+        link[rel="icon"] {
+          filter: brightness(1.1) contrast(1.1);
+        }
+      }
+      
+      /* High DPI display optimization */
+      @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+        link[rel="icon"] {
+          image-rendering: -webkit-optimize-contrast;
+          image-rendering: crisp-edges;
+        }
       }
     </style>
+    
+    <!-- Preconnect to external domains for performance -->
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    
+    <!-- Structured data for Google crawling -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "TravelAgency",
+      "name": "NextDrive Bihar",
+      "description": "Premium car rental services and expertly curated tour packages across Bihar",
+      "url": "https://next-drive-bihar.vercel.app",
+      "logo": "https://next-drive-bihar.vercel.app/nextDriveLogo.png",
+      "image": "https://next-drive-bihar.vercel.app/nextDriveLogo.png",
+      "telephone": "+91-87090-83341",
+      "email": "nextdrivebihar@gmail.com",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Bihar Sharif",
+        "addressLocality": "Nalanda",
+        "addressRegion": "Bihar",
+        "postalCode": "803101",
+        "addressCountry": "IN"
+      },
+      "areaServed": {
+        "@type": "State",
+        "name": "Bihar"
+      },
+      "serviceType": ["Car Rental", "Tour Packages", "Travel Services"],
+      "priceRange": "₹₹",
+      "sameAs": [
+        "https://facebook.com/nextdrivebihar",
+        "https://instagram.com/nextdrivebihar"
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

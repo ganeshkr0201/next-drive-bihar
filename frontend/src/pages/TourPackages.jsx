@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import tourService from '../services/tourService';
-import AuthRequiredMessage from '../components/AuthRequiredMessage/AuthRequiredMessage';
 
 const TourPackages = () => {
   const { isAuthenticated } = useAuth();
@@ -70,17 +69,6 @@ const TourPackages = () => {
             Discover amazing tour packages designed to give you the best travel experience across Bihar's magnificent destinations.
           </p>
         </div>
-
-        {/* Authentication Notice */}
-        {!isAuthenticated && (
-          <div className="mb-8">
-            <AuthRequiredMessage 
-              title="Login Required for Booking"
-              message="Please login to book tour packages and track your bookings. You can browse packages without logging in."
-              className="max-w-2xl mx-auto"
-            />
-          </div>
-        )}
 
         {/* Category Filter */}
         {categories.length > 0 && (

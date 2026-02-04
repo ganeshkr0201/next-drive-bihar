@@ -9,11 +9,11 @@ const Footer = () => {
           <div className="col-span-1 lg:col-span-2">
             <div className="flex items-center space-x-3 mb-4">
               <div className="relative">
-                <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-lg border border-gray-200">
+                <div className="w-18 h-18 bg-white rounded-xl flex items-center justify-center shadow-lg border border-gray-200">
                   <img 
                     src="/nextDriveLogo.png" 
                     alt="NextDrive Bihar" 
-                    className="w-12 h-12 object-contain"
+                    className="w-18 h-18 object-contain"
                   />
                 </div>
                 {/* Subtle glow effect */}
