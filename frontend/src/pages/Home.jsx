@@ -49,48 +49,71 @@ const Home = () => {
                 </button>
               </div>
 
-              {/* Quick Booking Form */}
+              {/* Quick Action Cards */}
               <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
                 {activeService === 'car' ? (
                   <div className="space-y-6">
-                    <h3 className="text-2xl font-semibold text-gray-900">Book Your Ride</h3>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Location</label>
-                        <input
-                          type="text"
-                          placeholder="Enter pickup location"
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        />
+                    <div className="text-center">
+                      <h3 className="text-2xl font-semibold text-gray-900 mb-2">Premium Car Rental</h3>
+                      <p className="text-gray-600">Choose from our fleet of well-maintained vehicles</p>
+                    </div>
+                    
+                    {/* Car Types Grid */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 text-center hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                        <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                          <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+                            <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1V8a1 1 0 00-1-1h-3z"/>
+                          </svg>
+                        </div>
+                        <h4 className="font-semibold text-gray-900 mb-2">Economy Cars</h4>
+                        <p className="text-sm text-gray-600">Perfect for city rides</p>
+                        <div className="mt-3 text-blue-600 font-semibold">From ₹12/km</div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Drop Location</label>
-                        <input
-                          type="text"
-                          placeholder="Enter destination"
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        />
+                      
+                      <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 text-center hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                        <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                          <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+                            <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1V8a1 1 0 00-1-1h-3z"/>
+                          </svg>
+                        </div>
+                        <h4 className="font-semibold text-gray-900 mb-2">SUVs</h4>
+                        <p className="text-sm text-gray-600">Spacious family trips</p>
+                        <div className="mt-3 text-green-600 font-semibold">From ₹18/km</div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Date</label>
-                        <input
-                          type="date"
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        />
+                      
+                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 text-center hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                        <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                          <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+                            <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1V8a1 1 0 00-1-1h-3z"/>
+                          </svg>
+                        </div>
+                        <h4 className="font-semibold text-gray-900 mb-2">Luxury Cars</h4>
+                        <p className="text-sm text-gray-600">Premium experience</p>
+                        <div className="mt-3 text-purple-600 font-semibold">From ₹25/km</div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Time</label>
-                        <input
-                          type="time"
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        />
+                      
+                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-6 text-center hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                        <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                          <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+                            <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1V8a1 1 0 00-1-1h-3z"/>
+                          </svg>
+                        </div>
+                        <h4 className="font-semibold text-gray-900 mb-2">Tempo Traveller</h4>
+                        <p className="text-sm text-gray-600">Group travel</p>
+                        <div className="mt-3 text-orange-600 font-semibold">From ₹22/km</div>
                       </div>
                     </div>
+                    
                     <Link
                       to="/car-rental"
                       className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 flex items-center justify-center space-x-2 group"
                     >
-                      <span>Find Available Cars</span>
+                      <span>View All Vehicles</span>
                       <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
@@ -98,50 +121,87 @@ const Home = () => {
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    <h3 className="text-2xl font-semibold text-gray-900">Explore Tours</h3>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Destination</label>
-                        <select className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
-                          <option>Select destination</option>
-                          <option>Bodh Gaya</option>
-                          <option>Nalanda</option>
-                          <option>Rajgir</option>
-                          <option>Patna</option>
-                        </select>
+                    <div className="text-center">
+                      <h3 className="text-2xl font-semibold text-gray-900 mb-2">Popular Destinations</h3>
+                      <p className="text-gray-600">Discover Bihar's most sought-after travel experiences</p>
+                    </div>
+                    
+                    {/* Popular Destinations */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-gradient-to-br from-amber-50 to-orange-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-16 h-16 bg-amber-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 mb-1">Bodh Gaya</h4>
+                            <p className="text-sm text-gray-600 mb-2">Buddhist pilgrimage site</p>
+                            <div className="flex items-center text-amber-600">
+                              <span className="text-sm font-semibold">3 Days from ₹8,999</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Duration</label>
-                        <select className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
-                          <option>Select duration</option>
-                          <option>1-2 Days</option>
-                          <option>3-5 Days</option>
-                          <option>1 Week</option>
-                          <option>Custom</option>
-                        </select>
+                      
+                      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 mb-1">Nalanda</h4>
+                            <p className="text-sm text-gray-600 mb-2">Ancient university ruins</p>
+                            <div className="flex items-center text-blue-600">
+                              <span className="text-sm font-semibold">2 Days from ₹6,499</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Travel Date</label>
-                        <input
-                          type="date"
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        />
+                      
+                      <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 mb-1">Rajgir</h4>
+                            <p className="text-sm text-gray-600 mb-2">Hot springs & hills</p>
+                            <div className="flex items-center text-green-600">
+                              <span className="text-sm font-semibold">2 Days from ₹7,299</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Travelers</label>
-                        <select className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
-                          <option>1 Person</option>
-                          <option>2 People</option>
-                          <option>3-5 People</option>
-                          <option>6+ People</option>
-                        </select>
+                      
+                      <div className="bg-gradient-to-br from-purple-50 to-violet-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
+                            </svg>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 mb-1">Patna Heritage</h4>
+                            <p className="text-sm text-gray-600 mb-2">Capital city tour</p>
+                            <div className="flex items-center text-purple-600">
+                              <span className="text-sm font-semibold">1 Day from ₹4,999</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
+                    
                     <Link
                       to="/tour-packages"
                       className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 flex items-center justify-center space-x-2 group"
                     >
-                      <span>Explore Packages</span>
+                      <span>Explore All Packages</span>
                       <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
