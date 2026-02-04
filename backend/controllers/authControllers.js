@@ -26,7 +26,7 @@ export const register = async (req, res) => {
             if (!userExist.isVerified) {
                 return res.status(400).json({ 
                     success: false,
-                    message: "User already exists but email is not verified. Please check your email for verification code.",
+                    message: "Please check your email for verification code.",
                     requiresVerification: true,
                     email: userExist.email
                 });
@@ -34,7 +34,7 @@ export const register = async (req, res) => {
             
             return res.status(400).json({ 
                 success: false,
-                message: "User already exists with this email. Please login instead." 
+                message: "User already exists with this email. Please login." 
             });
         }
 

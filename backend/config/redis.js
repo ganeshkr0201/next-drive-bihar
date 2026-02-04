@@ -13,19 +13,6 @@ class RedisManager {
     if (this.client) return this.client;
 
     try {
-      // Check if Upstash credentials are provided
-      if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-        throw new Error('Upstash Redis credentials not found. Please set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in your environment variables.');
-      }
-
-      // Validate credentials are not placeholders
-      if (process.env.UPSTASH_REDIS_REST_URL === 'YOUR_UPSTASH_REDIS_REST_URL' ||
-          process.env.UPSTASH_REDIS_REST_TOKEN === 'YOUR_UPSTASH_REDIS_REST_TOKEN') {
-        throw new Error('Please replace placeholder Upstash credentials with your actual values from Upstash Console.');
-      }
-
-      console.log('🔗 Connecting to Upstash Redis...');
-      
       this.client = new Redis({
         url: process.env.UPSTASH_REDIS_REST_URL,
         token: process.env.UPSTASH_REDIS_REST_TOKEN,
@@ -36,15 +23,11 @@ class RedisManager {
       this.isConnected = true;
       
       console.log('✅ Upstash Redis connected successfully');
-      console.log('🌐 Using Upstash Redis (Serverless)');
       return this.client;
       
     } catch (error) {
       console.error('❌ Upstash Redis connection failed:', error.message);
       console.error('💡 Please check your Upstash credentials and network connection');
-      console.error('📋 Required environment variables:');
-      console.error('   - UPSTASH_REDIS_REST_URL');
-      console.error('   - UPSTASH_REDIS_REST_TOKEN');
       
       this.isConnected = false;
       this.client = null;

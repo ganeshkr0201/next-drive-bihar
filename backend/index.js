@@ -44,8 +44,8 @@ app.use(cors({
         'http://localhost:5173',                    // Development frontend (Vite default)
         'http://localhost:5174',                    // Alternative dev port
         'http://localhost:4000',                    // Backend port (for testing)
-        'https://next-drive-bihar.vercel.app',       // Production frontend URL
-        'https://www.next-drive-bihar.vercel.app',   // Production frontend URL with www
+        'https://nextdrivebihar.com',      // Production frontend URL (Vercel)
+        'https://www.nextdrivebihar.com',  // Production frontend URL with www (if applicable)
     ],
     credentials: false, // Not needed for JWT
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -122,12 +122,8 @@ const startServer = async () => {
     await initializeServices();
     
     app.listen(PORT, () => {
-        console.log(`🚀 NextDrive Bihar Backend Server running on port: ${PORT}`);
-        console.log(`📍 Server URL: http://localhost:${PORT}`);
         console.log(`🌐 Client URL: ${CLIENT_URL}`);
         console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`🔗 Database: Connected`);
-        console.log(`🎯 Redis: ${redisManager.isConnected ? 'Connected' : 'Disconnected'}`);
     });
 };
 
