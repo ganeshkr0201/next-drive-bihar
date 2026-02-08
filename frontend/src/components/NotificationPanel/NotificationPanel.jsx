@@ -1,14 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import notificationService from '../../services/notificationService';
 
 const NotificationPanel = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const panelRef = useRef(null);
+  const loadingRef = useRef(false);
+  const intervalRef = useRef(null);
 
   // Close panel when clicking outside
   useEffect(() => {
@@ -24,37 +28,40 @@ const NotificationPanel = () => {
     };
   }, []);
 
-  // Load notifications when panel opens and mark all as read
+  // Load notifications when panel opens
   useEffect(() => {
     if (isOpen && user) {
       loadNotifications();
     }
-  }, [isOpen, user]);
+  }, [isOpen]);
 
-  // Auto-mark all notifications as read when panel is opened (separate effect)
+  // Load unread count on mount and setup polling
   useEffect(() => {
-    if (isOpen && user && unreadCount > 0) {
-      // Use a timeout to avoid immediate execution and potential loops
-      const timeoutId = setTimeout(() => {
-        markAllAsRead();
-      }, 500);
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [isOpen, user]); // Remove unreadCount from dependencies to prevent loop
+    if (!user) return;
 
-  // Load unread count on component mount
-  useEffect(() => {
-    if (user) {
+    // Initial load
+    loadUnreadCount();
+
+    // Setup polling every 30 seconds
+    intervalRef.current = setInterval(() => {
       loadUnreadCount();
-      // Set up polling for new notifications every 30 seconds
-      const interval = setInterval(loadUnreadCount, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [user]);
+    }, 30000);
+
+    // Cleanup
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
 
   const loadNotifications = async () => {
+    if (loadingRef.current) return;
+    
+    loadingRef.current = true;
     setIsLoading(true);
+    
     try {
       const data = await notificationService.getNotifications();
       setNotifications(data.notifications || []);
@@ -63,6 +70,7 @@ const NotificationPanel = () => {
       console.error('Failed to load notifications:', error);
     } finally {
       setIsLoading(false);
+      loadingRef.current = false;
     }
   };
 
@@ -107,7 +115,6 @@ const NotificationPanel = () => {
     try {
       await notificationService.deleteNotification(notificationId);
       setNotifications(prev => prev.filter(notif => notif._id !== notificationId));
-      // Update unread count if the deleted notification was unread
       const deletedNotif = notifications.find(n => n._id === notificationId);
       if (deletedNotif && !deletedNotif.isRead) {
         setUnreadCount(prev => Math.max(0, prev - 1));
@@ -275,11 +282,12 @@ const NotificationPanel = () => {
                         {notification.actionUrl && (
                           <button
                             onClick={() => {
-                              // Handle navigation to action URL
-                              window.location.href = notification.actionUrl;
+                              // Mark as read and navigate
                               if (!notification.isRead) {
                                 markAsRead(notification._id);
                               }
+                              setIsOpen(false);
+                              navigate(notification.actionUrl);
                             }}
                             className="mt-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition-colors"
                           >

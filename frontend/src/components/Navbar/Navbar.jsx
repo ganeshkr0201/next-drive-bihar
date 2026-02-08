@@ -35,9 +35,21 @@ const Navbar = () => {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleServices = () => setIsServicesOpen(!isServicesOpen);
   const toggleUserMenu = () => setIsUserMenuOpen(!isUserMenuOpen);
+  
+  // Separate mobile services toggle for better control
+  const toggleMobileServices = () => {
+    setIsServicesOpen(prev => !prev);
+  };
 
   // Close mobile menu when navigating (improved mobile UX)
   const closeMobileMenu = () => {
+    setIsMenuOpen(false);
+    setIsServicesOpen(false);
+    setIsUserMenuOpen(false);
+  };
+  
+  // Close mobile menu and services when clicking service links
+  const closeMobileMenuAndServices = () => {
     setIsMenuOpen(false);
     setIsServicesOpen(false);
     setIsUserMenuOpen(false);
@@ -58,10 +70,7 @@ const Navbar = () => {
   // Close dropdowns when clicking outside or pressing Escape
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Handle desktop services dropdown - should work regardless of mobile menu state
-      if (servicesRef.current && !servicesRef.current.contains(event.target)) {
-        setIsServicesOpen(false);
-      }
+      // COMPLETELY DISABLE services dropdown click outside for debugging
       
       // Handle user menu dropdown
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
@@ -71,10 +80,7 @@ const Navbar = () => {
       // Handle mobile menu - close everything when clicking outside mobile menu
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target) && !event.target.closest('[data-mobile-menu-trigger]')) {
         setIsMenuOpen(false);
-        // Only close services if mobile menu is open (to avoid interfering with desktop)
-        if (isMenuOpen) {
-          setIsServicesOpen(false);
-        }
+        setIsServicesOpen(false);
       }
     };
 
@@ -100,12 +106,15 @@ const Navbar = () => {
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
     if (isMenuOpen) {
+      document.body.classList.add('menu-open');
       document.body.style.overflow = 'hidden';
     } else {
+      document.body.classList.remove('menu-open');
       document.body.style.overflow = 'unset';
     }
     
     return () => {
+      document.body.classList.remove('menu-open');
       document.body.style.overflow = 'unset';
     };
   }, [isMenuOpen]);
@@ -113,22 +122,26 @@ const Navbar = () => {
   return (
     <>
       <nav className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            {/* Logo - Responsive for mobile */}
             <div className="flex-shrink-0 flex items-center">
-              <Link to="/" className="flex items-center space-x-2 group" onClick={closeMobileMenu}>
+              <Link to="/" className="flex items-center space-x-1.5 sm:space-x-2 group" onClick={closeMobileMenu}>
                 <div className="relative">
                   <img 
                     src="/nextDriveLogo.png" 
                     alt="NextDrive Bihar" 
-                    className="w-18 h-18 object-contain transition-transform duration-200 group-hover:scale-105"
+                    className="w-10 h-10 sm:w-14 sm:h-14 md:w-18 md:h-18 object-contain transition-transform duration-200 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-blue-500 opacity-0 group-hover:opacity-10 rounded-full transition-opacity duration-200"></div>
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-200">{envConfig.appName}</h1>
-                  <p className="text-xs text-gray-600 group-hover:text-blue-500 transition-colors duration-200">Bihar</p>
+                  <h1 className="text-base sm:text-lg md:text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-200 leading-tight">
+                    {/* Show short name on mobile, full name on larger screens */}
+                    <span className="sm:hidden">NextDrive</span>
+                    <span className="hidden sm:inline">{envConfig.appName}</span>
+                  </h1>
+                  <p className="text-[10px] sm:text-xs text-gray-600 group-hover:text-blue-500 transition-colors duration-200">Bihar</p>
                 </div>
               </Link>
             </div>
@@ -140,10 +153,13 @@ const Navbar = () => {
                   Home
                 </Link>
                 
-                {/* Services Dropdown */}
+                {/* Services Dropdown - Debug Version */}
                 <div className="relative" ref={servicesRef}>
                   <button
-                    onClick={toggleServices}
+                    onClick={() => {
+                      console.log('Services button clicked, current state:', isServicesOpen);
+                      toggleServices();
+                    }}
                     className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium flex items-center transition-all duration-200 hover:bg-blue-50 rounded-md"
                   >
                     Services
@@ -153,12 +169,26 @@ const Navbar = () => {
                   </button>
                   
                   {isServicesOpen && (
-                    <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl ring-1 ring-black ring-opacity-5 border border-gray-100 animate-in slide-in-from-top-2 duration-200">
+                    <div 
+                      className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl ring-1 ring-black ring-opacity-5 border border-gray-100 z-50"
+                      onMouseDown={(e) => {
+                        console.log('Dropdown mousedown');
+                        e.stopPropagation();
+                      }}
+                    >
                       <div className="py-2">
-                        <Link 
-                          to="/car-rental" 
-                          className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group"
-                          onClick={() => setIsServicesOpen(false)}
+                        <a 
+                          href="/car-rental"
+                          className="w-full flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group cursor-pointer block"
+                          onClick={(e) => {
+                            console.log('Car Rental link clicked');
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setIsServicesOpen(false);
+                            setTimeout(() => {
+                              navigate('/car-rental');
+                            }, 50);
+                          }}
                         >
                           <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors duration-200">
                             <img src="/car_logo.svg" alt="Car" className="w-5 h-5" />
@@ -167,11 +197,19 @@ const Navbar = () => {
                             <div className="font-medium">Car Rental</div>
                             <div className="text-xs text-gray-500">Premium vehicles</div>
                           </div>
-                        </Link>
-                        <Link 
-                          to="/tour-packages" 
-                          className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group"
-                          onClick={() => setIsServicesOpen(false)}
+                        </a>
+                        <a 
+                          href="/tour-packages"
+                          className="w-full flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group cursor-pointer block"
+                          onClick={(e) => {
+                            console.log('Tour Packages link clicked');
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setIsServicesOpen(false);
+                            setTimeout(() => {
+                              navigate('/tour-packages');
+                            }, 50);
+                          }}
                         >
                           <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-green-200 transition-colors duration-200">
                             <img src="/tour_logo.svg" alt="Tour" className="w-5 h-5" />
@@ -180,7 +218,7 @@ const Navbar = () => {
                             <div className="font-medium">Tour Packages</div>
                             <div className="text-xs text-gray-500">Curated experiences</div>
                           </div>
-                        </Link>
+                        </a>
                       </div>
                     </div>
                   )}
@@ -282,17 +320,30 @@ const Navbar = () => {
                       ) : (
                         <>
                           {user.role === 'admin' && (
-                            <Link to="/admin/dashboard" className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group">
-                              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors duration-200">
-                                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                              </div>
-                              <div>
-                                <div className="font-medium">Admin Dashboard</div>
-                                <div className="text-xs text-gray-500">Manage system</div>
-                              </div>
-                            </Link>
+                            <>
+                              <Link to="/admin/dashboard" className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group">
+                                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors duration-200">
+                                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <div className="font-medium">Admin Dashboard</div>
+                                  <div className="text-xs text-gray-500">Manage system</div>
+                                </div>
+                              </Link>
+                              <Link to="/admin/cars" className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-all duration-200 group">
+                                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-purple-200 transition-colors duration-200">
+                                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <div className="font-medium">Manage Cars</div>
+                                  <div className="text-xs text-gray-500">Fleet management</div>
+                                </div>
+                              </Link>
+                            </>
                           )}
                           <Link to="/profile" className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition-all duration-200 group">
                             <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-green-200 transition-colors duration-200">
@@ -351,22 +402,41 @@ const Navbar = () => {
             </div>
 
             {/* Mobile menu button and notification */}
-            <div className="md:hidden flex items-center space-x-2">
+            <div className="flex md:hidden items-center gap-1.5 sm:gap-2">
               {/* Notification Panel for mobile - only show for authenticated users */}
-              {isAuthenticated && envConfig.enableNotifications && <NotificationPanel />}
+              {isAuthenticated && envConfig.enableNotifications && (
+                <div className="flex-shrink-0">
+                  <NotificationPanel />
+                </div>
+              )}
               
+              {/* Hamburger Menu Button - Always visible on mobile */}
               <button
                 onClick={toggleMenu}
                 data-mobile-menu-trigger
-                className="text-gray-700 hover:text-blue-600 focus:outline-none focus:text-blue-600 p-3 rounded-lg transition-all duration-200 hover:bg-blue-50 touch-manipulation active:scale-95"
+                type="button"
+                className="flex-shrink-0 inline-flex items-center justify-center p-2 rounded-lg text-gray-900 bg-white border-2 border-gray-400 hover:bg-blue-50 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                 aria-label="Toggle mobile menu"
                 aria-expanded={isMenuOpen}
+                aria-controls="mobile-menu"
+                style={{ 
+                  minWidth: '44px', 
+                  minHeight: '44px',
+                  WebkitTapHighlightColor: 'transparent'
+                }}
               >
-                <svg className={`h-6 w-6 transition-all duration-300 ${isMenuOpen ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg 
+                  className="w-6 h-6 sm:w-7 sm:h-7" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24" 
+                  strokeWidth={2.5}
+                  aria-hidden="true"
+                >
                   {isMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                   )}
                 </svg>
               </button>
@@ -374,22 +444,36 @@ const Navbar = () => {
           </div>
         </div>
       </nav>
-      {/* Simple Minimalist Mobile Navigation Menu */}
+      {/* Mobile Navigation Menu */}
       <div 
+        id="mobile-menu"
         ref={mobileMenuRef}
-        className={`fixed top-0 left-0 right-0 bottom-0 z-50 md:hidden transform transition-all duration-300 ease-out ${
+        className={`fixed inset-0 z-[100] md:hidden ${
           isMenuOpen 
-            ? 'translate-x-0 opacity-100 visible' 
-            : 'translate-x-full opacity-0 invisible'
+            ? 'pointer-events-auto' 
+            : 'pointer-events-none'
         }`}
+        style={{ zIndex: 100 }}
+        aria-hidden={!isMenuOpen}
       >
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={closeMobileMenu} />
+        <div 
+          className={`absolute inset-0 bg-black transition-opacity duration-300 ${
+            isMenuOpen ? 'opacity-50' : 'opacity-0'
+          }`}
+          onClick={closeMobileMenu}
+          aria-hidden="true"
+        />
         
         {/* Sliding menu panel */}
-        <div className={`absolute top-0 right-0 h-full w-72 max-w-[85vw] bg-white shadow-2xl transform transition-transform duration-300 ease-out ${
-          isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}>
+        <div 
+          className={`absolute top-0 right-0 bottom-0 w-80 max-w-[85vw] bg-white shadow-2xl transform transition-transform duration-300 ease-out overflow-y-auto ${
+            isMenuOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mobile navigation menu"
+        >
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-6">
             {/* Close button */}
@@ -462,7 +546,7 @@ const Navbar = () => {
               {/* Services with toggle */}
               <div>
                 <button
-                  onClick={toggleServices}
+                  onClick={toggleMobileServices}
                   className="w-full flex items-center justify-between px-4 py-3 text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200 touch-manipulation"
                 >
                   <div className="flex items-center">
@@ -482,7 +566,7 @@ const Navbar = () => {
                     <Link 
                       to="/car-rental" 
                       className="flex items-center px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 touch-manipulation"
-                      onClick={closeMobileMenu}
+                      onClick={closeMobileMenuAndServices}
                     >
                       <img src="/car_logo.svg" alt="Car" className="w-4 h-4 mr-3" />
                       <span className="text-sm">Car Rental</span>
@@ -490,7 +574,7 @@ const Navbar = () => {
                     <Link 
                       to="/tour-packages" 
                       className="flex items-center px-4 py-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200 touch-manipulation"
-                      onClick={closeMobileMenu}
+                      onClick={closeMobileMenuAndServices}
                     >
                       <img src="/tour_logo.svg" alt="Tour" className="w-4 h-4 mr-3" />
                       <span className="text-sm">Tour Packages</span>
@@ -551,16 +635,28 @@ const Navbar = () => {
               ) : (
                 <div className="space-y-1">
                   {user.role === 'admin' && (
-                    <Link 
-                      to="/admin/dashboard" 
-                      className="flex items-center px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 touch-manipulation"
-                      onClick={closeMobileMenu}
-                    >
-                      <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                      <span className="font-medium">Admin Dashboard</span>
-                    </Link>
+                    <>
+                      <Link 
+                        to="/admin/dashboard" 
+                        className="flex items-center px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 touch-manipulation"
+                        onClick={closeMobileMenu}
+                      >
+                        <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <span className="font-medium">Admin Dashboard</span>
+                      </Link>
+                      <Link 
+                        to="/admin/cars" 
+                        className="flex items-center px-4 py-3 text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200 touch-manipulation"
+                        onClick={closeMobileMenu}
+                      >
+                        <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        <span className="font-medium">Manage Cars</span>
+                      </Link>
+                    </>
                   )}
                   <Link 
                     to="/profile" 

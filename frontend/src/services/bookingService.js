@@ -15,6 +15,19 @@ class BookingService {
     }
   }
 
+  // Create a new car booking
+  async createCarBooking(bookingData) {
+    try {
+      const response = await api.post('/api/bookings/car', bookingData);
+      return response.data;
+    } catch (error) {
+      if (envConfig.enableDebugLogs) {
+        console.error('Create car booking error:', error);
+      }
+      throw this.handleError(error);
+    }
+  }
+
   // Generic create booking function (alias for createTourBooking)
   async createBooking(bookingData) {
     return this.createTourBooking(bookingData);

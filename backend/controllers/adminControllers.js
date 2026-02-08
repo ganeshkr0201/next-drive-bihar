@@ -136,7 +136,8 @@ export const respondToQuery = async (req, res) => {
           title: 'Response to Your Query',
           message: `We have responded to your query: "${query.subject}".`,
           relatedQuery: query._id,
-          priority: 'high'
+          priority: 'high',
+          actionUrl: '/dashboard'
         });
         await notification.save();
       }
@@ -774,6 +775,247 @@ export const updateCarBookingStatus = async (req, res) => {
     });
   }
 }
+
+
+// Confirm car booking (admin)
+export const confirmCarBooking = async (req, res) => {
+  try {
+    const booking = await CarBooking.findById(req.params.id)
+      .populate('user', 'name email');
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Car booking not found'
+      });
+    }
+
+    if (booking.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'Only pending bookings can be confirmed'
+      });
+    }
+
+    booking.status = 'confirmed';
+    await booking.save();
+
+    // Send confirmation notification to user
+    try {
+      await notificationService.createCarBookingConfirmationNotification(booking, req.user);
+    } catch (notificationError) {
+      console.error('Failed to send confirmation notification:', notificationError);
+      // Don't fail the confirmation if notification fails
+    }
+
+    res.json({
+      success: true,
+      message: 'Car booking confirmed successfully',
+      booking
+    });
+  } catch (error) {
+    console.error('Confirm car booking error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to confirm car booking'
+    });
+  }
+}
+
+
+// Cancel car booking (admin)
+export const cancelCarBooking = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    
+    if (!reason || reason.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cancellation reason is required'
+      });
+    }
+
+    const booking = await CarBooking.findById(req.params.id)
+      .populate('user', 'name email');
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Car booking not found'
+      });
+    }
+
+    if (booking.status === 'cancelled') {
+      return res.status(400).json({
+        success: false,
+        message: 'Booking is already cancelled'
+      });
+    }
+
+    if (booking.status === 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot cancel completed booking'
+      });
+    }
+
+    booking.status = 'cancelled';
+    booking.cancellationReason = reason;
+    booking.cancelledBy = req.user._id;
+    booking.cancelledByType = 'admin';
+    booking.cancelledAt = new Date();
+    
+    await booking.save();
+
+    // Send cancellation notification to user
+    try {
+      await notificationService.createCarBookingCancellationNotification(booking, req.user);
+    } catch (notificationError) {
+      console.error('Failed to send cancellation notification:', notificationError);
+      // Don't fail the cancellation if notification fails
+    }
+
+    res.json({
+      success: true,
+      message: 'Car booking cancelled successfully',
+      booking
+    });
+  } catch (error) {
+    console.error('Cancel car booking error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to cancel car booking'
+    });
+  }
+}
+
+
+// Complete car booking (admin)
+export const completeCarBooking = async (req, res) => {
+  try {
+    const booking = await CarBooking.findById(req.params.id)
+      .populate('user', 'name email');
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Car booking not found'
+      });
+    }
+
+    if (booking.status !== 'confirmed' && booking.status !== 'in-progress') {
+      return res.status(400).json({
+        success: false,
+        message: 'Only confirmed or in-progress bookings can be marked as completed'
+      });
+    }
+
+    booking.status = 'completed';
+    await booking.save();
+
+    // Send completion notification to user
+    try {
+      await notificationService.createCarBookingCompletionNotification(booking, req.user);
+    } catch (notificationError) {
+      console.error('Failed to send completion notification:', notificationError);
+      // Don't fail the completion if notification fails
+    }
+
+    res.json({
+      success: true,
+      message: 'Car booking marked as completed successfully',
+      booking
+    });
+  } catch (error) {
+    console.error('Complete car booking error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to complete car booking'
+    });
+  }
+}
+
+
+// Update booking payment details
+export const updateBookingPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paidAmount, discount } = req.body;
+
+    // Validate input
+    if (paidAmount !== undefined && (isNaN(paidAmount) || paidAmount < 0)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Paid amount must be a non-negative number'
+      });
+    }
+
+    if (discount !== undefined && (isNaN(discount) || discount < 0)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Discount must be a non-negative number'
+      });
+    }
+
+    // Try to find in Booking collection first
+    let booking = await Booking.findById(id);
+    let isCarBooking = false;
+
+    // If not found, try CarBooking collection
+    if (!booking) {
+      booking = await CarBooking.findById(id);
+      isCarBooking = true;
+    }
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Update payment fields
+    if (paidAmount !== undefined) {
+      booking.paidAmount = parseFloat(paidAmount);
+    }
+    if (discount !== undefined) {
+      booking.discount = parseFloat(discount);
+    }
+
+    // Validate that paid amount + discount doesn't exceed total
+    const totalPaid = booking.paidAmount + booking.discount;
+    if (totalPaid > booking.totalAmount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Paid amount plus discount cannot exceed total amount'
+      });
+    }
+
+    await booking.save();
+
+    // Populate booking for response
+    if (isCarBooking) {
+      await booking.populate('user', 'name email');
+    } else {
+      await booking.populate([
+        { path: 'user', select: 'name email' },
+        { path: 'tourPackage', select: 'title duration pricing' }
+      ]);
+    }
+
+    res.json({
+      success: true,
+      message: 'Payment details updated successfully',
+      booking
+    });
+  } catch (error) {
+    console.error('Update booking payment error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update payment details'
+    });
+  }
+};
 
 
 // Get all users (optimized for performance)

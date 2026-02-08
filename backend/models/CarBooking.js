@@ -48,6 +48,16 @@ const carBookingSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
+  paidAmount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  discount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   status: {
     type: String,
     enum: ['pending', 'confirmed', 'in-progress', 'completed', 'cancelled'],
@@ -92,7 +102,24 @@ const carBookingSchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     }
-  }]
+  }],
+  // Cancellation fields
+  cancellationReason: {
+    type: String,
+    trim: true
+  },
+  cancelledBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  cancelledByType: {
+    type: String,
+    enum: ['user', 'admin'],
+    trim: true
+  },
+  cancelledAt: {
+    type: Date
+  }
 }, {
   timestamps: true
 });
@@ -102,7 +129,26 @@ carBookingSchema.pre('save', async function() {
   if (!this.bookingReference) {
     this.bookingReference = 'CAR' + Date.now() + Math.floor(Math.random() * 1000);
   }
+  
+  // Auto-update payment status based on paid amount
+  const dueAmount = this.totalAmount - this.discount - this.paidAmount;
+  if (this.paidAmount === 0) {
+    this.paymentStatus = 'pending';
+  } else if (dueAmount <= 0) {
+    this.paymentStatus = 'paid';
+  } else {
+    this.paymentStatus = 'partial';
+  }
 });
+
+// Virtual field for due amount
+carBookingSchema.virtual('dueAmount').get(function() {
+  return Math.max(0, this.totalAmount - this.discount - this.paidAmount);
+});
+
+// Ensure virtuals are included in JSON
+carBookingSchema.set('toJSON', { virtuals: true });
+carBookingSchema.set('toObject', { virtuals: true });
 
 // Indexes
 carBookingSchema.index({ user: 1 });

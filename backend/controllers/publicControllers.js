@@ -1,9 +1,11 @@
 import TourPackage from '../models/TourPackage.js';
 import Booking from '../models/Booking.js';
+import CarBooking from '../models/CarBooking.js';
 import Query from '../models/Query.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import notificationService from '../utils/notificationService.js';
+import { formatPhoneNumber } from '../utils/phoneFormatter.js';
 
 
 
@@ -151,6 +153,10 @@ export const tourBookings = async (req, res) => {
       });
     }
 
+    // Format phone numbers to include +91 prefix
+    const formattedContactNumber = formatPhoneNumber(contactNumber);
+    const formattedEmergencyContact = emergencyContact ? formatPhoneNumber(emergencyContact) : null;
+
     // Create booking
     const booking = new Booking({
       user: req.user._id,
@@ -160,8 +166,8 @@ export const tourBookings = async (req, res) => {
       travelDate: travelDateTime,
       totalAmount: parseFloat(totalAmount),
       specialRequests,
-      contactNumber,
-      emergencyContact,
+      contactNumber: formattedContactNumber,
+      emergencyContact: formattedEmergencyContact,
       pickupLocation,
       dropLocation,
       status: 'pending',
@@ -200,16 +206,155 @@ export const tourBookings = async (req, res) => {
 
 
 
+// Create car booking
+export const carBookings = async (req, res) => {
+  try {
+    console.log('🚗 Car booking request received');
+    console.log('📦 Request body:', JSON.stringify(req.body, null, 2));
+    console.log('👤 User:', req.user?._id);
+    
+    const {
+      bookingType,
+      carId,
+      carName,
+      carType,
+      sourceCity,
+      destinationCity,
+      pickupDate,
+      pickupTime,
+      dropDate,
+      dropTime,
+      pickupLocation,
+      dropLocation,
+      contactNumber,
+      emergencyContact,
+      specialRequests,
+      distance,
+      estimatedTime,
+      estimatedCost,
+      estimatedHours,
+      tripType,
+      pricingDetails,
+      numberOfPassengers
+    } = req.body;
+
+    // Validate required fields
+    if (!carType || !sourceCity || !destinationCity || !pickupDate || !contactNumber) {
+      console.log('❌ Validation failed: Missing required fields');
+      return res.status(400).json({
+        success: false,
+        message: 'Car type, source city, destination city, pickup date, and contact number are required'
+      });
+    }
+
+    // Check if pickup date is in the future
+    const pickupDateTime = new Date(`${pickupDate}T${pickupTime || '00:00'}`);
+    if (pickupDateTime <= new Date()) {
+      console.log('❌ Validation failed: Pickup date must be in future');
+      return res.status(400).json({
+        success: false,
+        message: 'Pickup date must be in the future'
+      });
+    }
+
+    // Format phone numbers to include +91 prefix
+    const formattedContactNumber = formatPhoneNumber(contactNumber);
+    const formattedEmergencyContact = emergencyContact ? formatPhoneNumber(emergencyContact) : null;
+
+    console.log('✅ Validation passed, creating car booking...');
+
+    // Create car booking with correct field mapping
+    const carBooking = new CarBooking({
+      user: req.user._id,
+      carType: carType || 'SUV',
+      pickupLocation: pickupLocation || sourceCity,
+      dropoffLocation: dropLocation || destinationCity,
+      pickupDate: pickupDateTime,
+      dropoffDate: dropDate ? new Date(`${dropDate}T${dropTime || '18:00'}`) : pickupDateTime,
+      pickupTime: pickupTime || '09:00',
+      numberOfPassengers: numberOfPassengers || 4,
+      tripType: (tripType || bookingType || 'one-way').toLowerCase(),
+      totalAmount: parseFloat(estimatedCost) || 0,
+      paidAmount: 0,
+      discount: 0,
+      status: 'pending',
+      paymentStatus: 'pending',
+      specialRequests: specialRequests || '',
+      // Store additional data in notes for reference
+      notes: [{
+        content: JSON.stringify({
+          carId,
+          carName,
+          sourceCity,
+          destinationCity,
+          contactNumber: formattedContactNumber,
+          emergencyContact: formattedEmergencyContact,
+          distance,
+          estimatedTime,
+          estimatedHours,
+          pricingDetails
+        }),
+        addedBy: req.user._id,
+        addedAt: new Date()
+      }]
+    });
+
+    await carBooking.save();
+    console.log('✅ Car booking saved to database:', carBooking._id);
+
+    // Populate the booking for response
+    await carBooking.populate('user', 'name email');
+    console.log('✅ Car booking populated');
+
+    // Send notification to all admins about new car booking
+    try {
+      await notificationService.notifyAdminsAboutNewCarBooking(carBooking);
+      console.log('✅ Admin notifications sent');
+    } catch (notificationError) {
+      console.error('❌ Failed to send admin notifications:', notificationError);
+      // Don't fail the booking creation if notification fails
+    }
+
+    console.log('✅ Sending success response');
+    res.status(201).json({
+      success: true,
+      message: 'Car booking created successfully',
+      booking: carBooking
+    });
+  } catch (error) {
+    console.error('❌ Create car booking error:', error);
+    console.error('❌ Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create car booking',
+      error: error.message
+    });
+  }
+}
+
+
+
 // Get user's bookings
 export const userBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find({ user: req.user._id })
-      .populate('tourPackage', 'title duration pricing images')
-      .sort({ createdAt: -1 });
+    // Fetch both tour bookings and car bookings
+    const [tourBookings, carBookings] = await Promise.all([
+      Booking.find({ user: req.user._id })
+        .populate('tourPackage', 'title duration pricing images')
+        .sort({ createdAt: -1 }),
+      CarBooking.find({ user: req.user._id })
+        .sort({ createdAt: -1 })
+    ]);
+
+    // Combine and sort all bookings by creation date
+    const allBookings = [
+      ...tourBookings.map(booking => ({ ...booking.toObject(), type: 'tour' })),
+      ...carBookings.map(booking => ({ ...booking.toObject(), type: 'car' }))
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     res.json({
       success: true,
-      bookings
+      bookings: allBookings
     });
   } catch (error) {
     console.error('Get user bookings error:', error);
@@ -225,13 +370,30 @@ export const userBookings = async (req, res) => {
 // Get single booking
 export const singleBookings = async (req, res) => {
   try {
-    const booking = await Booking.findOne({ 
+    // Try to find the booking in both collections
+    let booking = await Booking.findOne({ 
       _id: req.params.id, 
       user: req.user._id 
     }).populate([
       { path: 'tourPackage', select: 'title duration pricing images highlights' },
       { path: 'user', select: 'name email' }
     ]);
+
+    // If not found in Booking collection, try CarBooking collection
+    if (!booking) {
+      booking = await CarBooking.findOne({ 
+        _id: req.params.id, 
+        user: req.user._id 
+      }).populate([
+        { path: 'user', select: 'name email' }
+      ]);
+      
+      if (booking) {
+        booking = { ...booking.toObject(), type: 'car' };
+      }
+    } else {
+      booking = { ...booking.toObject(), type: 'tour' };
+    }
 
     if (!booking) {
       return res.status(404).json({
@@ -259,10 +421,22 @@ export const cancelBookings = async (req, res) => {
   try {
     const { reason } = req.body;
     
-    const booking = await Booking.findOne({ 
+    // Try to find the booking in both collections
+    let booking = await Booking.findOne({ 
       _id: req.params.id, 
       user: req.user._id 
     });
+
+    let isCarBooking = false;
+    
+    // If not found in Booking collection, try CarBooking collection
+    if (!booking) {
+      booking = await CarBooking.findOne({ 
+        _id: req.params.id, 
+        user: req.user._id 
+      });
+      isCarBooking = true;
+    }
 
     if (!booking) {
       return res.status(404).json({
@@ -334,12 +508,16 @@ export const submitQuery = async (req, res) => {
     // Use authenticated user's information
     const userId = req.user._id;
 
+    // Format phone numbers to include +91 prefix
+    const formattedPhone = formatPhoneNumber(phone);
+    const formattedWhatsApp = whatsapp ? formatPhoneNumber(whatsapp) : null;
+
     // Create query
     const query = new Query({
       name: name.trim(),
       email: email.trim().toLowerCase(),
-      phone: phone.trim(),
-      whatsapp: whatsapp ? whatsapp.trim() : null,
+      phone: formattedPhone,
+      whatsapp: formattedWhatsApp,
       subject: subject.trim(),
       message: message.trim(),
       category,
@@ -360,7 +538,8 @@ export const submitQuery = async (req, res) => {
         title: 'New Query Received',
         message: `New ${category.replace('-', ' ')} query from ${name}: "${subject}". Please check the admin dashboard to respond.`,
         relatedQuery: query._id,
-        priority: 'medium'
+        priority: 'medium',
+        actionUrl: '/admin/dashboard'
       }));
 
       if (adminNotifications.length > 0) {

@@ -25,6 +25,22 @@
   }
 }
 
+/* Fade in animation for smooth appearance */
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
 /* Enhanced mobile touch interactions */
 .touch-manipulation {
   touch-action: manipulation;
@@ -290,4 +306,340 @@
 
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out;
+}
+/* Background patterns for auth pages */
+.bg-grid-pattern {
+  background-image: 
+    linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Enhanced form focus states for auth pages */
+.auth-input:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+/* Smooth transitions for auth elements */
+.auth-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Glass morphism effect for auth cards */
+.auth-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ========================================
+   MOBILE-FIRST RESPONSIVE UTILITIES
+   ======================================== */
+
+/* Safe area padding for mobile devices (notch support) */
+.safe-area-padding {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Mobile-optimized container */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Prevent horizontal scroll on mobile */
+body {
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mobile-friendly text sizes */
+@media (max-width: 640px) {
+  h1 {
+    font-size: 1.875rem; /* 30px */
+    line-height: 2.25rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem; /* 24px */
+    line-height: 2rem;
+  }
+  
+  h3 {
+    font-size: 1.25rem; /* 20px */
+    line-height: 1.75rem;
+  }
+}
+
+/* Mobile-optimized spacing */
+@media (max-width: 640px) {
+  .mobile-px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .mobile-py-6 {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+  
+  .mobile-space-y-4 > * + * {
+    margin-top: 1rem;
+  }
+}
+
+/* Mobile-friendly buttons */
+@media (max-width: 640px) {
+  button, .btn {
+    min-height: 44px; /* Apple's recommended touch target */
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+}
+
+/* Mobile-friendly forms */
+@media (max-width: 640px) {
+  input, textarea, select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    min-height: 44px;
+  }
+}
+
+/* Mobile-friendly cards */
+@media (max-width: 640px) {
+  .card {
+    border-radius: 0.75rem;
+    padding: 1rem;
+  }
+}
+
+/* Mobile-friendly modals */
+@media (max-width: 640px) {
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    border-radius: 1rem 1rem 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+}
+
+/* Mobile-friendly tables */
+@media (max-width: 640px) {
+  .responsive-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .responsive-table table {
+    min-width: 600px;
+  }
+}
+
+/* Hide on mobile */
+@media (max-width: 640px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+/* Show only on mobile */
+.show-mobile {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .show-mobile {
+    display: block !important;
+  }
+  
+  .show-mobile-flex {
+    display: flex !important;
+  }
+  
+  .show-mobile-grid {
+    display: grid !important;
+  }
+}
+
+/* Mobile-friendly grid */
+@media (max-width: 640px) {
+  .mobile-grid-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  
+  .mobile-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Mobile-friendly flex */
+@media (max-width: 640px) {
+  .mobile-flex-col {
+    flex-direction: column;
+  }
+  
+  .mobile-flex-wrap {
+    flex-wrap: wrap;
+  }
+}
+
+/* Mobile-friendly text alignment */
+@media (max-width: 640px) {
+  .mobile-text-center {
+    text-align: center;
+  }
+  
+  .mobile-text-left {
+    text-align: left;
+  }
+}
+
+/* Prevent text overflow on mobile */
+.text-ellipsis-mobile {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .text-ellipsis-mobile {
+    max-width: 100%;
+  }
+}
+
+/* Mobile-friendly images */
+@media (max-width: 640px) {
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* Sticky mobile header */
+@media (max-width: 640px) {
+  .sticky-mobile-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: white;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Mobile-friendly notification panel */
+@media (max-width: 640px) {
+  .notification-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0;
+  }
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Prevent zoom on double-tap for iOS */
+* {
+  touch-action: manipulation;
+}
+
+/* Better mobile menu transitions */
+@media (max-width: 640px) {
+  .mobile-menu-enter {
+    animation: slideInFromRight 0.3s ease-out;
+  }
+  
+  .mobile-menu-exit {
+    animation: slideOutToRight 0.3s ease-in;
+  }
+}
+
+@keyframes slideOutToRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* Mobile-friendly spacing utilities */
+@media (max-width: 640px) {
+  .mobile-mt-4 { margin-top: 1rem; }
+  .mobile-mb-4 { margin-bottom: 1rem; }
+  .mobile-mx-4 { margin-left: 1rem; margin-right: 1rem; }
+  .mobile-my-4 { margin-top: 1rem; margin-bottom: 1rem; }
+  
+  .mobile-pt-4 { padding-top: 1rem; }
+  .mobile-pb-4 { padding-bottom: 1rem; }
+  .mobile-px-4 { padding-left: 1rem; padding-right: 1rem; }
+  .mobile-py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+}
+
+/* Fix for iOS Safari bottom bar */
+@supports (-webkit-touch-callout: none) {
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Force hamburger menu visibility on mobile devices */
+@media (max-width: 767px) {
+  /* Ensure mobile menu button is always visible */
+  [data-mobile-menu-trigger] {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Hide desktop navigation on mobile */
+  nav .hidden.md\:block,
+  nav .hidden.md\:flex {
+    display: none !important;
+  }
+}
+
+/* Ensure proper stacking context for mobile menu */
+@media (max-width: 767px) {
+  #mobile-menu {
+    position: fixed !important;
+    z-index: 100 !important;
+  }
+  
+  /* Prevent body scroll when menu is open */
+  body.menu-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
 }

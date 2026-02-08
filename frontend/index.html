@@ -3,7 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     
-    <!-- Primary favicon with larger sizes for better visibility -->
+    <!-- Primary favicon with maximum sizes for best visibility -->
+    <link rel="icon" type="image/png" sizes="128x128" href="/nextDriveLogo.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/nextDriveLogo.png" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/nextDriveLogo.png" />
     <link rel="icon" type="image/png" sizes="48x48" href="/nextDriveLogo.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/nextDriveLogo.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/nextDriveLogo.png" />
@@ -84,8 +87,19 @@
       
       /* Ensure favicon loads with proper dimensions */
       link[rel="shortcut icon"] {
-        width: 48px;
-        height: 48px;
+        width: 96px;
+        height: 96px;
+      }
+      
+      /* Primary favicon sizing */
+      link[rel="icon"][sizes="96x96"] {
+        width: 96px;
+        height: 96px;
+      }
+      
+      link[rel="icon"][sizes="64x64"] {
+        width: 64px;
+        height: 64px;
       }
       
       /* Browser-specific favicon optimizations */

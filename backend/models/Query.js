@@ -18,9 +18,10 @@ const querySchema = new mongoose.Schema({
     trim: true,
     validate: {
       validator: function(v) {
-        return /^\d{10}$/.test(v);
+        // Accept 10 digits or +91 followed by space and 10 digits
+        return /^\d{10}$/.test(v) || /^\+91\s?\d{10}$/.test(v);
       },
-      message: 'Phone number must be exactly 10 digits'
+      message: 'Phone number must be exactly 10 digits or in format +91 XXXXXXXXXX'
     }
   },
   whatsapp: {
@@ -28,9 +29,10 @@ const querySchema = new mongoose.Schema({
     trim: true,
     validate: {
       validator: function(v) {
-        return !v || /^\d{10}$/.test(v);
+        // Accept 10 digits or +91 followed by space and 10 digits, or empty
+        return !v || /^\d{10}$/.test(v) || /^\+91\s?\d{10}$/.test(v);
       },
-      message: 'WhatsApp number must be exactly 10 digits'
+      message: 'WhatsApp number must be exactly 10 digits or in format +91 XXXXXXXXXX'
     }
   },
   subject: {

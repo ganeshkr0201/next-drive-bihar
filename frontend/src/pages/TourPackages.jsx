@@ -10,6 +10,8 @@ const TourPackages = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('featured');
 
   useEffect(() => {
     loadData();
@@ -51,184 +53,157 @@ const TourPackages = () => {
     }
   };
 
+  // Filter and sort packages
+  const filteredPackages = tourPackages
+    .filter(pkg => 
+      pkg.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pkg.description.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'price-low':
+          return parseInt(a.price.replace(/[₹,]/g, '')) - parseInt(b.price.replace(/[₹,]/g, ''));
+        case 'price-high':
+          return parseInt(b.price.replace(/[₹,]/g, '')) - parseInt(a.price.replace(/[₹,]/g, ''));
+        case 'rating':
+          return parseFloat(b.rating) - parseFloat(a.rating);
+        case 'duration':
+          return parseInt(a.duration) - parseInt(b.duration);
+        default:
+          return 0;
+      }
+    });
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-            Tour{' '}
-            <span 
-              className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-600"
-              style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-            >
-              Packages
-            </span>
-          </h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Discover amazing tour packages designed to give you the best travel experience across Bihar's magnificent destinations.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <div className="mb-6">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Discover Bihar's
+              <span className="block text-blue-600">
+                Amazing Tours
+              </span>
+            </h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Explore Bihar's rich heritage, spiritual destinations, and natural beauty with our expertly curated tour packages
+            </p>
+          </div>
         </div>
 
-        {/* Category Filter */}
-        {categories.length > 0 && (
-          <div className="mb-8">
-            <div className="flex flex-wrap justify-center gap-4">
-              <button
-                onClick={() => setSelectedCategory('')}
-                className={`px-6 py-2 rounded-full font-medium transition-all ${
-                  selectedCategory === '' 
-                    ? 'bg-blue-600 text-white shadow-lg' 
-                    : 'bg-white text-gray-600 hover:bg-blue-50 border border-gray-200'
-                }`}
+        {/* Search and Filter Section */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 mb-8">
+          <div className="flex flex-col lg:flex-row gap-4 items-center">
+            {/* Search Bar */}
+            <div className="flex-1 relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Search tour packages..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+              />
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="appearance-none bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
               >
-                All Categories
-              </button>
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-6 py-2 rounded-full font-medium transition-all ${
-                    selectedCategory === category 
-                      ? 'bg-blue-600 text-white shadow-lg' 
-                      : 'bg-white text-gray-600 hover:bg-blue-50 border border-gray-200'
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
+                <option value="featured">Featured</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="rating">Highest Rated</option>
+                <option value="duration">Duration</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
           </div>
-        )}
+
+          {/* Category Filter */}
+          {categories.length > 0 && (
+            <div className="mt-6">
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => setSelectedCategory('')}
+                  className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+                    selectedCategory === '' 
+                      ? 'bg-blue-600 text-white shadow-lg transform scale-105' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-800'
+                  }`}
+                >
+                  All Categories
+                </button>
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+                      selectedCategory === category 
+                        ? 'bg-blue-600 text-white shadow-lg transform scale-105' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-800'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Loading State */}
         {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="flex justify-center items-center py-16">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading amazing tours...</p>
+            </div>
           </div>
         ) : (
           <>
+            {/* Results Header */}
+            {searchTerm && (
+              <div className="mb-6">
+                <p className="text-gray-600">
+                  Found <span className="font-semibold text-gray-900">{filteredPackages.length}</span> results for "{searchTerm}"
+                </p>
+              </div>
+            )}
+
             {/* Tour Packages Grid */}
-            {tourPackages.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {tourPackages.map((pkg) => (
-                  <div
-                    key={pkg.id}
-                    className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden group"
-                  >
-                    {/* Package Image */}
-                    <div className="relative h-48 overflow-hidden">
-                      <img
-                        src={pkg.image}
-                        alt={pkg.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                      
-                      {/* Discount Badge */}
-                      <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                        Save ₹{parseInt(pkg.originalPrice.replace('₹', '').replace(',', '')) - parseInt(pkg.price.replace('₹', '').replace(',', ''))}
-                      </div>
-                      
-                      {/* Rating Badge */}
-                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center">
-                        <svg className="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        <span className="text-sm font-medium text-gray-700">{pkg.rating}</span>
-                      </div>
-                    </div>
-
-                    {/* Package Content */}
-                    <div className="p-6">
-                      {/* Title and Duration */}
-                      <div className="mb-3">
-                        <h3 className="text-xl font-bold text-gray-800 mb-1">{pkg.title}</h3>
-                        <div className="flex items-center text-gray-500 text-sm">
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          {pkg.duration}
-                        </div>
-                      </div>
-
-                      {/* Description */}
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                        {pkg.description}
-                      </p>
-
-                      {/* Highlights */}
-                      {(Array.isArray(pkg.highlights) ? pkg.highlights : []).length > 0 && (
-                        <div className="mb-4">
-                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Highlights:</h4>
-                          <div className="flex flex-wrap gap-1">
-                            {(Array.isArray(pkg.highlights) ? pkg.highlights : []).slice(0, 4).map((highlight, index) => (
-                              <span
-                                key={index}
-                                className="bg-blue-50 text-blue-600 px-2 py-1 rounded-full text-xs font-medium"
-                              >
-                                {highlight}
-                              </span>
-                            ))}
-                            {(Array.isArray(pkg.highlights) ? pkg.highlights : []).length > 4 && (
-                              <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium">
-                                +{(Array.isArray(pkg.highlights) ? pkg.highlights : []).length - 4} more
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Reviews */}
-                      <div className="flex items-center mb-4 text-sm text-gray-500">
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2v-6a2 2 0 012-2h8z" />
-                        </svg>
-                        {pkg.reviews} reviews
-                      </div>
-
-                      {/* Price and CTA */}
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-2xl font-bold text-gray-800">{pkg.price}</span>
-                            <span className="text-sm text-gray-500 line-through">{pkg.originalPrice}</span>
-                          </div>
-                          <span className="text-xs text-gray-500">per person</span>
-                        </div>
-                        
-                        {/* Book Now Button */}
-                        {!isAuthenticated ? (
-                          <button
-                            onClick={() => navigate('/login')}
-                            className="bg-gradient-to-r from-blue-600 to-green-600 text-white px-6 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-green-700 transition-all transform hover:scale-105"
-                          >
-                            Login to Book
-                          </button>
-                        ) : (
-                          <Link
-                            to={`/tour-packages/${pkg.id}`}
-                            className="bg-gradient-to-r from-blue-600 to-green-600 text-white px-6 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-green-700 transition-all transform hover:scale-105"
-                          >
-                            Book Now
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+            {filteredPackages.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                {filteredPackages.map((pkg) => (
+                  <TourPackageCard 
+                    key={pkg.id} 
+                    pkg={pkg} 
+                    isAuthenticated={isAuthenticated}
+                    navigate={navigate}
+                  />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <div className="mb-4">
-                  <img src="/tour_logo.svg" alt="Tour Package" className="w-16 h-16 mx-auto opacity-40" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-600 mb-2">No Tour Packages Found</h3>
-                <p className="text-gray-500">
-                  {selectedCategory 
-                    ? `No packages found in "${selectedCategory}" category.` 
-                    : 'No tour packages are currently available.'}
-                </p>
-              </div>
+              <EmptyState 
+                searchTerm={searchTerm}
+                selectedCategory={selectedCategory}
+                onClearFilters={() => {
+                  setSearchTerm('');
+                  setSelectedCategory('');
+                }}
+              />
             )}
           </>
         )}
@@ -236,5 +211,157 @@ const TourPackages = () => {
     </div>
   );
 };
+
+// Tour Package Card Component
+const TourPackageCard = ({ pkg, isAuthenticated, navigate }) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  const calculateDiscount = () => {
+    const original = parseInt(pkg.originalPrice.replace(/[₹,]/g, ''));
+    const current = parseInt(pkg.price.replace(/[₹,]/g, ''));
+    return Math.round(((original - current) / original) * 100);
+  };
+
+  return (
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
+      {/* Package Image */}
+      <div className="relative h-56 overflow-hidden">
+        <div className={`absolute inset-0 bg-gray-200 animate-pulse ${imageLoaded ? 'hidden' : 'block'}`} />
+        <img
+          src={pkg.image}
+          alt={pkg.title}
+          className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => setImageLoaded(true)}
+        />
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+        
+        {/* Discount Badge */}
+        {calculateDiscount() > 0 && (
+          <div className="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+            {calculateDiscount()}% OFF
+          </div>
+        )}
+        
+        {/* Rating Badge */}
+        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center shadow-lg">
+          <svg className="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+          <span className="text-sm font-semibold text-gray-700">{pkg.rating}</span>
+        </div>
+
+        {/* Duration Badge */}
+        <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center shadow-lg">
+          <svg className="w-4 h-4 text-blue-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-sm font-semibold text-gray-700">{pkg.duration}</span>
+        </div>
+      </div>
+
+      {/* Package Content */}
+      <div className="p-6">
+        {/* Title */}
+        <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200">
+          {pkg.title}
+        </h3>
+
+        {/* Description */}
+        <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">
+          {pkg.description}
+        </p>
+
+        {/* Highlights */}
+        {(Array.isArray(pkg.highlights) ? pkg.highlights : []).length > 0 && (
+          <div className="mb-4">
+            <div className="flex flex-wrap gap-2">
+              {(Array.isArray(pkg.highlights) ? pkg.highlights : []).slice(0, 3).map((highlight, index) => (
+                <span
+                  key={index}
+                  className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium border border-blue-100"
+                >
+                  {highlight}
+                </span>
+              ))}
+              {(Array.isArray(pkg.highlights) ? pkg.highlights : []).length > 3 && (
+                <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium">
+                  +{(Array.isArray(pkg.highlights) ? pkg.highlights : []).length - 3} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Reviews */}
+        <div className="flex items-center mb-4 text-sm text-gray-500">
+          <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2v-6a2 2 0 012-2h8z" />
+          </svg>
+          <span className="font-medium">{pkg.reviews}</span> reviews
+        </div>
+
+        {/* Price and CTA */}
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          <div>
+            <div className="flex items-baseline space-x-2">
+              <span className="text-2xl font-bold text-gray-900">{pkg.price}</span>
+              {pkg.originalPrice !== pkg.price && (
+                <span className="text-sm text-gray-500 line-through">{pkg.originalPrice}</span>
+              )}
+            </div>
+            <span className="text-xs text-gray-500">per person</span>
+          </div>
+          
+          {/* Book Now Button */}
+          {!isAuthenticated ? (
+            <button
+              onClick={() => navigate('/login')}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            >
+              Login to Book
+            </button>
+          ) : (
+            <Link
+              to={`/tour-packages/${pkg.id}`}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            >
+              Book Now
+            </Link>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Empty State Component
+const EmptyState = ({ searchTerm, selectedCategory, onClearFilters }) => (
+  <div className="text-center py-16">
+    <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+      <img src="/tour_logo.svg" alt="Tour Package" className="w-12 h-12 opacity-40" />
+    </div>
+    <h3 className="text-2xl font-semibold text-gray-900 mb-2">No Tours Found</h3>
+    <p className="text-gray-600 mb-6 max-w-md mx-auto">
+      {searchTerm 
+        ? `No tour packages match "${searchTerm}". Try different keywords or clear filters.`
+        : selectedCategory 
+        ? `No packages found in "${selectedCategory}" category.`
+        : 'No tour packages are currently available.'}
+    </p>
+    {(searchTerm || selectedCategory) && (
+      <button
+        onClick={onClearFilters}
+        className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+      >
+        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Clear All Filters
+      </button>
+    )}
+  </div>
+);
 
 export default TourPackages;

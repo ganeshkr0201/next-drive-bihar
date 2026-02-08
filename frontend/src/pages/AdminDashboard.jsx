@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useData } from '../context/DataContext';
@@ -9,11 +10,16 @@ import notificationService from '../services/notificationService';
 const AdminDashboard = () => {
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
-  const { updateItem, removeItem, addItem, invalidateData } = useData();
+  const { updateItem, removeItem } = useData();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(false);
   
-  // Use synchronized data hooks with stable function references
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  
+  // Data fetching hooks
   const fetchQueries = useCallback(() => adminService.getQueries(), []);
   const fetchTourBookings = useCallback(() => adminService.getTourBookings(), []);
   const fetchCarBookings = useCallback(() => adminService.getCarBookings(), []);
@@ -21,55 +27,18 @@ const AdminDashboard = () => {
   const fetchUsers = useCallback(() => adminService.getUsers(), []);
   const fetchStats = useCallback(() => adminService.getStats(), []);
 
-  const { data: queries, refetch: refetchQueries } = useDataSync('queries', fetchQueries, []);
-  const { data: tourBookings, refetch: refetchTourBookings } = useDataSync('tourBookings', fetchTourBookings, []);
-  const { data: carBookings, refetch: refetchCarBookings } = useDataSync('carBookings', fetchCarBookings, []);
-  const { data: tourPackages, refetch: refetchTourPackages } = useDataSync('tourPackages', fetchTourPackages, []);
-  const { data: users, refetch: refetchUsers } = useDataSync('users', fetchUsers, []);
-  const { data: stats, refetch: refetchStats } = useDataSync('stats', fetchStats, []);
+  const { data: queries = [], refetch: refetchQueries } = useDataSync('queries', fetchQueries, []);
+  const { data: tourBookings = [], refetch: refetchTourBookings } = useDataSync('tourBookings', fetchTourBookings, []);
+  const { data: carBookings = [], refetch: refetchCarBookings } = useDataSync('carBookings', fetchCarBookings, []);
+  const { data: tourPackages = [], refetch: refetchTourPackages } = useDataSync('tourPackages', fetchTourPackages, []);
+  const { data: users = [], refetch: refetchUsers } = useDataSync('users', fetchUsers, []);
+  const { data: stats = {}, refetch: refetchStats } = useDataSync('stats', fetchStats, []);
   
-  // Local state for filters and forms
-  const [filteredQueries, setFilteredQueries] = useState([]);
-  const [queryFilters, setQueryFilters] = useState({
-    status: '',
-    category: '',
-    filter: ''
-  });
-  const [filteredTourBookings, setFilteredTourBookings] = useState([]);
-  const [bookingFilters, setBookingFilters] = useState({
-    status: '',
-    type: '',
-    category: '',
-    filter: '',
-    search: ''
-  });
-  const [bookingStats, setBookingStats] = useState({
-    total: 0,
-    pending: 0,
-    confirmed: 0,
-    completed: 0,
-    cancelled: 0,
-    active: 0
-  });
-  const [querySearch, setQuerySearch] = useState('');
-  const [filteredUsers, setFilteredUsers] = useState([]);
-  const [searchEmail, setSearchEmail] = useState('');
-  const [userFilters, setUserFilters] = useState({
-    verification: '', // 'verified', 'unverified', or ''
-    sortBy: 'newest' // 'newest', 'oldest', 'most-bookings', 'least-bookings'
-  });
-
-  // Local state for query responses to prevent text vanishing
+  // Local state for responses and forms
   const [queryResponses, setQueryResponses] = useState({});
-  // Pagination state
-  const [queryPagination, setQueryPagination] = useState({
-    currentPage: 1,
-    itemsPerPage: 10
-  });
-  const [bookingPagination, setBookingPagination] = useState({
-    currentPage: 1,
-    itemsPerPage: 10
-  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [verificationFilter, setVerificationFilter] = useState(''); // New verification filter
 
   // Tour package form state
   const [tourPackageForm, setTourPackageForm] = useState({
@@ -86,197 +55,205 @@ const AdminDashboard = () => {
     images: []
   });
 
-  // Filter queries based on current filters
-  useEffect(() => {
-    if (!queries || !Array.isArray(queries)) {
-      setFilteredQueries([]);
-      return;
-    }
-
-    let filtered = [...queries];
-
-    if (queryFilters.status) {
-      filtered = filtered.filter(query => query.status === queryFilters.status);
-    }
-
-    if (queryFilters.category) {
-      filtered = filtered.filter(query => query.category === queryFilters.category);
-    }
-
-    if (queryFilters.filter === 'active') {
-      filtered = filtered.filter(query => ['pending', 'resolved'].includes(query.status));
-    } else if (queryFilters.filter === 'closed') {
-      filtered = filtered.filter(query => query.status === 'closed');
-    }
-
-    // Search functionality
-    if (querySearch.trim()) {
-      const searchTerm = querySearch.toLowerCase().trim();
-      filtered = filtered.filter(query => 
-        query._id.toLowerCase().includes(searchTerm) ||
-        query.subject?.toLowerCase().includes(searchTerm) ||
-        query.message?.toLowerCase().includes(searchTerm) ||
-        query.user?.name?.toLowerCase().includes(searchTerm) ||
-        query.user?.email?.toLowerCase().includes(searchTerm) ||
-        query.name?.toLowerCase().includes(searchTerm) ||
-        query.email?.toLowerCase().includes(searchTerm)
-      );
-    }
-
-    setFilteredQueries(filtered);
-    resetQueryPagination(); // Reset pagination when filters change
-  }, [queries, queryFilters, querySearch]);
-
-  // Filter bookings based on current filters
-  useEffect(() => {
-    if (!tourBookings || !Array.isArray(tourBookings)) {
-      setFilteredTourBookings([]);
-      setBookingStats({
-        total: 0,
-        pending: 0,
-        confirmed: 0,
-        completed: 0,
-        cancelled: 0,
-        active: 0
-      });
-      return;
-    }
-
-    let filtered = [...tourBookings];
-
-    // Calculate statistics
-    const stats = {
-      total: tourBookings.length,
-      pending: tourBookings.filter(b => b.status === 'pending').length,
-      confirmed: tourBookings.filter(b => b.status === 'confirmed').length,
-      completed: tourBookings.filter(b => b.status === 'completed').length,
-      cancelled: tourBookings.filter(b => b.status === 'cancelled').length,
-      active: tourBookings.filter(b => ['pending', 'confirmed'].includes(b.status)).length
-    };
-    setBookingStats(stats);
-
-    // Apply filters
-    if (bookingFilters.status) {
-      filtered = filtered.filter(booking => booking.status === bookingFilters.status);
-    }
-
-    if (bookingFilters.filter === 'active') {
-      filtered = filtered.filter(booking => ['pending', 'confirmed'].includes(booking.status));
-    } else if (bookingFilters.filter === 'completed') {
-      filtered = filtered.filter(booking => booking.status === 'completed');
-    } else if (bookingFilters.filter === 'cancelled') {
-      filtered = filtered.filter(booking => booking.status === 'cancelled');
-    }
-
-    // Search functionality
-    if (bookingFilters.search.trim()) {
-      const searchTerm = bookingFilters.search.toLowerCase().trim();
-      filtered = filtered.filter(booking => 
-        booking._id.toLowerCase().includes(searchTerm) ||
-        booking.bookingReference?.toLowerCase().includes(searchTerm) ||
-        booking.tourPackage?.title?.toLowerCase().includes(searchTerm) ||
-        booking.tourPackage?.name?.toLowerCase().includes(searchTerm) ||
-        booking.user?.name?.toLowerCase().includes(searchTerm) ||
-        booking.user?.email?.toLowerCase().includes(searchTerm) ||
-        booking.contactNumber?.includes(searchTerm)
-      );
-    }
-
-    setFilteredTourBookings(filtered);
-    resetBookingPagination(); // Reset pagination when filters change
-  }, [tourBookings, bookingFilters]);
-
-  // Update filtered users when users data changes
-  useEffect(() => {
-    if (users && users.length > 0) {
-      let filtered = [...users];
-
-      // Apply verification filter
-      if (userFilters.verification === 'verified') {
-        filtered = filtered.filter(user => user.isVerified);
-      } else if (userFilters.verification === 'unverified') {
-        filtered = filtered.filter(user => !user.isVerified);
-      }
-
-      // Apply search filter
-      if (searchEmail.trim()) {
-        const searchTerm = searchEmail.toLowerCase();
-        filtered = filtered.filter(user => 
-          user.email.toLowerCase().includes(searchTerm) ||
-          user.name.toLowerCase().includes(searchTerm)
-        );
-      }
-
-      // Apply sorting
-      filtered.sort((a, b) => {
-        switch (userFilters.sortBy) {
-          case 'most-bookings':
-            return (b.bookingStats?.totalBookings || 0) - (a.bookingStats?.totalBookings || 0);
-          case 'least-bookings':
-            return (a.bookingStats?.totalBookings || 0) - (b.bookingStats?.totalBookings || 0);
-          case 'oldest':
-            return new Date(a.createdAt) - new Date(b.createdAt);
-          case 'newest':
+  // Filter data based on search and status
+  const getFilteredData = (data, type) => {
+    if (!data || !Array.isArray(data)) return [];
+    
+    let filtered = [...data];
+    
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(item => {
+        switch (type) {
+          case 'queries':
+            return item.subject?.toLowerCase().includes(search) ||
+                   item.message?.toLowerCase().includes(search) ||
+                   item.name?.toLowerCase().includes(search) ||
+                   item.email?.toLowerCase().includes(search);
+          case 'bookings':
+            return item.bookingReference?.toLowerCase().includes(search) ||
+                   item.user?.name?.toLowerCase().includes(search) ||
+                   item.user?.email?.toLowerCase().includes(search) ||
+                   item.tourPackage?.title?.toLowerCase().includes(search);
+          case 'users':
+            return item.name?.toLowerCase().includes(search) ||
+                   item.email?.toLowerCase().includes(search);
+          case 'packages':
+            return item.title?.toLowerCase().includes(search) ||
+                   item.name?.toLowerCase().includes(search);
           default:
-            // First sort by role (admins first), then by creation date
-            if (a.role === b.role) {
-              return new Date(b.createdAt) - new Date(a.createdAt);
-            }
-            return a.role === 'admin' ? -1 : 1;
+            return true;
         }
       });
+    }
+    
+    // Apply status filter
+    if (statusFilter) {
+      filtered = filtered.filter(item => item.status === statusFilter);
+    }
+    
+    // Apply verification filter for users
+    if (type === 'users' && verificationFilter) {
+      filtered = filtered.filter(item => {
+        if (verificationFilter === 'verified') return item.isVerified === true;
+        if (verificationFilter === 'unverified') return item.isVerified === false;
+        return true;
+      });
+    }
+    
+    return filtered;
+  };
+
+  // Get pending counts for badges
+  const getPendingCount = (data) => {
+    if (!data || !Array.isArray(data)) return 0;
+    return data.filter(item => item.status === 'pending').length;
+  };
+
+  // Handle query response
+  const handleRespondToQuery = async (queryId, response) => {
+    if (!response.trim()) {
+      showError('Please enter a response');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const query = queries.find(q => q._id === queryId);
+      if (!query) {
+        showError('Query not found');
+        return;
+      }
+
+      await adminService.respondToQuery(queryId, {
+        response: response.trim(),
+        status: 'resolved'
+      });
+
+      // Send notification
+      try {
+        await notificationService.createNotification({
+          recipientEmail: query.email || query.user?.email,
+          type: 'query_response',
+          title: 'Response to Your Query',
+          message: `We have responded to your query: "${query.subject}". Response: ${response.trim().substring(0, 100)}${response.trim().length > 100 ? '...' : ''}`,
+          relatedQuery: queryId,
+          priority: 'high'
+        });
+      } catch (notificationError) {
+        console.warn('Failed to send notification:', notificationError);
+      }
+
+      showSuccess('Response sent successfully!');
       
-      setFilteredUsers(filtered);
-    }
-  }, [users, userFilters, searchEmail]);
-
-  const clearBookingFilters = () => {
-    setBookingFilters({
-      status: '',
-      type: '',
-      category: '',
-      filter: '',
-      search: ''
-    });
-    setBookingPagination({ currentPage: 1, itemsPerPage: 10 });
-  };
-
-  // Pagination helper functions
-  const getPaginatedData = (data, pagination) => {
-    const startIndex = (pagination.currentPage - 1) * pagination.itemsPerPage;
-    const endIndex = startIndex + pagination.itemsPerPage;
-    return data.slice(startIndex, endIndex);
-  };
-
-  const getTotalPages = (totalItems, itemsPerPage) => {
-    return Math.ceil(totalItems / itemsPerPage);
-  };
-
-  const handlePageChange = (type, newPage) => {
-    if (type === 'queries') {
-      setQueryPagination(prev => ({ ...prev, currentPage: newPage }));
-    } else if (type === 'bookings') {
-      setBookingPagination(prev => ({ ...prev, currentPage: newPage }));
+      // Clear response and update data
+      setQueryResponses(prev => {
+        const updated = { ...prev };
+        delete updated[queryId];
+        return updated;
+      });
+      
+      updateItem('queries', queryId, {
+        response: response.trim(),
+        status: 'resolved',
+        respondedAt: new Date(),
+        respondedBy: user
+      });
+      
+      refetchStats();
+    } catch (error) {
+      showError(error.message || 'Failed to send response');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleItemsPerPageChange = (type, newItemsPerPage) => {
-    if (type === 'queries') {
-      setQueryPagination({ currentPage: 1, itemsPerPage: newItemsPerPage });
-    } else if (type === 'bookings') {
-      setBookingPagination({ currentPage: 1, itemsPerPage: newItemsPerPage });
+  // Handle booking status update
+  const handleBookingStatusUpdate = async (bookingId, newStatus, reason = '', bookingType = 'tour') => {
+    console.log('🔄 Status update called:', { bookingId, newStatus, reason, bookingType });
+    setIsLoading(true);
+    try {
+      if (bookingType === 'car') {
+        console.log('🚗 Processing car booking status update');
+        // Handle car bookings
+        if (newStatus === 'confirmed') {
+          console.log('✅ Confirming car booking...');
+          await adminService.confirmCarBooking(bookingId);
+        } else if (newStatus === 'cancelled') {
+          console.log('❌ Cancelling car booking...');
+          await adminService.cancelCarBooking(bookingId, reason);
+        } else if (newStatus === 'completed') {
+          console.log('✔️ Completing car booking...');
+          await adminService.completeCarBooking(bookingId);
+        }
+        showSuccess(`Car booking ${newStatus} successfully!`);
+        refetchCarBookings();
+      } else {
+        console.log('🎯 Processing tour booking status update');
+        // Handle tour bookings
+        if (newStatus === 'confirmed') {
+          console.log('✅ Confirming tour booking...');
+          await adminService.confirmBooking(bookingId);
+        } else if (newStatus === 'cancelled') {
+          console.log('❌ Cancelling tour booking...');
+          await adminService.cancelBooking(bookingId, reason);
+        } else if (newStatus === 'completed') {
+          console.log('✔️ Completing tour booking...');
+          await adminService.completeBooking(bookingId);
+        }
+        showSuccess(`Booking ${newStatus} successfully!`);
+        refetchTourBookings();
+      }
+      refetchStats();
+      console.log('✅ Status update completed successfully');
+    } catch (error) {
+      console.error('❌ Status update error:', error);
+      showError(error.message || `Failed to ${newStatus} booking`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Reset pagination when filters change
-  const resetQueryPagination = () => {
-    setQueryPagination(prev => ({ ...prev, currentPage: 1 }));
+  // Handle user deletion
+  const handleDeleteUser = async (userId, userName) => {
+    if (!window.confirm(`Are you sure you want to delete user "${userName}"?`)) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await adminService.deleteUser(userId);
+      showSuccess('User deleted successfully');
+      removeItem('users', userId);
+      refetchStats();
+    } catch (error) {
+      showError(error.message || 'Failed to delete user');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const resetBookingPagination = () => {
-    setBookingPagination(prev => ({ ...prev, currentPage: 1 }));
+  // Handle tour package deletion
+  const handleDeleteTourPackage = async (packageId, packageName) => {
+    if (!window.confirm(`Are you sure you want to delete tour package "${packageName}"?`)) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await adminService.deleteTourPackage(packageId);
+      showSuccess('Tour package deleted successfully');
+      removeItem('tourPackages', packageId);
+      refetchStats();
+    } catch (error) {
+      showError(error.message || 'Failed to delete tour package');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  // Handle tour package form submission
   const handleTourPackageSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -284,15 +261,12 @@ const AdminDashboard = () => {
     try {
       const formData = new FormData();
       
-      // Add form fields
       Object.keys(tourPackageForm).forEach(key => {
         if (key === 'images') {
-          // Handle multiple images
           tourPackageForm.images.forEach(image => {
             formData.append('images', image);
           });
         } else if (key === 'highlights') {
-          // Convert highlights string to array
           const highlightsArray = tourPackageForm.highlights.split('\n').filter(h => h.trim());
           formData.append('highlights', JSON.stringify(highlightsArray));
         } else {
@@ -318,7 +292,6 @@ const AdminDashboard = () => {
         images: []
       });
       
-      // Refresh tour packages data
       refetchTourPackages();
       refetchStats();
     } catch (error) {
@@ -336,217 +309,103 @@ const AdminDashboard = () => {
     }));
   };
 
-  const handleDeleteUser = async (userId, userName) => {
-    if (!window.confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await adminService.deleteUser(userId);
-      showSuccess('User deleted successfully');
-      
-      // Remove user from synchronized data
-      removeItem('users', userId);
-      
-      // Update filtered users
-      setFilteredUsers(prev => prev.filter(user => user._id !== userId));
-      
-      // Refresh stats
-      refetchStats();
-    } catch (error) {
-      showError(error.message || 'Failed to delete user');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Search functionality
-  const handleSearchEmail = (searchTerm) => {
-    setSearchEmail(searchTerm);
-  };
-
-  const clearSearch = () => {
-    setSearchEmail('');
-    setUserFilters({
-      verification: '',
-      sortBy: 'newest'
-    });
-  };
-
-  const handleDeleteTourPackage = async (packageId, packageName) => {
-    if (!window.confirm(`Are you sure you want to delete tour package "${packageName}"? This action cannot be undone and will affect all related bookings.`)) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await adminService.deleteTourPackage(packageId);
-      showSuccess('Tour package deleted successfully');
-      
-      // Remove package from synchronized data
-      removeItem('tourPackages', packageId);
-      
-      // Refresh stats
-      refetchStats();
-    } catch (error) {
-      showError(error.message || 'Failed to delete tour package');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRespondToQuery = async (queryId, response) => {
-    if (!response.trim()) {
-      showError('Please enter a response');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      // Find the query to get user email
-      const query = queries?.find(q => q._id === queryId);
-      if (!query) {
-        showError('Query not found');
-        return;
-      }
-
-      console.log('🔄 Responding to query:', queryId, 'with response:', response.trim());
-
-      // Update query with response and set status to resolved
-      const result = await adminService.respondToQuery(queryId, {
-        response: response.trim(),
-        status: 'resolved' // Always set to resolved when responding
-      });
-
-      console.log('✅ Query response result:', result);
-
-      // Send notification to user (optional - handled by backend)
-      try {
-        await notificationService.createNotification({
-          recipientEmail: query.email || query.user?.email,
-          type: 'query_response',
-          title: 'Response to Your Query',
-          message: `We have responded to your query: "${query.subject}". Response: ${response.trim().substring(0, 100)}${response.trim().length > 100 ? '...' : ''}`,
-          relatedQuery: queryId,
-          priority: 'high'
-        });
-      } catch (notificationError) {
-        console.warn('Failed to send notification (non-critical):', notificationError);
-      }
-
-      showSuccess('Response sent successfully! Query marked as resolved and user has been notified.');
-      
-      // Clear the local response state for this query
-      setQueryResponses(prev => {
-        const updated = { ...prev };
-        delete updated[queryId];
-        return updated;
-      });
-      
-      // Update query in synchronized data
-      updateItem('queries', queryId, {
-        response: response.trim(),
-        status: 'resolved',
-        respondedAt: new Date(),
-        respondedBy: user
-      });
-      
-      // Refresh stats
-      refetchStats();
-    } catch (error) {
-      console.error('❌ Failed to respond to query:', error);
-      showError(error.message || 'Failed to send response');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Tab configuration with badges
   const tabs = [
     { 
       id: 'overview', 
       name: 'Overview', 
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-      )
-    },
-    { 
-      id: 'users', 
-      name: 'Users', 
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      )
+      icon: '📊',
+      badge: null
     },
     { 
       id: 'queries', 
       name: 'Queries', 
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-      )
+      icon: '💬',
+      badge: getPendingCount(queries)
     },
     { 
       id: 'tour-bookings', 
       name: 'Tour Bookings', 
-      icon: (
-        <img src="/tour_logo.svg" alt="Tour" className="w-5 h-5" />
-      )
+      icon: '🎯',
+      badge: getPendingCount(tourBookings)
     },
     { 
       id: 'car-bookings', 
       name: 'Car Bookings', 
-      icon: (
-        <img src="/car_logo.svg" alt="Car" className="w-5 h-5" />
-      )
+      icon: '🚗',
+      badge: getPendingCount(carBookings)
+    },
+    { 
+      id: 'users', 
+      name: 'Users', 
+      icon: '👥',
+      badge: null
     },
     { 
       id: 'tour-packages', 
       name: 'Tour Packages', 
-      icon: (
-        <img src="/tour_package.png" alt="Tour Package" className="w-5 h-5" />
-      )
+      icon: '📦',
+      badge: null
     },
     { 
       id: 'add-package', 
       name: 'Add Package', 
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-      )
+      icon: '➕',
+      badge: null
     }
   ];
 
+  // Reset pagination when tab changes
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-2">Welcome back, {user?.name}! Manage your NextDrive Bihar platform.</p>
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Welcome back, {user?.name}! Manage your NextDrive Bihar platform.</p>
+            </div>
+            <button
+              onClick={() => navigate('/admin/cars')}
+              className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 text-sm sm:text-base"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              <span className="hidden sm:inline">Manage Cars</span>
+              <span className="sm:hidden">Cars</span>
+            </button>
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div className="mb-8">
+        {/* Navigation Tabs */}
+        <div className="mb-6 sm:mb-8">
           <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8 overflow-x-auto">
+            <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto scrollbar-hide">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center space-x-1 sm:space-x-2 flex-shrink-0 ${
                     activeTab === tab.id
                       ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  {tab.icon}
-                  <span>{tab.name}</span>
+                  <span className="text-base sm:text-lg">{tab.icon}</span>
+                  <span className="hidden sm:inline">{tab.name}</span>
+                  <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
+                  {tab.badge > 0 && (
+                    <span className="bg-red-100 text-red-800 text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full">
+                      {tab.badge}
+                    </span>
+                  )}
                 </button>
               ))}
             </nav>
@@ -554,1415 +413,133 @@ const AdminDashboard = () => {
         </div>
 
         {/* Content */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
-            <div className="p-6">
-              <h2 className="text-xl font-semibold mb-6">Dashboard Overview</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                <div 
-                  className="bg-blue-50 p-4 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors duration-200"
+            <div className="p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">Dashboard Overview</h2>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+                <StatCard
+                  title="Total Users"
+                  value={users.length}
+                  icon="👥"
+                  color="blue"
                   onClick={() => setActiveTab('users')}
-                >
-                  <div className="flex items-center">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Total Users</p>
-                      <p className="text-2xl font-bold text-blue-600">{users?.length || 0}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div 
-                  className="bg-green-50 p-4 rounded-lg cursor-pointer hover:bg-green-100 transition-colors duration-200"
+                />
+                <StatCard
+                  title="Queries"
+                  value={queries.length}
+                  badge={getPendingCount(queries)}
+                  icon="💬"
+                  color="green"
                   onClick={() => setActiveTab('queries')}
-                >
-                  <div className="flex items-center">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Queries</p>
-                      <p className="text-2xl font-bold text-green-600">{queries?.length || 0}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div 
-                  className="bg-purple-50 p-4 rounded-lg cursor-pointer hover:bg-purple-100 transition-colors duration-200"
+                />
+                <StatCard
+                  title="Tour Bookings"
+                  value={tourBookings.length}
+                  badge={getPendingCount(tourBookings)}
+                  icon="🎯"
+                  color="purple"
                   onClick={() => setActiveTab('tour-bookings')}
-                >
-                  <div className="flex items-center">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <img src="/tour_logo.svg" alt="Tour" className="w-8 h-8" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Tour Bookings</p>
-                      <p className="text-2xl font-bold text-purple-600">{tourBookings?.length || 0}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div 
-                  className="bg-orange-50 p-4 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors duration-200"
+                />
+                <StatCard
+                  title="Car Bookings"
+                  value={carBookings.length}
+                  badge={getPendingCount(carBookings)}
+                  icon="🚗"
+                  color="orange"
                   onClick={() => setActiveTab('car-bookings')}
-                >
-                  <div className="flex items-center">
-                    <div className="p-2 bg-orange-100 rounded-lg">
-                      <img src="/car_logo.svg" alt="Car" className="w-8 h-8" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Car Bookings</p>
-                      <p className="text-2xl font-bold text-orange-600">{carBookings?.length || 0}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div 
-                  className="bg-indigo-50 p-4 rounded-lg cursor-pointer hover:bg-indigo-100 transition-colors duration-200"
-                  onClick={() => setActiveTab('tour-packages')}
-                >
-                  <div className="flex items-center">
-                    <div className="p-2 bg-indigo-100 rounded-lg">
-                      <img src="/tour_package.png" alt="Tour Package" className="w-8 h-8" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Tour Packages</p>
-                      <p className="text-2xl font-bold text-indigo-600">{tourPackages?.length || 0}</p>
-                    </div>
-                  </div>
-                </div>
+                />
               </div>
-            </div>
-          )}
-
-          {/* Users Tab */}
-          {activeTab === 'users' && (
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold">All Users</h2>
-                <div className="flex items-center space-x-4">
-                  {/* Search Box */}
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Search by email or name..."
-                      value={searchEmail}
-                      onChange={(e) => handleSearchEmail(e.target.value)}
-                      className="block w-80 pl-10 pr-10 py-2 border-2 border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    {searchEmail && (
-                      <button
-                        onClick={clearSearch}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                      >
-                        <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                  
-                  {/* Results Count */}
-                  <div className="text-sm text-gray-500">
-                    {searchEmail || userFilters.verification || userFilters.sortBy !== 'newest' ? (
-                      <>Showing {filteredUsers.length} of {users.length} users</>
-                    ) : (
-                      <>Total: {users.length} users</>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* User Filters */}
-              <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700">Verification Status:</label>
-                    <select
-                      value={userFilters.verification}
-                      onChange={(e) => setUserFilters(prev => ({ ...prev, verification: e.target.value }))}
-                      className="px-3 py-1 border-2 border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">All Users</option>
-                      <option value="verified">Verified Only</option>
-                      <option value="unverified">Unverified Only</option>
-                    </select>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700">Sort By:</label>
-                    <select
-                      value={userFilters.sortBy}
-                      onChange={(e) => setUserFilters(prev => ({ ...prev, sortBy: e.target.value }))}
-                      className="px-3 py-1 border-2 border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="newest">Newest First</option>
-                      <option value="oldest">Oldest First</option>
-                      <option value="most-bookings">Most Bookings</option>
-                      <option value="least-bookings">Least Bookings</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-center">
-                    <button
-                      onClick={clearSearch}
-                      className="w-full px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md text-sm font-medium transition-colors"
-                    >
-                      Clear All Filters
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {filteredUsers.length === 0 ? (
-                <div className="text-center py-8">
-                  {searchEmail || userFilters.verification || userFilters.sortBy !== 'newest' ? (
-                    <div>
-                      <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                      <h3 className="mt-2 text-sm font-medium text-gray-900">No users found</h3>
-                      <p className="mt-1 text-sm text-gray-500">
-                        No users match your current filters
-                      </p>
-                      <button
-                        onClick={clearSearch}
-                        className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
-                        Clear all filters
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">No users found.</p>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {/* Admin Users Section */}
-                  {filteredUsers.filter(user => user.role === 'admin').length > 0 && (
-                    <div>
-                      <div className="flex items-center mb-4">
-                        <h3 className="text-lg font-semibold text-purple-700">Administrators</h3>
-                        <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
-                          {filteredUsers.filter(user => user.role === 'admin').length}
-                        </span>
-                        {searchEmail && (
-                          <span className="ml-2 text-sm text-gray-500">
-                            of {users.filter(user => user.role === 'admin').length} total
-                          </span>
-                        )}
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                          <thead className="bg-purple-50">
-                            <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verified</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Auth Provider</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredUsers.filter(user => user.role === 'admin').map((user) => (
-                              <tr key={user._id} className="hover:bg-purple-25">
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="flex items-center">
-                                    <div className="flex-shrink-0 h-10 w-10">
-                                      {user.avatar ? (
-                                        <img
-                                          className="h-10 w-10 rounded-full object-cover"
-                                          src={user.avatar.startsWith('http') ? user.avatar : `${import.meta.env.VITE_API_URL}/${user.avatar}`}
-                                          alt={user.name}
-                                          onError={(e) => {
-                                            e.target.style.display = 'none';
-                                            e.target.nextSibling.style.display = 'flex';
-                                          }}
-                                        />
-                                      ) : null}
-                                      <div className={`h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center ${user.avatar ? 'hidden' : 'flex'}`}>
-                                        <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                      </div>
-                                    </div>
-                                    <div className="ml-4">
-                                      <div className="text-sm font-medium text-gray-900 flex items-center">
-                                        {searchEmail && (user.name.toLowerCase().includes(searchEmail.toLowerCase()) || user.email.toLowerCase().includes(searchEmail.toLowerCase())) ? (
-                                          <span dangerouslySetInnerHTML={{
-                                            __html: user.name.replace(
-                                              new RegExp(`(${searchEmail})`, 'gi'),
-                                              '<mark class="bg-yellow-200">$1</mark>'
-                                            )
-                                          }} />
-                                        ) : (
-                                          user.name
-                                        )}
-                                        <span className="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
-                                          Admin
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {searchEmail && user.email.toLowerCase().includes(searchEmail.toLowerCase()) ? (
-                                    <span dangerouslySetInnerHTML={{
-                                      __html: user.email.replace(
-                                        new RegExp(`(${searchEmail})`, 'gi'),
-                                        '<mark class="bg-yellow-200">$1</mark>'
-                                      )
-                                    }} />
-                                  ) : (
-                                    user.email
-                                  )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                    user.isVerified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                  }`}>
-                                    {user.isVerified ? 'Verified' : 'Not Verified'}
-                                  </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
-                                  {user.authProvider || 'local'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {new Date(user.createdAt).toLocaleDateString()}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                  <span className="text-gray-400 text-xs">Admin Protected</span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Regular Users Section */}
-                  {filteredUsers.filter(user => user.role !== 'admin').length > 0 && (
-                    <div>
-                      <div className="flex items-center mb-4">
-                        <h3 className="text-lg font-semibold text-blue-700">Regular Users</h3>
-                        <span className="ml-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                          {filteredUsers.filter(user => user.role !== 'admin').length}
-                        </span>
-                        {searchEmail && (
-                          <span className="ml-2 text-sm text-gray-500">
-                            of {users.filter(user => user.role !== 'admin').length} total
-                          </span>
-                        )}
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                          <thead className="bg-blue-50">
-                            <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bookings</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verified</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Auth Provider</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredUsers.filter(user => user.role !== 'admin').map((user) => (
-                              <tr key={user._id} className="hover:bg-blue-25">
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="flex items-center">
-                                    <div className="flex-shrink-0 h-10 w-10">
-                                      {user.avatar ? (
-                                        <img
-                                          className="h-10 w-10 rounded-full object-cover"
-                                          src={user.avatar.startsWith('http') ? user.avatar : `${import.meta.env.VITE_API_URL}/${user.avatar}`}
-                                          alt={user.name}
-                                          onError={(e) => {
-                                            e.target.style.display = 'none';
-                                            e.target.nextSibling.style.display = 'flex';
-                                          }}
-                                        />
-                                      ) : null}
-                                      <div className={`h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center ${user.avatar ? 'hidden' : 'flex'}`}>
-                                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                      </div>
-                                    </div>
-                                    <div className="ml-4">
-                                      <div className="text-sm font-medium text-gray-900 flex items-center">
-                                        {searchEmail && (user.name.toLowerCase().includes(searchEmail.toLowerCase()) || user.email.toLowerCase().includes(searchEmail.toLowerCase())) ? (
-                                          <span dangerouslySetInnerHTML={{
-                                            __html: user.name.replace(
-                                              new RegExp(`(${searchEmail})`, 'gi'),
-                                              '<mark class="bg-yellow-200">$1</mark>'
-                                            )
-                                          }} />
-                                        ) : (
-                                          user.name
-                                        )}
-                                        <span className="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                                          User
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {searchEmail && user.email.toLowerCase().includes(searchEmail.toLowerCase()) ? (
-                                    <span dangerouslySetInnerHTML={{
-                                      __html: user.email.replace(
-                                        new RegExp(`(${searchEmail})`, 'gi'),
-                                        '<mark class="bg-yellow-200">$1</mark>'
-                                      )
-                                    }} />
-                                  ) : (
-                                    user.email
-                                  )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="flex space-x-2">
-                                    <div className="text-center">
-                                      <div className="text-sm font-semibold text-blue-600">
-                                        {user.bookingStats?.tourBookings || 0}
-                                      </div>
-                                      <div className="text-xs text-gray-500">Tours</div>
-                                    </div>
-                                    <div className="text-center">
-                                      <div className="text-sm font-semibold text-orange-600">
-                                        {user.bookingStats?.carBookings || 0}
-                                      </div>
-                                      <div className="text-xs text-gray-500">Cars</div>
-                                    </div>
-                                    <div className="text-center">
-                                      <div className="text-sm font-semibold text-gray-900">
-                                        {user.bookingStats?.totalBookings || 0}
-                                      </div>
-                                      <div className="text-xs text-gray-500">Total</div>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                    user.isVerified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                  }`}>
-                                    {user.isVerified ? 'Verified' : 'Not Verified'}
-                                  </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
-                                  {user.authProvider || 'local'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {new Date(user.createdAt).toLocaleDateString()}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                  <button
-                                    onClick={() => handleDeleteUser(user._id, user.name)}
-                                    disabled={isLoading}
-                                    className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                    <span>Delete</span>
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           )}
 
           {/* Queries Tab */}
           {activeTab === 'queries' && (
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold">Customer Queries Management</h2>
-                <div className="flex items-center space-x-4">
-                  {/* Search Box */}
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Search by ID, subject, message, user name, or email..."
-                      value={querySearch}
-                      onChange={(e) => setQuerySearch(e.target.value)}
-                      className="block w-80 pl-10 pr-10 py-2 border-2 border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    {querySearch && (
-                      <button
-                        onClick={() => setQuerySearch('')}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                      >
-                        <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                  
-                  {/* Results Count */}
-                  <div className="text-sm text-gray-500">
-                    {querySearch.trim() || Object.values(queryFilters).some(filter => filter) ? (
-                      <>Showing {filteredQueries.length} of {queries?.length || 0} queries</>
-                    ) : (
-                      <>Total: {queries?.length || 0} queries</>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Query Statistics */}
-              {queries && (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">{queries.length}</div>
-                    <div className="text-sm text-blue-700">Total Queries</div>
-                  </div>
-                  <div className="bg-yellow-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-yellow-600">{queries.filter(q => q.status === 'pending').length}</div>
-                    <div className="text-sm text-yellow-700">Pending</div>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">{queries.filter(q => q.status === 'resolved').length}</div>
-                    <div className="text-sm text-green-700">Resolved</div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-600">{queries.filter(q => q.status === 'closed').length}</div>
-                    <div className="text-sm text-gray-700">Closed</div>
-                  </div>
-                </div>
-              )}
-
-              {/* Query Filters */}
-              <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700">Filter by Status:</label>
-                    <select
-                      value={queryFilters.status}
-                      onChange={(e) => setQueryFilters(prev => ({ ...prev, status: e.target.value }))}
-                      className="px-3 py-1 border-2 border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">All Statuses</option>
-                      <option value="pending">Pending</option>
-                      <option value="resolved">Resolved</option>
-                      <option value="closed">Closed</option>
-                    </select>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700">Filter by Category:</label>
-                    <select
-                      value={queryFilters.category}
-                      onChange={(e) => setQueryFilters(prev => ({ ...prev, category: e.target.value }))}
-                      className="px-3 py-1 border-2 border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">All Categories</option>
-                      <option value="car-booking">Car Booking</option>
-                      <option value="tour-package">Tour Package</option>
-                      <option value="others">Others</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-center">
-                    <button
-                      onClick={() => {
-                        setQueryFilters({ status: '', category: '', filter: '' });
-                        setQuerySearch('');
-                      }}
-                      className="w-full px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md text-sm font-medium transition-colors"
-                    >
-                      Clear Filters
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Queries List */}
-              {filteredQueries.length === 0 ? (
-                <div className="text-center py-12">
-                  <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No queries found</h3>
-                  <p className="text-gray-500">
-                    {Object.values(queryFilters).some(filter => filter) || querySearch.trim()
-                      ? 'Try adjusting your filters or search terms to see more queries.' 
-                      : 'No customer queries have been submitted yet.'}
-                  </p>
-                  {(Object.values(queryFilters).some(filter => filter) || querySearch.trim()) && (
-                    <button
-                      onClick={() => {
-                        setQueryFilters({ status: '', category: '', filter: '' });
-                        setQuerySearch('');
-                      }}
-                      className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Clear All Filters
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div>
-                  <div className="grid gap-6">
-                    {getPaginatedData(filteredQueries, queryPagination).map((query) => (
-                      <div key={query._id} className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
-                        {/* Header */}
-                        <div className="p-6 border-b border-gray-50">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-3">
-                                <h3 className="text-lg font-semibold text-gray-900">{query.subject}</h3>
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  query.status === 'resolved' ? 'bg-green-100 text-green-800' :
-                                  query.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                  query.status === 'closed' ? 'bg-gray-100 text-gray-800' :
-                                  'bg-blue-100 text-blue-800'
-                                }`}>
-                                  {query.statusDisplay || query.status}
-                                </span>
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                                  {query.displayCategory || query.category}
-                                </span>
-                              </div>
-                              
-                              <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
-                                <div className="flex items-center gap-1">
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                  </svg>
-                                  <span className="font-medium">{query.name}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                  </svg>
-                                  <span>{query.email}</span>
-                                </div>
-                                {query.phone && (
-                                  <div className="flex items-center gap-1">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                    </svg>
-                                    <span>{query.phone}</span>
-                                  </div>
-                                )}
-                              </div>
-                              
-                              <div className="flex items-center gap-4 text-xs text-gray-500">
-                                <span>Submitted: {new Date(query.createdAt).toLocaleDateString()}</span>
-                                {query.respondedAt && (
-                                  <span>• Responded: {new Date(query.respondedAt).toLocaleDateString()}</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-6">
-                          <div className="mb-4">
-                            <h4 className="text-sm font-medium text-gray-700 mb-2">Message:</h4>
-                            <div className="bg-gray-50 rounded-lg p-4">
-                              <p className="text-sm text-gray-700 leading-relaxed">{query.message}</p>
-                            </div>
-                          </div>
-
-                          {query.response && (
-                            <div className="mb-4">
-                              <h4 className="text-sm font-medium text-gray-700 mb-2">Admin Response:</h4>
-                              <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-400">
-                                <p className="text-sm text-gray-700 leading-relaxed">{query.response}</p>
-                                {query.respondedBy && (
-                                  <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                    Responded by {query.respondedBy.name} on {new Date(query.respondedAt).toLocaleDateString()}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Rating Display */}
-                          {query.rating && (
-                            <div className="mb-4">
-                              <h4 className="text-sm font-medium text-gray-700 mb-2">User Feedback:</h4>
-                              <div className="bg-gray-50 rounded-lg p-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    query.rating === 'satisfied' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                  }`}>
-                                    {query.rating === 'satisfied' ? '😊 Satisfied' : '😞 Unsatisfied'}
-                                  </span>
-                                  <span className="text-xs text-gray-500">
-                                    Rated on {new Date(query.ratedAt).toLocaleDateString()}
-                                  </span>
-                                </div>
-                                {query.feedback && (
-                                  <p className="text-sm text-gray-700">
-                                    <strong>Additional Feedback:</strong> {query.feedback}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Response Form - Only show for pending queries */}
-                          {query.status === 'pending' && (
-                            <div className="border-t border-gray-100 pt-4">
-                              <h4 className="text-sm font-medium text-gray-700 mb-3">Respond to Query:</h4>
-                              <div className="space-y-3">
-                                <textarea
-                                  placeholder="Type your response here..."
-                                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                                  rows="4"
-                                  value={queryResponses[query._id] || ''}
-                                  onChange={(e) => {
-                                    setQueryResponses(prev => ({
-                                      ...prev,
-                                      [query._id]: e.target.value
-                                    }));
-                                  }}
-                                />
-                                <div className="flex justify-end">
-                                  <button
-                                    onClick={() => handleRespondToQuery(query._id, queryResponses[query._id] || '')}
-                                    disabled={isLoading || !queryResponses[query._id]?.trim()}
-                                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors gap-2"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                    </svg>
-                                    Send Response & Mark Resolved
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Status indicators for resolved/closed queries */}
-                          {query.status === 'resolved' && (
-                            <div className="border-t border-gray-100 pt-4">
-                              <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-                                <div className="flex items-center gap-2">
-                                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                  </svg>
-                                  <p className="text-sm text-green-700 font-medium">
-                                    This query has been resolved and is waiting for user feedback.
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {query.status === 'closed' && (
-                            <div className="border-t border-gray-100 pt-4">
-                              <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                                <div className="flex items-center gap-2">
-                                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                  </svg>
-                                  <p className="text-sm text-gray-700 font-medium">
-                                    This query has been closed after receiving user feedback.
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Pagination */}
-                  {filteredQueries.length > 0 && (
-                    <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-6">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm font-medium text-gray-700">Show:</label>
-                          <select
-                            value={queryPagination.itemsPerPage}
-                            onChange={(e) => handleItemsPerPageChange('queries', parseInt(e.target.value))}
-                            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                            <option value={5}>5</option>
-                            <option value={10}>10</option>
-                            <option value={20}>20</option>
-                            <option value={50}>50</option>
-                          </select>
-                          <span className="text-sm text-gray-500">per page</span>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Showing {((queryPagination.currentPage - 1) * queryPagination.itemsPerPage) + 1} to {Math.min(queryPagination.currentPage * queryPagination.itemsPerPage, filteredQueries.length)} of {filteredQueries.length} queries
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handlePageChange('queries', queryPagination.currentPage - 1)}
-                          disabled={queryPagination.currentPage === 1}
-                          className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Previous
-                        </button>
-                        
-                        {Array.from({ length: getTotalPages(filteredQueries.length, queryPagination.itemsPerPage) }, (_, i) => i + 1).map((page) => (
-                          <button
-                            key={page}
-                            onClick={() => handlePageChange('queries', page)}
-                            className={`px-3 py-1 text-sm font-medium rounded-md ${
-                              page === queryPagination.currentPage
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        ))}
-                        
-                        <button
-                          onClick={() => handlePageChange('queries', queryPagination.currentPage + 1)}
-                          disabled={queryPagination.currentPage === getTotalPages(filteredQueries.length, queryPagination.itemsPerPage)}
-                          className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            <QueriesSection
+              queries={getFilteredData(queries, 'queries')}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              queryResponses={queryResponses}
+              setQueryResponses={setQueryResponses}
+              onRespond={handleRespondToQuery}
+              isLoading={isLoading}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+            />
           )}
 
           {/* Tour Bookings Tab */}
           {activeTab === 'tour-bookings' && (
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold">Tour Package Bookings</h2>
-                <div className="flex items-center space-x-4">
-                  {/* Search Box */}
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Search by ID, reference, tour package, user name, or email..."
-                      value={bookingFilters.search}
-                      onChange={(e) => setBookingFilters(prev => ({ ...prev, search: e.target.value }))}
-                      className="block w-96 pl-10 pr-10 py-2 border-2 border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    {bookingFilters.search && (
-                      <button
-                        onClick={() => setBookingFilters(prev => ({ ...prev, search: '' }))}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                      >
-                        <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                  
-                  {/* Results Count */}
-                  <div className="text-sm text-gray-500">
-                    {bookingFilters.search.trim() || bookingFilters.status || bookingFilters.filter ? (
-                      <>Showing {filteredTourBookings.length} of {bookingStats.total} bookings</>
-                    ) : (
-                      <>Total: {bookingStats.total} bookings</>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Statistics Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <div className="text-2xl font-bold text-blue-600">{bookingStats.total}</div>
-                  <div className="text-sm text-blue-700">Total Bookings</div>
-                </div>
-                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                  <div className="text-2xl font-bold text-yellow-600">{bookingStats.pending}</div>
-                  <div className="text-sm text-yellow-700">Pending</div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <div className="text-2xl font-bold text-green-600">{bookingStats.confirmed}</div>
-                  <div className="text-sm text-green-700">Confirmed</div>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                  <div className="text-2xl font-bold text-purple-600">{bookingStats.completed}</div>
-                  <div className="text-sm text-purple-700">Completed</div>
-                </div>
-                <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                  <div className="text-2xl font-bold text-red-600">{bookingStats.cancelled}</div>
-                  <div className="text-sm text-red-700">Cancelled</div>
-                </div>
-              </div>
-
-              {/* Filters */}
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Status Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Filter by Status:
-                    </label>
-                    <select
-                      value={bookingFilters.status}
-                      onChange={(e) => setBookingFilters(prev => ({ ...prev, status: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">All Statuses</option>
-                      <option value="pending">Pending</option>
-                      <option value="confirmed">Confirmed</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
-                  </div>
-
-                  {/* Clear Filters */}
-                  <div className="flex items-end">
-                    <button
-                      onClick={() => setBookingFilters({
-                        status: '',
-                        type: '',
-                        category: '',
-                        filter: '',
-                        search: ''
-                      })}
-                      className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm"
-                    >
-                      Clear Filters
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              {filteredTourBookings.length === 0 ? (
-                <div className="text-center py-12">
-                  <svg className="w-16 h-16 mx-auto mb-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings found</h3>
-                  <p className="text-gray-600 mb-4">
-                    {bookingFilters.status || bookingFilters.filter || bookingFilters.search.trim()
-                      ? 'Try adjusting your filters or search terms to see more results.' 
-                      : 'No tour bookings have been made yet.'}
-                  </p>
-                  {(bookingFilters.status || bookingFilters.filter || bookingFilters.search.trim()) && (
-                    <button
-                      onClick={() => setBookingFilters({
-                        status: '',
-                        type: '',
-                        category: '',
-                        filter: '',
-                        search: ''
-                      })}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Clear All Filters
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div>
-                  <div className="space-y-4">
-                    {getPaginatedData(filteredTourBookings, bookingPagination).map((booking) => (
-                      <AdminBookingCard 
-                        key={booking._id} 
-                        booking={booking} 
-                        onUpdate={() => {
-                          refetchTourBookings();
-                          refetchStats();
-                        }}
-                        type="tour"
-                      />
-                    ))}
-                  </div>
-
-                  {/* Pagination */}
-                  {filteredTourBookings.length > 0 && (
-                    <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-6">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm font-medium text-gray-700">Show:</label>
-                          <select
-                            value={bookingPagination.itemsPerPage}
-                            onChange={(e) => handleItemsPerPageChange('bookings', parseInt(e.target.value))}
-                            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                            <option value={5}>5</option>
-                            <option value={10}>10</option>
-                            <option value={20}>20</option>
-                            <option value={50}>50</option>
-                          </select>
-                          <span className="text-sm text-gray-500">per page</span>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Showing {((bookingPagination.currentPage - 1) * bookingPagination.itemsPerPage) + 1} to {Math.min(bookingPagination.currentPage * bookingPagination.itemsPerPage, filteredTourBookings.length)} of {filteredTourBookings.length} bookings
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handlePageChange('bookings', bookingPagination.currentPage - 1)}
-                          disabled={bookingPagination.currentPage === 1}
-                          className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Previous
-                        </button>
-                        
-                        {Array.from({ length: getTotalPages(filteredTourBookings.length, bookingPagination.itemsPerPage) }, (_, i) => i + 1).map((page) => (
-                          <button
-                            key={page}
-                            onClick={() => handlePageChange('bookings', page)}
-                            className={`px-3 py-1 text-sm font-medium rounded-md ${
-                              page === bookingPagination.currentPage
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        ))}
-                        
-                        <button
-                          onClick={() => handlePageChange('bookings', bookingPagination.currentPage + 1)}
-                          disabled={bookingPagination.currentPage === getTotalPages(filteredTourBookings.length, bookingPagination.itemsPerPage)}
-                          className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            <BookingsSection
+              bookings={getFilteredData(tourBookings, 'bookings')}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              onStatusUpdate={handleBookingStatusUpdate}
+              isLoading={isLoading}
+              type="tour"
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+            />
           )}
 
           {/* Car Bookings Tab */}
           {activeTab === 'car-bookings' && (
-            <div className="p-6">
-              <h2 className="text-xl font-semibold mb-6">Car Rental Bookings</h2>
-              {carBookings.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No car bookings found.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Car Type</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pickup</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Drop-off</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {carBookings.map((booking) => (
-                        <tr key={booking._id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {booking.user?.name || 'N/A'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.carType}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(booking.pickupDate).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(booking.dropoffDate).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                              booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {booking.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{booking.totalAmount}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+            <BookingsSection
+              bookings={getFilteredData(carBookings, 'bookings')}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              onStatusUpdate={handleBookingStatusUpdate}
+              isLoading={isLoading}
+              type="car"
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+            />
+          )}
+
+          {/* Users Tab */}
+          {activeTab === 'users' && (
+            <UsersSection
+              users={getFilteredData(users, 'users')}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              verificationFilter={verificationFilter}
+              setVerificationFilter={setVerificationFilter}
+              onDeleteUser={handleDeleteUser}
+              isLoading={isLoading}
+            />
           )}
 
           {/* Tour Packages Tab */}
           {activeTab === 'tour-packages' && (
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold">Tour Packages Management</h2>
-                <div className="text-sm text-gray-500">
-                  Total: {tourPackages.length} packages
-                </div>
-              </div>
-              
-              {tourPackages.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="mb-4">
-                    <img src="/tour_package.png" alt="Tour Package" className="w-16 h-16 mx-auto opacity-40" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-600 mb-2">No Tour Packages Found</h3>
-                  <p className="text-gray-500 mb-4">Create your first tour package to get started.</p>
-                  <button
-                    onClick={() => setActiveTab('add-package')}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Create Tour Package
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {tourPackages.map((pkg) => (
-                    <div key={pkg._id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                      {/* Package Image */}
-                      <div className="relative h-48 overflow-hidden rounded-t-lg">
-                        <img
-                          src={pkg.images?.featured ? 
-                            (pkg.images.featured.startsWith('http') ? 
-                              pkg.images.featured : 
-                              `${import.meta.env.VITE_API_URL}/${pkg.images.featured}`) :
-                            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-                          }
-                          alt={pkg.title}
-                          className="w-full h-full object-cover"
-                        />
-                        
-                        {/* Status Badge */}
-                        <div className="absolute top-3 left-3">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            pkg.status === 'Published' ? 'bg-green-100 text-green-800' :
-                            pkg.status === 'Draft' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {pkg.status}
-                          </span>
-                        </div>
-
-                        {/* Featured Badge */}
-                        {pkg.featured && (
-                          <div className="absolute top-3 right-3">
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
-                              Featured
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Package Content */}
-                      <div className="p-4">
-                        {/* Title and Duration */}
-                        <div className="mb-3">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{pkg.title}</h3>
-                          <div className="flex items-center text-sm text-gray-500">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {pkg.duration.days} Days / {pkg.duration.nights} Nights
-                          </div>
-                        </div>
-
-                        {/* Description */}
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                          {pkg.shortDescription || pkg.description}
-                        </p>
-
-                        {/* Highlights */}
-                        {pkg.highlights && pkg.highlights.length > 0 && (
-                          <div className="mb-3">
-                            <div className="flex flex-wrap gap-1">
-                              {pkg.highlights.slice(0, 3).map((highlight, index) => (
-                                <span
-                                  key={index}
-                                  className="bg-blue-50 text-blue-600 px-2 py-1 rounded-full text-xs font-medium"
-                                >
-                                  {highlight}
-                                </span>
-                              ))}
-                              {pkg.highlights.length > 3 && (
-                                <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium">
-                                  +{pkg.highlights.length - 3} more
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Statistics */}
-                        <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
-                          <div className="text-center">
-                            <div className="text-lg font-semibold text-blue-600">
-                              {pkg.bookingStats?.totalBookings || 0}
-                            </div>
-                            <div className="text-xs text-gray-500">Total Bookings</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-lg font-semibold text-green-600">
-                              {pkg.bookingStats?.totalTravelers || 0}
-                            </div>
-                            <div className="text-xs text-gray-500">Total Travelers</div>
-                          </div>
-                        </div>
-
-                        {/* Pricing */}
-                        <div className="mb-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <span className="text-lg font-bold text-gray-900">₹{pkg.pricing.basePrice.toLocaleString()}</span>
-                              {pkg.pricing.originalPrice > pkg.pricing.basePrice && (
-                                <span className="text-sm text-gray-500 line-through ml-2">₹{pkg.pricing.originalPrice.toLocaleString()}</span>
-                              )}
-                            </div>
-                            <div className="text-xs text-gray-500">per person</div>
-                          </div>
-                        </div>
-
-                        {/* Created Info */}
-                        <div className="text-xs text-gray-500 mb-4">
-                          Created: {new Date(pkg.createdAt).toLocaleDateString()}
-                          {pkg.createdBy?.name && (
-                            <span> by {pkg.createdBy.name}</span>
-                          )}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleDeleteTourPackage(pkg._id, pkg.title)}
-                            disabled={isLoading}
-                            className="flex-1 bg-red-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            <span>Delete</span>
-                          </button>
-                          
-                          <button
-                            className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700 flex items-center justify-center space-x-1"
-                            onClick={() => {
-                              // You can add edit functionality here later
-                              showSuccess('Edit functionality coming soon!');
-                            }}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            <span>Edit</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <TourPackagesSection
+              packages={getFilteredData(tourPackages, 'packages')}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              onDeletePackage={handleDeleteTourPackage}
+              onAddPackage={() => setActiveTab('add-package')}
+              isLoading={isLoading}
+            />
           )}
 
           {/* Add Package Tab */}
           {activeTab === 'add-package' && (
-            <div className="p-6">
-              <h2 className="text-xl font-semibold mb-6">Add New Tour Package</h2>
-              <form onSubmit={handleTourPackageSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Package Name *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g., Buddhist Circuit Tour"
-                      value={tourPackageForm.name}
-                      onChange={(e) => setTourPackageForm(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Duration *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g., 5 Days / 4 Nights"
-                      value={tourPackageForm.duration}
-                      onChange={(e) => setTourPackageForm(prev => ({ ...prev, duration: e.target.value }))}
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹) *</label>
-                    <input
-                      type="number"
-                      required
-                      placeholder="e.g., 15999"
-                      value={tourPackageForm.price}
-                      onChange={(e) => setTourPackageForm(prev => ({ ...prev, price: e.target.value }))}
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Discount (₹)</label>
-                    <input
-                      type="number"
-                      placeholder="e.g., 4000"
-                      value={tourPackageForm.discount}
-                      onChange={(e) => setTourPackageForm(prev => ({ ...prev, discount: e.target.value }))}
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Original price will be calculated as Price + Discount</p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Summary *</label>
-                  <textarea
-                    required
-                    rows={3}
-                    placeholder="Brief description of the tour package..."
-                    value={tourPackageForm.summary}
-                    onChange={(e) => setTourPackageForm(prev => ({ ...prev, summary: e.target.value }))}
-                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Highlights (one per line) *</label>
-                  <textarea
-                    required
-                    rows={4}
-                    placeholder="Bodh Gaya&#10;Nalanda&#10;Rajgir&#10;Vaishali"
-                    value={tourPackageForm.highlights}
-                    onChange={(e) => setTourPackageForm(prev => ({ ...prev, highlights: e.target.value }))}
-                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Enter each highlight on a new line</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Inclusions (one per line)</label>
-                    <textarea
-                      rows={4}
-                      placeholder="Transportation&#10;Accommodation&#10;Meals as per itinerary&#10;Professional guide"
-                      value={tourPackageForm.inclusions}
-                      onChange={(e) => setTourPackageForm(prev => ({ ...prev, inclusions: e.target.value }))}
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">What's included in the package</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Exclusions (one per line)</label>
-                    <textarea
-                      rows={4}
-                      placeholder="Personal expenses&#10;Travel insurance&#10;Tips and gratuities&#10;Extra activities"
-                      value={tourPackageForm.exclusions}
-                      onChange={(e) => setTourPackageForm(prev => ({ ...prev, exclusions: e.target.value }))}
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">What's not included in the package</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Locations (one per line)</label>
-                    <textarea
-                      rows={3}
-                      placeholder="Bihar Sharif Railway Station&#10;Patna Airport&#10;Gaya Railway Station&#10;Hotel pickup available"
-                      value={tourPackageForm.pickupLocations}
-                      onChange={(e) => setTourPackageForm(prev => ({ ...prev, pickupLocations: e.target.value }))}
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Available pickup points</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Drop Locations (one per line)</label>
-                    <textarea
-                      rows={3}
-                      placeholder="Bihar Sharif Railway Station&#10;Patna Airport&#10;Gaya Railway Station&#10;Hotel drop available"
-                      value={tourPackageForm.dropLocations}
-                      onChange={(e) => setTourPackageForm(prev => ({ ...prev, dropLocations: e.target.value }))}
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Available drop-off points</p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Package Images</label>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">Select multiple images for the tour package</p>
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 flex items-center space-x-2"
-                  >
-                    {isLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Creating...</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        <span>Create Tour Package</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
+            <AddPackageSection
+              form={tourPackageForm}
+              setForm={setTourPackageForm}
+              onSubmit={handleTourPackageSubmit}
+              onImageChange={handleImageChange}
+              isLoading={isLoading}
+            />
           )}
         </div>
       </div>
@@ -1970,11 +547,583 @@ const AdminDashboard = () => {
   );
 };
 
-// AdminBookingCard Component
-const AdminBookingCard = ({ booking, onUpdate, type }) => {
-  const { showSuccess, showError } = useToast();
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+// Simplified StatCard Component
+const StatCard = ({ title, value, badge, icon, color, onClick }) => {
+  const colorClasses = {
+    blue: 'bg-blue-50 hover:bg-blue-100 text-blue-600',
+    green: 'bg-green-50 hover:bg-green-100 text-green-600',
+    purple: 'bg-purple-50 hover:bg-purple-100 text-purple-600',
+    orange: 'bg-orange-50 hover:bg-orange-100 text-orange-600'
+  };
+
+  return (
+    <div 
+      className={`p-4 sm:p-6 rounded-lg cursor-pointer transition-colors duration-200 ${colorClasses[color]}`}
+      onClick={onClick}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{title}</p>
+          <p className={`text-xl sm:text-2xl font-bold ${color === 'blue' ? 'text-blue-600' : color === 'green' ? 'text-green-600' : color === 'purple' ? 'text-purple-600' : 'text-orange-600'}`}>
+            {value}
+          </p>
+        </div>
+        <div className="text-xl sm:text-2xl ml-2">{icon}</div>
+      </div>
+      {badge > 0 && (
+        <div className="mt-2">
+          <span className="bg-red-100 text-red-800 text-xs font-medium px-2 py-1 rounded-full">
+            {badge} pending
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Simplified Queries Section
+const QueriesSection = ({ queries, searchTerm, setSearchTerm, statusFilter, setStatusFilter, queryResponses, setQueryResponses, onRespond, isLoading, currentPage, setCurrentPage, itemsPerPage }) => {
+  // Pagination calculations
+  const totalPages = Math.ceil(queries.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentQueries = queries.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  return (
+    <div className="p-4 sm:p-6">
+      <div className="flex flex-col gap-3 sm:gap-4 mb-6">
+        <h2 className="text-lg sm:text-xl font-semibold">Customer Queries</h2>
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <input
+            type="text"
+            placeholder="Search queries..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1 px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Results Summary */}
+      {queries.length > 0 && (
+        <div className="mb-4 text-sm text-gray-600">
+          Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, queries.length)} of {queries.length} queries
+        </div>
+      )}
+
+      {queries.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-4xl mb-4">💬</div>
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No queries found</h3>
+          <p className="text-sm sm:text-base text-gray-500">No customer queries match your current filters.</p>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-6">
+            {currentQueries.map((query) => (
+              <QueryCard
+                key={query._id}
+                query={query}
+                response={queryResponses[query._id] || ''}
+                setResponse={(response) => setQueryResponses(prev => ({ ...prev, [query._id]: response }))}
+                onRespond={onRespond}
+                isLoading={isLoading}
+              />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* Page Info */}
+                <div className="text-sm text-gray-700">
+                  Page <span className="font-medium">{currentPage}</span> of{' '}
+                  <span className="font-medium">{totalPages}</span>
+                </div>
+
+                {/* Pagination Buttons */}
+                <div className="flex items-center gap-2">
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+
+                  {/* Page Numbers */}
+                  <div className="hidden sm:flex items-center gap-1">
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      if (
+                        pageNumber === 1 ||
+                        pageNumber === totalPages ||
+                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => handlePageChange(pageNumber)}
+                            className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                              currentPage === pageNumber
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      } else if (
+                        pageNumber === currentPage - 2 ||
+                        pageNumber === currentPage + 2
+                      ) {
+                        return (
+                          <span key={pageNumber} className="px-2 text-gray-500">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+
+                  {/* Next Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+
+                {/* Mobile Page Numbers */}
+                <div className="sm:hidden text-sm text-gray-600">
+                  {currentPage} / {totalPages}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+// Simplified Query Card
+const QueryCard = ({ query, response, setResponse, onRespond, isLoading }) => {
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'resolved': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'closed': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-blue-100 text-blue-800';
+    }
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{query.subject}</h3>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-xs sm:text-sm text-gray-600">
+            <span className="truncate">👤 {query.name}</span>
+            <span className="truncate">📧 {query.email}</span>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${getStatusColor(query.status)}`}>
+              {query.status}
+            </span>
+          </div>
+        </div>
+        <span className="text-xs sm:text-sm text-gray-500 flex-shrink-0">
+          {new Date(query.createdAt).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          })}
+        </span>
+      </div>
+
+      <div className="mb-4">
+        <p className="text-sm sm:text-base text-gray-700 bg-gray-50 p-3 sm:p-4 rounded-lg">{query.message}</p>
+      </div>
+
+      {query.response && (
+        <div className="mb-4">
+          <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2">Admin Response:</h4>
+          <p className="text-sm sm:text-base text-gray-700 bg-blue-50 p-3 sm:p-4 rounded-lg border-l-4 border-blue-400">{query.response}</p>
+        </div>
+      )}
+
+      {query.status === 'pending' && (
+        <div className="flex flex-col sm:flex-row gap-2">
+          <textarea
+            value={response}
+            onChange={(e) => setResponse(e.target.value)}
+            placeholder="Type your response..."
+            className="flex-1 px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            rows={3}
+          />
+          <button
+            onClick={() => onRespond(query._id, response)}
+            disabled={isLoading || !response.trim()}
+            className="px-4 py-2 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            {isLoading ? 'Sending...' : 'Send Response'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+// Simplified Bookings Section
+const BookingsSection = ({ bookings, searchTerm, setSearchTerm, statusFilter, setStatusFilter, onStatusUpdate, isLoading, type, currentPage, setCurrentPage, itemsPerPage }) => {
+  // Pagination calculations
+  const totalPages = Math.ceil(bookings.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBookings = bookings.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  return (
+    <div className="p-4 sm:p-6">
+      <div className="flex flex-col gap-3 sm:gap-4 mb-6">
+        <h2 className="text-lg sm:text-xl font-semibold">{type === 'tour' ? 'Tour' : 'Car'} Bookings</h2>
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <input
+            type="text"
+            placeholder="Search bookings..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1 px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Results Summary */}
+      {bookings.length > 0 && (
+        <div className="mb-4 text-sm text-gray-600">
+          Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, bookings.length)} of {bookings.length} bookings
+        </div>
+      )}
+
+      {bookings.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-4xl mb-4">{type === 'tour' ? '🎯' : '🚗'}</div>
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No bookings found</h3>
+          <p className="text-sm sm:text-base text-gray-500">No {type} bookings match your current filters.</p>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-6">
+            {currentBookings.map((booking) => (
+              <BookingCard
+                key={booking._id}
+                booking={booking}
+                onStatusUpdate={onStatusUpdate}
+                isLoading={isLoading}
+                type={type}
+              />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* Page Info */}
+                <div className="text-sm text-gray-700">
+                  Page <span className="font-medium">{currentPage}</span> of{' '}
+                  <span className="font-medium">{totalPages}</span>
+                </div>
+
+                {/* Pagination Buttons */}
+                <div className="flex items-center gap-2">
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+
+                  {/* Page Numbers */}
+                  <div className="hidden sm:flex items-center gap-1">
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      if (
+                        pageNumber === 1 ||
+                        pageNumber === totalPages ||
+                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => handlePageChange(pageNumber)}
+                            className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                              currentPage === pageNumber
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      } else if (
+                        pageNumber === currentPage - 2 ||
+                        pageNumber === currentPage + 2
+                      ) {
+                        return (
+                          <span key={pageNumber} className="px-2 text-gray-500">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+
+                  {/* Next Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+
+                {/* Mobile Page Numbers */}
+                <div className="sm:hidden text-sm text-gray-600">
+                  {currentPage} / {totalPages}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+// Payment Details Section Component
+const PaymentDetailsSection = ({ booking, onUpdate, isLoading }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [paidAmount, setPaidAmount] = useState(booking.paidAmount || 0);
+  const [discount, setDiscount] = useState(booking.discount || 0);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const totalAmount = booking.totalAmount || 0;
+  const dueAmount = Math.max(0, totalAmount - discount - paidAmount);
+
+  const handleSave = async () => {
+    if (paidAmount + discount > totalAmount) {
+      alert('Paid amount plus discount cannot exceed total amount');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await adminService.updateBookingPayment(booking._id, {
+        paidAmount: parseFloat(paidAmount),
+        discount: parseFloat(discount)
+      });
+      
+      // Update local booking object
+      booking.paidAmount = parseFloat(paidAmount);
+      booking.discount = parseFloat(discount);
+      
+      setIsEditing(false);
+      // Trigger a refresh if needed
+      if (onUpdate) {
+        onUpdate();
+      }
+    } catch (error) {
+      alert(error.message || 'Failed to update payment details');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setPaidAmount(booking.paidAmount || 0);
+    setDiscount(booking.discount || 0);
+    setIsEditing(false);
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR'
+    }).format(amount);
+  };
+
+  return (
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 mb-4 border border-blue-200">
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          Payment Details
+        </h4>
+        {!isEditing && (
+          <button
+            onClick={() => setIsEditing(true)}
+            disabled={isLoading}
+            className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            Edit Payment
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Paid Amount */}
+        <div>
+          <label className="text-xs text-gray-600 mb-1 block flex items-center gap-1">
+            <svg className="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Paid Amount
+          </label>
+          {isEditing ? (
+            <input
+              type="number"
+              value={paidAmount}
+              onChange={(e) => setPaidAmount(Math.max(0, parseFloat(e.target.value) || 0))}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              min="0"
+              step="0.01"
+            />
+          ) : (
+            <p className="text-lg font-bold text-green-600">{formatCurrency(paidAmount)}</p>
+          )}
+        </div>
+
+        {/* Discount */}
+        <div>
+          <label className="text-xs text-gray-600 mb-1 block flex items-center gap-1">
+            <svg className="w-3.5 h-3.5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+            Discount
+          </label>
+          {isEditing ? (
+            <input
+              type="number"
+              value={discount}
+              onChange={(e) => setDiscount(Math.max(0, parseFloat(e.target.value) || 0))}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              min="0"
+              step="0.01"
+            />
+          ) : (
+            <p className="text-lg font-bold text-orange-600">{formatCurrency(discount)}</p>
+          )}
+        </div>
+
+        {/* Due Amount (Auto-calculated) */}
+        <div>
+          <label className="text-xs text-gray-600 mb-1 block flex items-center gap-1">
+            <svg className="w-3.5 h-3.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Due Amount
+          </label>
+          <p className={`text-lg font-bold ${dueAmount > 0 ? 'text-red-600' : 'text-gray-400'}`}>
+            {formatCurrency(dueAmount)}
+          </p>
+        </div>
+      </div>
+
+      {/* Total Amount Display */}
+      <div className="mt-3 pt-3 border-t border-blue-200">
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-600">Total Amount:</span>
+          <span className="text-lg font-bold text-gray-900">{formatCurrency(totalAmount)}</span>
+        </div>
+      </div>
+
+      {/* Edit Actions */}
+      {isEditing && (
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex-1 px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+          >
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
+          <button
+            onClick={handleCancel}
+            disabled={isSaving}
+            className="flex-1 px-4 py-2 text-sm font-medium bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Enhanced Booking Card with Better Visual Hierarchy
+const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
+  const isCarBooking = type === 'car';
+  const isTourBooking = type === 'tour';
+
+  // Extract additional data from notes for car bookings
+  let carBookingData = {};
+  if (isCarBooking && booking.notes && booking.notes.length > 0) {
+    try {
+      carBookingData = JSON.parse(booking.notes[0].content);
+    } catch (error) {
+      console.error('Failed to parse car booking notes:', error);
+    }
+  }
+
+  // Get contact number and other details - from notes for car bookings, direct field for tour bookings
+  const contactNumber = isCarBooking ? carBookingData.contactNumber : booking.contactNumber;
+  const emergencyContact = isCarBooking ? carBookingData.emergencyContact : booking.emergencyContact;
+  const carName = isCarBooking ? carBookingData.carName : null;
+  const distance = isCarBooking ? carBookingData.distance : null;
+  const estimatedTime = isCarBooking ? carBookingData.estimatedTime : null;
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -1988,341 +1137,1088 @@ const AdminBookingCard = ({ booking, onUpdate, type }) => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'confirmed':
-        return (
-          <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
       case 'pending':
-        return (
-          <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
+        return <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+      case 'confirmed':
+        return <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
       case 'completed':
-        return (
-          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-          </svg>
-        );
+        return <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>;
       case 'cancelled':
-        return (
-          <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
+        return <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
       default:
         return null;
     }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR'
-    }).format(amount);
-  };
-
-  const handleStatusUpdate = async (newStatus) => {
-    if (window.confirm(`Are you sure you want to ${newStatus} this booking?`)) {
-      setIsUpdating(true);
-      try {
-        if (newStatus === 'confirmed') {
-          await adminService.confirmBooking(booking._id);
-        } else if (newStatus === 'cancelled') {
-          const reason = prompt('Please provide a reason for cancellation:');
-          if (reason) {
-            await adminService.cancelBooking(booking._id, reason);
-          } else {
-            setIsUpdating(false);
-            return;
-          }
-        } else if (newStatus === 'completed') {
-          await adminService.completeBooking(booking._id);
-        }
-        
-        showSuccess(`Booking ${newStatus} successfully!`);
-        onUpdate();
-      } catch (error) {
-        showError(error.message || `Failed to ${newStatus} booking`);
-      } finally {
-        setIsUpdating(false);
+  const handleStatusUpdate = (newStatus) => {
+    console.log('📋 BookingCard handleStatusUpdate called:', { newStatus, type, bookingId: booking._id });
+    let reason = '';
+    if (newStatus === 'cancelled') {
+      reason = prompt('Please provide a reason for cancellation:');
+      if (!reason) {
+        console.log('❌ Cancellation aborted - no reason provided');
+        return;
       }
+    }
+    
+    if (window.confirm(`Are you sure you want to ${newStatus} this booking?`)) {
+      console.log('✅ User confirmed, calling onStatusUpdate with type:', type);
+      onStatusUpdate(booking._id, newStatus, reason, type);
+    } else {
+      console.log('❌ User cancelled the confirmation dialog');
     }
   };
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  const formatTravelDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const formatTime = (timeString) => {
+    if (!timeString) return '';
+    
+    // Parse the time string (assuming format like "14:30" or "09:00")
+    const [hours, minutes] = timeString.split(':');
+    const hour24 = parseInt(hours, 10);
+    const minute = parseInt(minutes, 10);
+    
+    // Convert to 12-hour format
+    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+    const ampm = hour24 >= 12 ? 'PM' : 'AM';
+    
+    // Format with leading zero for minutes if needed
+    const formattedMinute = minute.toString().padStart(2, '0');
+    
+    return `${hour12}:${formattedMinute} ${ampm}`;
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
-      {/* Header */}
-      <div className="p-6 border-b border-gray-50">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-3">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {booking.tourPackage?.title || booking.tourPackage?.name || 'Tour Package'}
-              </h3>
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(booking.status)}`}>
-                {getStatusIcon(booking.status)}
-                <span className="ml-1">{booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span>
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
-              <div className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-                <span className="font-medium">ID: {booking.bookingReference}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span>{booking.user?.name || 'N/A'}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Key Info Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h6m-6 0l-1 12a2 2 0 002 2h6a2 2 0 002-2L15 7" />
-              </svg>
-              <span className="text-xs font-medium text-gray-500 uppercase">Travel Date</span>
-            </div>
-            <p className="text-sm font-semibold text-gray-900">{formatDate(booking.travelDate)}</p>
-          </div>
-          
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span className="text-xs font-medium text-gray-500 uppercase">Travelers</span>
-            </div>
-            <p className="text-sm font-semibold text-gray-900">{booking.numberOfTravelers} people</p>
-          </div>
-          
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
-              <span className="text-xs font-medium text-gray-500 uppercase">Amount</span>
-            </div>
-            <p className="text-sm font-semibold text-green-600">{formatCurrency(booking.totalAmount)}</p>
-          </div>
-          
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h6m-6 0l-1 12a2 2 0 002 2h6a2 2 0 002-2L15 7" />
-              </svg>
-              <span className="text-xs font-medium text-gray-500 uppercase">Booked On</span>
-            </div>
-            <p className="text-sm font-semibold text-gray-900">{formatDate(booking.createdAt)}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Status Messages */}
-      <div className="px-6 py-4">
-        {booking.status === 'pending' && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-sm text-yellow-800 font-medium">Awaiting confirmation</p>
-            </div>
-          </div>
-        )}
-
-        {booking.status === 'confirmed' && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-sm text-green-800 font-medium">Booking confirmed - Ready for travel!</p>
-            </div>
-          </div>
-        )}
-
-        {booking.status === 'completed' && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
-              <p className="text-sm text-blue-800 font-medium">Trip completed successfully!</p>
-            </div>
-          </div>
-        )}
-
-        {booking.status === 'cancelled' && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div>
-                  <p className="text-sm text-red-800 font-medium">
-                    Cancelled by {booking.cancelledByType === 'user' ? 'customer' : 'admin'}
-                    {booking.cancelledBy && ` (${booking.cancelledBy.name})`}
-                  </p>
-                  {booking.cancellationReason && (
-                    <p className="text-xs text-red-600 mt-1">Reason: {booking.cancellationReason}</p>
-                  )}
-                </div>
-              </div>
-              {booking.cancelledAt && (
-                <span className="text-xs text-red-500 font-medium">
-                  {formatDate(booking.cancelledAt)}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Action Buttons */}
-      <div className="px-6 py-4 border-t border-gray-50 bg-gray-50 rounded-b-xl">
-        <div className="flex justify-between items-center">
-          <button 
-            onClick={() => setShowDetails(!showDetails)}
-            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors gap-1"
-          >
-            <svg className={`w-4 h-4 transition-transform ${showDetails ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-all duration-200">
+      {/* Header Section */}
+      <div className="flex items-start gap-3 sm:gap-4 mb-4">
+        {/* Icon */}
+        <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm ${
+          isCarBooking ? 'bg-gradient-to-br from-green-100 to-green-50' : 'bg-gradient-to-br from-blue-100 to-blue-50'
+        }`}>
+          {isCarBooking ? (
+            <svg className="w-6 h-6 sm:w-7 sm:h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
-            {showDetails ? 'Hide Details' : 'View Details'}
-          </button>
-          
-          <div className="flex gap-2">
-            {booking.status === 'pending' && (
-              <>
-                <button
-                  onClick={() => handleStatusUpdate('confirmed')}
-                  disabled={isUpdating}
-                  className="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors gap-1"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {isUpdating ? 'Updating...' : 'Confirm'}
-                </button>
-                <button
-                  onClick={() => handleStatusUpdate('cancelled')}
-                  disabled={isUpdating}
-                  className="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors gap-1"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Cancel
-                </button>
-              </>
-            )}
+          ) : (
+            <svg className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )}
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 min-w-0">
+          {/* Title and Status Badge */}
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-gray-900 text-base sm:text-lg leading-tight mb-1">
+                {isTourBooking 
+                  ? (booking.tourPackage?.title || booking.tourPackage?.name) 
+                  : (carName ? `${carName} (${booking.carType})` : booking.carType)
+                }
+              </h3>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${
+                  isCarBooking ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                }`}>
+                  {isCarBooking ? '🚗 Car Rental' : '🎯 Tour Package'}
+                </span>
+                <span className="text-xs text-gray-500">
+                  ID: <span className="font-mono font-medium">{booking.bookingReference}</span>
+                </span>
+              </div>
+            </div>
             
-            {booking.status === 'confirmed' && (
-              <button
-                onClick={() => handleStatusUpdate('completed')}
-                disabled={isUpdating}
-                className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors gap-1"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                {isUpdating ? 'Updating...' : 'Mark Complete'}
-              </button>
-            )}
+            {/* Status Badge */}
+            <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold border-2 flex items-center gap-1.5 flex-shrink-0 ${getStatusColor(booking.status)}`}>
+              {getStatusIcon(booking.status)}
+              <span className="capitalize">{booking.status}</span>
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Expanded Details */}
-      {showDetails && (
-        <div className="px-6 py-4 border-t border-gray-100 bg-white">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-medium text-gray-500 uppercase">Contact Number</label>
-                <p className="text-sm font-medium text-gray-900">{booking.contactNumber}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500 uppercase">Email</label>
-                <p className="text-sm font-medium text-gray-900">{booking.user?.email || 'N/A'}</p>
-              </div>
-              {booking.emergencyContact && (
-                <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase">WhatsApp Number</label>
-                  <p className="text-sm font-medium text-gray-900">{booking.emergencyContact}</p>
-                </div>
-              )}
+      {/* Basic Information */}
+      <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl p-4 mb-4 border border-gray-200">
+        <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Basic Information
+        </h4>
+
+        {/* Key Information Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Travel Date with Time */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
             </div>
-            
-            <div className="space-y-3">
-              {booking.pickupLocation && (
-                <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase">Pickup Location</label>
-                  <p className="text-sm font-medium text-gray-900">{booking.pickupLocation}</p>
-                </div>
-              )}
-              {booking.dropLocation && (
-                <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase">Drop Location</label>
-                  <p className="text-sm font-medium text-gray-900">{booking.dropLocation}</p>
-                </div>
-              )}
-              <div>
-                <label className="text-xs font-medium text-gray-500 uppercase">Payment Status</label>
-                <p className="text-sm font-medium text-gray-900">{booking.paymentStatus || 'pending'}</p>
-              </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-gray-500">{isCarBooking ? 'Pickup Date' : 'Travel Date'}</p>
+              <p className="text-sm font-semibold text-gray-900 truncate">
+                {formatTravelDate(isCarBooking ? booking.pickupDate : booking.travelDate)}
+                {isCarBooking && booking.pickupTime && (
+                  <span className="block text-xs text-gray-600">at {formatTime(booking.pickupTime)}</span>
+                )}
+              </p>
             </div>
           </div>
-          
-          {booking.specialRequests && (
-            <div className="mb-4">
-              <label className="text-xs font-medium text-gray-500 uppercase">Special Requests</label>
-              <p className="text-sm font-medium text-gray-900 mt-1">{booking.specialRequests}</p>
+
+          {/* Amount */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-gray-500">Amount</p>
+              <p className="text-sm font-bold text-green-600 truncate">
+                ₹{booking.totalAmount?.toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          {/* Travelers/Passengers or Trip Type */}
+          {isTourBooking ? (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-gray-500">Travelers</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {booking.numberOfTravelers} {booking.numberOfTravelers === 1 ? 'person' : 'people'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 515.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-gray-500">Passengers</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {booking.numberOfPassengers || 'N/A'} {booking.numberOfPassengers === 1 ? 'person' : 'people'}
+                </p>
+              </div>
             </div>
           )}
-          
-          {booking.cancellationReason && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-red-800 mb-2">Cancellation Details</h4>
-              <div className="space-y-1">
-                <p className="text-sm text-red-700">
-                  <span className="font-medium">Cancelled by:</span> {booking.cancelledByType === 'user' ? 'Customer' : 'Admin'}
-                  {booking.cancelledBy && ` (${booking.cancelledBy.name})`}
-                </p>
-                <p className="text-sm text-red-700">
-                  <span className="font-medium">Reason:</span> {booking.cancellationReason}
-                </p>
-                {booking.cancelledAt && (
-                  <p className="text-sm text-red-700">
-                    <span className="font-medium">Date:</span> {formatDate(booking.cancelledAt)}
-                  </p>
-                )}
+
+          {/* Trip Type for Car or Booked Date */}
+          {isCarBooking ? (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
               </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-gray-500">Trip Type</p>
+                <p className="text-sm font-semibold text-gray-900 capitalize">
+                  {booking.tripType?.replace('-', ' ') || 'One-way'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-gray-500">Booked On</p>
+                <p className="text-sm font-semibold text-gray-900 truncate">
+                  {formatDate(booking.createdAt)}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Additional Car Booking Details */}
+        {isCarBooking && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Drop-off Date */}
+              {booking.dropoffDate && (
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-gray-500">Drop-off Date & Time</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {formatTravelDate(booking.dropoffDate)}
+                      {carBookingData?.dropTime && (
+                        <span className="block text-xs text-gray-600">at {formatTime(carBookingData.dropTime)}</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Distance */}
+              {distance && (
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-gray-500">Distance</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {distance} km
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Estimated Time */}
+              {estimatedTime && (
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-yellow-50 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-gray-500">Est. Time</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {estimatedTime}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Booking Created */}
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-gray-500">Booked On</p>
+                  <p className="text-sm font-semibold text-gray-900 truncate">
+                    {formatDate(booking.createdAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Cancellation Details */}
+      {booking.status === 'cancelled' && booking.cancellationReason && (
+        <div className="bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-400 rounded-lg p-4 mb-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-red-900 mb-1">Booking Cancelled</p>
+              <p className="text-sm text-red-800 mb-2 leading-relaxed">{booking.cancellationReason}</p>
+              {booking.cancelledAt && (
+                <div className="flex items-center gap-2 text-xs text-red-700">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>
+                    Cancelled on {formatDate(booking.cancelledAt)}
+                    {booking.cancelledByType && (
+                      <span className="font-medium"> by {booking.cancelledByType === 'admin' ? 'Admin' : 'Customer'}</span>
+                    )}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Details Section */}
+      <PaymentDetailsSection 
+        booking={booking}
+        onUpdate={handleStatusUpdate}
+        isLoading={isLoading}
+      />
+
+      {/* Additional Contact & Location Details */}
+      <div className="bg-gray-50 rounded-xl p-4 mb-4">
+        <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Contact & Location Details
+        </h4>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Customer Name */}
+          {booking.user?.name && (
+            <div>
+              <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Customer Name
+              </p>
+              <p className="text-sm font-medium text-gray-900">{booking.user.name}</p>
+            </div>
+          )}
+
+          {/* Email */}
+          {booking.user?.email && (
+            <div>
+              <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Email Address
+              </p>
+              <a href={`mailto:${booking.user.email}`} className="text-sm font-medium text-purple-600 hover:text-purple-800 break-all">
+                {booking.user.email}
+              </a>
+            </div>
+          )}
+
+          {/* Contact Number */}
+          {contactNumber && (
+            <div>
+              <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                Contact Number
+              </p>
+              <a href={`tel:${contactNumber}`} className="text-sm font-medium text-blue-600 hover:text-blue-800">
+                {contactNumber}
+              </a>
+            </div>
+          )}
+
+          {/* WhatsApp Number */}
+          {emergencyContact && (
+            <div>
+              <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                </svg>
+                WhatsApp Number
+              </p>
+              <a 
+                href={`https://wa.me/${emergencyContact.replace(/\D/g, '')}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-green-600 hover:text-green-800 inline-flex items-center gap-1"
+              >
+                {emergencyContact}
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+          )}
+
+          {/* Pickup Location */}
+          {booking.pickupLocation && (
+            <div>
+              <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Pickup Location
+              </p>
+              <p className="text-sm font-medium text-gray-900">{booking.pickupLocation}</p>
+            </div>
+          )}
+
+          {/* Drop Location */}
+          {(booking.dropoffLocation || booking.dropLocation) && (
+            <div>
+              <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Drop Location
+              </p>
+              <p className="text-sm font-medium text-gray-900">{booking.dropoffLocation || booking.dropLocation}</p>
+            </div>
+          )}
+
+          {/* Special Requests */}
+          {booking.specialRequests && (
+            <div className="sm:col-span-2 lg:col-span-3">
+              <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                </svg>
+                Special Requests
+              </p>
+              <p className="text-sm font-medium text-gray-900 bg-white p-3 rounded border border-gray-200">
+                {booking.specialRequests}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Admin Actions */}
+      {booking.status === 'pending' && (
+        <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
+          <button
+            onClick={() => handleStatusUpdate('confirmed')}
+            disabled={isLoading}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Confirm Booking
+          </button>
+          <button
+            onClick={() => handleStatusUpdate('cancelled')}
+            disabled={isLoading}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Cancel Booking
+          </button>
+        </div>
+      )}
+
+      {booking.status === 'confirmed' && (
+        <div className="pt-4 border-t border-gray-200">
+          <button
+            onClick={() => handleStatusUpdate('completed')}
+            disabled={isLoading}
+            className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            Mark as Completed
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Enhanced Users Section with Admin/User Separation and Verification Filters
+const UsersSection = ({ users, searchTerm, setSearchTerm, verificationFilter, setVerificationFilter, onDeleteUser, isLoading }) => {
+  // Separate admin and regular users
+  const adminUsers = users.filter(user => user.role === 'admin');
+  const regularUsers = users.filter(user => user.role !== 'admin');
+
+  // Get verification counts for filter badges
+  const verifiedCount = users.filter(user => user.isVerified).length;
+  const unverifiedCount = users.filter(user => !user.isVerified).length;
+
+  return (
+    <div className="p-4 sm:p-6">
+      <div className="flex flex-col gap-3 sm:gap-4 mb-6">
+        <div>
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Users Management</h2>
+          <p className="text-xs sm:text-sm text-gray-600 mt-1">
+            {adminUsers.length} admin{adminUsers.length !== 1 ? 's' : ''} • {regularUsers.length} user{regularUsers.length !== 1 ? 's' : ''}
+            {verificationFilter && (
+              <span className="ml-2 text-blue-600">
+                • Filtered: {users.length} result{users.length !== 1 ? 's' : ''}
+              </span>
+            )}
+          </p>
+        </div>
+        
+        {/* Search and Filter Controls */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="text"
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1 px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          
+          {/* Verification Filter */}
+          <select
+            value={verificationFilter}
+            onChange={(e) => setVerificationFilter(e.target.value)}
+            className="px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+          >
+            <option value="">All Users</option>
+            <option value="verified">Verified Only ({verifiedCount})</option>
+            <option value="unverified">Unverified Only ({unverifiedCount})</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Filter Tags */}
+      {(searchTerm || verificationFilter) && (
+        <div className="flex flex-wrap items-center gap-2 mb-6 p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <span className="text-xs sm:text-sm font-medium text-blue-800">Active Filters:</span>
+          
+          {searchTerm && (
+            <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm">
+              Search: "{searchTerm.length > 15 ? searchTerm.substring(0, 15) + '...' : searchTerm}"
+              <button
+                onClick={() => setSearchTerm('')}
+                className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </span>
+          )}
+          
+          {verificationFilter && (
+            <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm">
+              Status: {verificationFilter === 'verified' ? 'Verified' : 'Unverified'}
+              <button
+                onClick={() => setVerificationFilter('')}
+                className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </span>
+          )}
+          
+          {(searchTerm || verificationFilter) && (
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setVerificationFilter('');
+              }}
+              className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Clear All
+            </button>
+          )}
+        </div>
+      )}
+
+      {users.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+            </svg>
+          </div>
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No users found</h3>
+          <p className="text-sm sm:text-base text-gray-500">
+            {searchTerm || verificationFilter 
+              ? 'No users match your current search and filter criteria.' 
+              : 'No users available in the system.'
+            }
+          </p>
+          {(searchTerm || verificationFilter) && (
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setVerificationFilter('');
+              }}
+              className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {/* Admin Users Section */}
+          {adminUsers.length > 0 && (
+            <div>
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Administrators</h3>
+                </div>
+                <span className="bg-purple-100 text-purple-800 text-xs font-medium px-2 py-1 rounded-full flex-shrink-0">
+                  {adminUsers.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
+                {adminUsers.map((user) => (
+                  <UserCard
+                    key={user._id}
+                    user={user}
+                    onDelete={onDeleteUser}
+                    isLoading={isLoading}
+                    isAdmin={true}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Regular Users Section */}
+          {regularUsers.length > 0 && (
+            <div>
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Regular Users</h3>
+                </div>
+                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full flex-shrink-0">
+                  {regularUsers.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {regularUsers.map((user) => (
+                  <UserCard
+                    key={user._id}
+                    user={user}
+                    onDelete={onDeleteUser}
+                    isLoading={isLoading}
+                    isAdmin={false}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* No Results Message for Filtered Results */}
+          {(searchTerm || verificationFilter) && adminUsers.length === 0 && regularUsers.length === 0 && (
+            <div className="text-center py-8">
+              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <p className="text-gray-500 mb-3">
+                No users found matching your search and filter criteria
+              </p>
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setVerificationFilter('');
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Clear All Filters
+              </button>
             </div>
           )}
         </div>
       )}
+    </div>
+  );
+};
+
+// Enhanced User Card with Better Admin/User Distinction
+const UserCard = ({ user, onDelete, isLoading, isAdmin }) => {
+  return (
+    <div className={`bg-white border rounded-xl p-5 hover:shadow-md transition-all duration-200 ${
+      isAdmin 
+        ? 'border-purple-200 bg-gradient-to-br from-purple-50 to-white' 
+        : 'border-gray-200 hover:border-gray-300'
+    }`}>
+      {/* Header with Avatar and Role Badge */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center space-x-3">
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+            isAdmin ? 'bg-purple-100' : 'bg-blue-100'
+          }`}>
+            {user.avatar ? (
+              <img
+                src={user.avatar.startsWith('http') ? user.avatar : `${import.meta.env.VITE_API_URL}/${user.avatar}`}
+                alt={user.name}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+            ) : (
+              <span className={`font-semibold text-lg ${
+                isAdmin ? 'text-purple-600' : 'text-blue-600'
+              }`}>
+                {user.name.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center space-x-2 mb-1">
+              <h3 className="font-semibold text-gray-900 truncate">{user.name}</h3>
+              {isAdmin && (
+                <div className="flex items-center space-x-1">
+                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            <p className="text-sm text-gray-600 truncate">{user.email}</p>
+          </div>
+        </div>
+        
+        {/* Role Badge */}
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          isAdmin 
+            ? 'bg-purple-100 text-purple-800 border border-purple-200' 
+            : 'bg-gray-100 text-gray-700 border border-gray-200'
+        }`}>
+          {isAdmin ? 'Admin' : 'User'}
+        </span>
+      </div>
+
+      {/* User Details */}
+      <div className="space-y-3 mb-4">
+        {/* Verification Status */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">Status</span>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            user.isVerified 
+              ? 'bg-green-100 text-green-800 border border-green-200' 
+              : 'bg-red-100 text-red-800 border border-red-200'
+          }`}>
+            {user.isVerified ? (
+              <div className="flex items-center space-x-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Verified</span>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Unverified</span>
+              </div>
+            )}
+          </span>
+        </div>
+
+        {/* Join Date */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">Joined</span>
+          <span className="text-sm font-medium text-gray-900">
+            {new Date(user.createdAt).toLocaleString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true
+            })}
+          </span>
+        </div>
+
+        {/* User ID */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">User ID</span>
+          <span className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-1 rounded">
+            {user._id.slice(-8)}
+          </span>
+        </div>
+      </div>
+
+      {/* Actions */}
+      {!isAdmin && (
+        <div className="pt-3 border-t border-gray-100">
+          <button
+            onClick={() => onDelete(user._id, user.name)}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span>Delete User</span>
+          </button>
+        </div>
+      )}
+
+      {/* Admin Protection Message */}
+      {isAdmin && (
+        <div className="pt-3 border-t border-purple-100">
+          <div className="flex items-center space-x-2 text-xs text-purple-600 bg-purple-50 px-3 py-2 rounded-lg">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <span>Admin accounts are protected</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Simplified Tour Packages Section
+const TourPackagesSection = ({ packages, searchTerm, setSearchTerm, onDeletePackage, onAddPackage, isLoading }) => {
+  return (
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold">Tour Packages</h2>
+        <div className="flex gap-4">
+          <input
+            type="text"
+            placeholder="Search packages..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <button
+            onClick={onAddPackage}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            ➕ Add Package
+          </button>
+        </div>
+      </div>
+
+      {packages.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-4xl mb-4">📦</div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No tour packages found</h3>
+          <p className="text-gray-500 mb-4">Create your first tour package to get started.</p>
+          <button
+            onClick={onAddPackage}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Create Tour Package
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {packages.map((pkg) => (
+            <PackageCard
+              key={pkg._id}
+              package={pkg}
+              onDelete={onDeletePackage}
+              isLoading={isLoading}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Simplified Package Card
+const PackageCard = ({ package: pkg, onDelete, isLoading }) => {
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      <div className="h-48 bg-gray-200">
+        <img
+          src={pkg.images?.featured ? 
+            (pkg.images.featured.startsWith('http') ? 
+              pkg.images.featured : 
+              `${import.meta.env.VITE_API_URL}/${pkg.images.featured}`) :
+            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+          }
+          alt={pkg.title}
+          className="w-full h-full object-cover"
+        />
+      </div>
+      
+      <div className="p-4">
+        <h3 className="font-semibold text-gray-900 mb-2">{pkg.title}</h3>
+        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+          {pkg.shortDescription || pkg.description}
+        </p>
+        
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-lg font-bold text-green-600">
+            ₹{pkg.pricing?.basePrice?.toLocaleString()}
+          </span>
+          <span className="text-sm text-gray-500">
+            {pkg.duration?.days} Days
+          </span>
+        </div>
+
+        <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
+          <span>Bookings: {pkg.bookingStats?.totalBookings || 0}</span>
+          <span>{new Date(pkg.createdAt).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          })}</span>
+        </div>
+
+        <button
+          onClick={() => onDelete(pkg._id, pkg.title)}
+          disabled={isLoading}
+          className="w-full px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+        >
+          🗑️ Delete Package
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Simplified Add Package Section
+const AddPackageSection = ({ form, setForm, onSubmit, onImageChange, isLoading }) => {
+  return (
+    <div className="p-6">
+      <h2 className="text-xl font-semibold mb-6">Add New Tour Package</h2>
+      <form onSubmit={onSubmit} className="space-y-6 max-w-2xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Package Name *</label>
+            <input
+              type="text"
+              required
+              value={form.name}
+              onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., Buddhist Circuit Tour"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Duration *</label>
+            <input
+              type="text"
+              required
+              value={form.duration}
+              onChange={(e) => setForm(prev => ({ ...prev, duration: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., 5 Days / 4 Nights"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹) *</label>
+            <input
+              type="number"
+              required
+              value={form.price}
+              onChange={(e) => setForm(prev => ({ ...prev, price: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., 15999"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Discount (₹)</label>
+            <input
+              type="number"
+              value={form.discount}
+              onChange={(e) => setForm(prev => ({ ...prev, discount: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., 4000"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Summary *</label>
+          <textarea
+            required
+            rows={3}
+            value={form.summary}
+            onChange={(e) => setForm(prev => ({ ...prev, summary: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Brief description of the tour package..."
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Highlights (one per line) *</label>
+          <textarea
+            required
+            rows={4}
+            value={form.highlights}
+            onChange={(e) => setForm(prev => ({ ...prev, highlights: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Bodh Gaya&#10;Nalanda&#10;Rajgir&#10;Vaishali"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Inclusions</label>
+            <textarea
+              rows={3}
+              value={form.inclusions}
+              onChange={(e) => setForm(prev => ({ ...prev, inclusions: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Transportation&#10;Accommodation&#10;Meals"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Exclusions</label>
+            <textarea
+              rows={3}
+              value={form.exclusions}
+              onChange={(e) => setForm(prev => ({ ...prev, exclusions: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Personal expenses&#10;Travel insurance&#10;Tips"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Package Images</label>
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={onImageChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+        >
+          {isLoading ? 'Creating...' : '➕ Create Tour Package'}
+        </button>
+      </form>
     </div>
   );
 };

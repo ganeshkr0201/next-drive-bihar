@@ -55,6 +55,18 @@ router.put('/tour-bookings/:id/status', adminControllers.updatBookingStatus);
 // Update car booking status
 router.put('/car-bookings/:id/status', adminControllers.updateCarBookingStatus);
 
+// Confirm car booking (admin)
+router.patch('/car-bookings/:id/confirm', adminControllers.confirmCarBooking);
+
+// Cancel car booking (admin)
+router.patch('/car-bookings/:id/cancel', adminControllers.cancelCarBooking);
+
+// Complete car booking (admin)
+router.patch('/car-bookings/:id/complete', adminControllers.completeCarBooking);
+
+// Update booking payment details (works for both tour and car bookings)
+router.put('/bookings/:id/payment', adminControllers.updateBookingPayment);
+
 // Get all users
 router.get('/users', adminControllers.getAllUsers);
 

@@ -200,6 +200,59 @@ class AdminService {
     }
   }
 
+  // Update booking payment details
+  async updateBookingPayment(bookingId, paymentData) {
+    try {
+      const response = await api.put(`/admin/bookings/${bookingId}/payment`, paymentData);
+      return response.data;
+    } catch (error) {
+      console.error('Update booking payment error:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  // Confirm car booking
+  async confirmCarBooking(bookingId) {
+    try {
+      console.log('🚗 AdminService: Confirming car booking:', bookingId);
+      const response = await api.patch(`/admin/car-bookings/${bookingId}/confirm`);
+      console.log('✅ AdminService: Car booking confirmed:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ AdminService: Confirm car booking error:', error);
+      console.error('Error response:', error.response?.data);
+      throw this.handleError(error);
+    }
+  }
+
+  // Cancel car booking (admin)
+  async cancelCarBooking(bookingId, reason) {
+    try {
+      console.log('🚗 AdminService: Cancelling car booking:', bookingId, 'Reason:', reason);
+      const response = await api.patch(`/admin/car-bookings/${bookingId}/cancel`, { reason });
+      console.log('✅ AdminService: Car booking cancelled:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ AdminService: Cancel car booking error:', error);
+      console.error('Error response:', error.response?.data);
+      throw this.handleError(error);
+    }
+  }
+
+  // Mark car booking as completed
+  async completeCarBooking(bookingId) {
+    try {
+      console.log('🚗 AdminService: Completing car booking:', bookingId);
+      const response = await api.patch(`/admin/car-bookings/${bookingId}/complete`);
+      console.log('✅ AdminService: Car booking completed:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ AdminService: Complete car booking error:', error);
+      console.error('Error response:', error.response?.data);
+      throw this.handleError(error);
+    }
+  }
+
   // Get all feedbacks
   async getFeedbacks() {
     try {

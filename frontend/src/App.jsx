@@ -22,6 +22,8 @@ import TermsOfService from './pages/TermsOfService';
 import UserDashboard from './pages/UserDashboard';
 import UserProfile from './pages/UserProfile';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminCarManagement from './pages/AdminCarManagement';
+import MyBookings from './pages/MyBookings';
 import NotFound from './pages/NotFound';
 import TourDetail from './pages/TourDetail';
 
@@ -89,14 +91,7 @@ function App() {
                 path="/my-bookings" 
                 element={
                   <ProtectedRoute>
-                    <div className="min-h-screen py-8">
-                      <div className="container mx-auto px-4">
-                        <h1 className="text-4xl font-bold text-center mb-8">My Bookings</h1>
-                        <div className="bg-white rounded-lg shadow-md p-8">
-                          <p className="text-lg text-gray-600">Your booking history will appear here.</p>
-                        </div>
-                      </div>
-                    </div>
+                    <MyBookings />
                   </ProtectedRoute>
                 } 
               />
@@ -113,6 +108,14 @@ function App() {
                 element={
                   <AdminProtectedRoute>
                     <AdminDashboard />
+                  </AdminProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/cars" 
+                element={
+                  <AdminProtectedRoute>
+                    <AdminCarManagement />
                   </AdminProtectedRoute>
                 } 
               />

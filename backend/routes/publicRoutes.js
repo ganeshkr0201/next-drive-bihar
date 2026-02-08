@@ -17,9 +17,15 @@ router.post('/bookings/tour',
     invalidateCacheAfter(['tour_packages:*', 'admin_stats']), // Invalidate cache after booking
     publicControllers.tourBookings
 );
+router.post('/bookings/car', 
+    authenticateJWT, 
+    requireUser, 
+    invalidateCacheAfter(['admin_stats']), // Invalidate cache after car booking
+    publicControllers.carBookings
+);
 router.get('/bookings/my-bookings', authenticateJWT, requireUser, publicControllers.userBookings);
 router.get('/bookings/:id', authenticateJWT, requireUser, publicControllers.singleBookings);
-router.patch('/bookings/:id/cancel', 
+router.put('/bookings/:id/cancel', 
     authenticateJWT, 
     requireUser, 
     invalidateCacheAfter(['admin_stats']), // Invalidate stats after cancellation

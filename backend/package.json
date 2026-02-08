@@ -10,7 +10,8 @@
     "test": "nodemon index.js",
     "start": "node index.js",
     "test-upstash": "node test-upstash.js",
-    "setup-upstash": "node setup-upstash.js"
+    "setup-upstash": "node setup-upstash.js",
+    "update-phone-numbers": "node scripts/updatePhoneNumbers.js"
   },
   "dependencies": {
     "@upstash/redis": "^1.36.1",

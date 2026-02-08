@@ -14,6 +14,7 @@ import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import publicRoutes from './routes/publicRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import carRoutes from './routes/carRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -23,7 +24,6 @@ const initializeServices = async () => {
   try {
     // Connect to database
     await connectToDB(process.env.MONGO_URI);
-    console.log('✅ Database connected successfully');
 
     // Initialize Redis connection
     await redisManager.connect();
@@ -103,6 +103,7 @@ app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api', publicRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/cars', carRoutes);
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {

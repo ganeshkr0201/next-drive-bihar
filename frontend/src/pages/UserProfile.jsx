@@ -26,38 +26,8 @@ const UserProfile = () => {
   const [sessionValid, setSessionValid] = useState(true);
 
   useEffect(() => {
-    // Check session validity when component mounts
-    const checkSession = async () => {
-      try {
-        const sessionUser = await authService.checkSession();
-        if (sessionUser) {
-          updateUser(sessionUser);
-          setSessionValid(true);
-        } else {
-          // Only set session invalid if user is not authenticated locally
-          if (!isAuthenticated) {
-            setSessionValid(false);
-          } else {
-            // User is authenticated locally, assume session is valid
-            // This prevents false session expired messages
-            setSessionValid(true);
-          }
-        }
-      } catch (error) {
-        // Don't immediately invalidate session on network errors
-        // Only invalidate if it's a clear authentication error
-        if (error.response?.status === 401) {
-          setSessionValid(false);
-        } else {
-          // For network errors, keep session valid if user is authenticated locally
-          setSessionValid(isAuthenticated);
-        }
-      }
-    };
-    
+    // Only populate form data when user is available
     if (user && isAuthenticated) {
-      checkSession();
-      
       setFormData({
         name: user.name || '',
         email: user.email || '',
@@ -67,10 +37,11 @@ const UserProfile = () => {
         bio: user.bio || ''
       });
       setImagePreview(user.avatar || null);
+      setSessionValid(true);
     } else if (!isAuthenticated) {
       setSessionValid(false);
     }
-  }, [user, isAuthenticated]);
+  }, [user?.email, isAuthenticated]); // Only depend on user.email to avoid infinite loops
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

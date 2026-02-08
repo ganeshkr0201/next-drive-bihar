@@ -7,6 +7,7 @@ import { generateOTP } from '../utils/generateOtp.js';
 import { cloudinaryUtils } from '../config/cloudinary.js';
 import { generateTokenPair, verifyToken } from '../utils/jwt.js';
 import redisOTPManager from '../utils/redisOtp.js';
+import { formatPhoneNumber } from '../utils/phoneFormatter.js';
 
 
 
@@ -687,7 +688,7 @@ export const userProfile = async (req, res) => {
 
         // Update user fields
         if (name) user.name = name;
-        if (phone !== undefined) user.phone = phone;
+        if (phone !== undefined) user.phone = formatPhoneNumber(phone);
         if (address !== undefined) user.address = address;
         if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth;
         if (bio !== undefined) user.bio = bio;
