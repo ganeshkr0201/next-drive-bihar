@@ -97,7 +97,7 @@ const TermsOfService = () => {
                 <p className="text-gray-700">
                   <strong>Email:</strong> nextdrivebihar@gmail.com<br />
                   <strong>Phone:</strong> +91 87090 83341<br />
-                  <strong>Address:</strong> Bihar Sharif, Nalanda, Bihar 803101, India
+                  <strong>Address:</strong> Soh Sarai, Bihar Sharif, Nalanda, Bihar 803101, India
                 </p>
               </div>
             </section>

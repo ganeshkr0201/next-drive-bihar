@@ -177,7 +177,7 @@ const Contact = () => {
                     <div>
                       <h3 className="text-xl font-semibold text-gray-900 mb-2">Visit Our Office</h3>
                       <p className="text-gray-700 leading-relaxed">
-                        Bihar Sharif<br />
+                        Soh Sarai, Bihar Sharif<br />
                         Nalanda, Bihar 803101<br />
                         India
                       </p>

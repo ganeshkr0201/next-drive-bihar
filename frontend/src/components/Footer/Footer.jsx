@@ -108,7 +108,7 @@ const Footer = () => {
                 </svg>
                 <div>
                   <p className="text-gray-300 text-sm">
-                    Bihar Sharif<br />
+                    Soh Sarai, Bihar Sharif<br />
                     Nalanda, Bihar 803101<br />
                     India
                   </p>
