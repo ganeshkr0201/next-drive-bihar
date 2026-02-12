@@ -21,7 +21,7 @@ const Footer = () => {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">NextDrive Bihar</h2>
-                <p className="text-sm text-gray-300">Your Travel Partner</p>
+                <p className="text-sm text-gray-300">Your Trusted Travel Partner</p>
               </div>
             </div>
             <p className="text-gray-300 mb-3 max-w-md">
