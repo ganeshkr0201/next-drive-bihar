@@ -1,5 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import our_story from '../assets/our_story.jpeg';
+import founder from "../assets/founder.jpeg";
+import no_img from '../assets/no_img.png'
+
+
 
 const About = () => {
   const [activeTab, setActiveTab] = useState('story');
@@ -14,42 +19,70 @@ const About = () => {
   const teamMembers = [
     {
       name: 'Avinash Kumar',
-      role: 'Founder & CEO',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-      bio: 'Passionate about Bihar\'s heritage with 10+ years in tourism industry.',
-      color: 'blue'
+      role: 'Founder',
+      image: founder,
+      bio: 'Passionate about Bihar\'s heritage with 3+ years in tourism industry.',
+      color: 'blue',
+      contact: '917484037926',
+      email: "ganeshkr0201@gmail.com"
     },
     {
-      name: 'Priya Singh',
-      role: 'Operations Manager',
-      image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-      bio: 'Ensures smooth operations and exceptional customer service experiences.',
-      color: 'purple'
-    },
-    {
-      name: 'Amit Sharma',
-      role: 'Tour Guide Coordinator',
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-      bio: 'Coordinates with local guides to provide authentic cultural experiences.',
-      color: 'green'
-    },
-    {
-      name: 'Ravi Gupta',
-      role: 'Fleet Manager',
-      image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&crop=face',
+      name: 'Sonu Kumar',
+      role: 'Operation Manager',
+      image: no_img,
       bio: 'Maintains our premium fleet and ensures vehicle safety standards.',
-      color: 'orange'
+      color: 'green',
+      contact: '917484037926',
+      email: "ganeshkr0201@gmail.com"
+    },
+    {
+      name: 'Amit Kumar',
+      role: 'Tour Guide Coordinator',
+      image: no_img,
+      bio: 'Coordinates with local guides to provide authentic cultural experiences.',
+      color: 'orange',
+      contact: '917484037926',
+      email: "ganeshkr0201@gmail.com"
     }
   ];
 
-  const achievements = [
-    { number: '15K+', label: 'Happy Customers', icon: '😊' },
-    { number: '75+', label: 'Tour Packages', icon: '🎒' },
-    { number: '150+', label: 'Destinations', icon: '📍' },
-    { number: '8+', label: 'Years Experience', icon: '⭐' },
-    { number: '50+', label: 'Premium Vehicles', icon: '🚗' },
-    { number: '24/7', label: 'Customer Support', icon: '📞' }
-  ];
+const achievements = [
+  { number: 5000, suffix: "+", label: "Happy Customers", icon: "😊" },
+  { number: 15, suffix: "+", label: "Tour Packages", icon: "🎒" },
+  { number: 50, suffix: "+", label: "Destinations", icon: "📍" },
+  { number: 2, suffix: "+", label: "Years Experience", icon: "⭐" },
+  { number: 15, suffix: "+", label: "Premium Vehicles", icon: "🚗" },
+  { number: 24, suffix: "/7", label: "Customer Support", icon: "📞" }
+];
+
+
+const Counter = ({ end, suffix = "", duration = 2000 }) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const increment = end / (duration / 16);
+
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, 16);
+
+    return () => clearInterval(timer);
+  }, [end, duration]);
+
+  return (
+    <span>
+      {count}
+      {suffix}
+    </span>
+  );
+};
 
   return (
     <div className="min-h-screen bg-white">
@@ -83,9 +116,16 @@ const About = () => {
             {/* Floating Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16">
               {achievements.slice(0, 4).map((stat, index) => (
-                <div key={index} className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 transform hover:-translate-y-2">
+                <div
+                  key={index}
+                  className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 transform hover:-translate-y-2"
+                >
                   <div className="text-3xl mb-2">{stat.icon}</div>
-                  <div className="text-3xl font-bold text-white mb-1">{stat.number}</div>
+
+                  <div className="text-3xl font-bold text-white mb-1">
+                    <Counter end={stat.number} suffix={stat.suffix} />
+                  </div>
+
                   <div className="text-blue-200 text-sm">{stat.label}</div>
                 </div>
               ))}
@@ -123,14 +163,26 @@ const About = () => {
                   <h2 className="text-4xl font-bold text-gray-900 mb-6">Our Story</h2>
                   <div className="space-y-6 text-gray-600 text-lg leading-relaxed">
                     <p>
-                      Founded with a passion for showcasing Bihar's rich cultural heritage, NextDrive Bihar began as a vision to help travelers discover the hidden gems of this historically significant state.
-                    </p>
-                    <p>
-                      From the ancient ruins of Nalanda University to the spiritual serenity of Bodh Gaya, we've been creating unforgettable journeys that connect people with Bihar's incredible history and culture.
-                    </p>
-                    <p>
-                      What started as a local initiative has evolved into Bihar's trusted travel partner, serving thousands of satisfied customers while maintaining our commitment to quality, authenticity, and exceptional service.
-                    </p>
+Driving Bihar Forward
+</p>
+<p>
+Next Drive Bihar was founded with a simple vision — to make travel in Bihar safe, affordable, and comfortable for everyone. What started as a small local car rental service has grown into a trusted travel partner for families, tourists, students, and business professionals.
+<br></br>
+Based in Bihar Sharif, we proudly serve customers across Bihar including Patna, Rajgir, Gaya, Nalanda, and nearby regions. Our goal has always been clear:
+</p>
+✔ Reliable and on-time service
+<br></br>
+✔ Well-maintained and clean vehicles
+<br></br>
+✔ Professional and polite drivers
+<br></br>
+✔ Transparent pricing with no hidden charges
+<p></p>
+<p>
+We understand that every journey is important — whether it’s a family trip, a business meeting, an airport transfer, or a weekend getaway. That’s why we focus on comfort, safety, and customer satisfaction in every ride.
+</p><p>
+At Next Drive Bihar, we don’t just provide cars — we provide peace of mind. Our team works 24/7 to ensure smooth bookings, quick responses on WhatsApp, and hassle-free travel experiences.
+</p>
                   </div>
                   <div className="flex space-x-4 pt-6">
                     <Link to="/tour-packages" className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors duration-300">
@@ -143,7 +195,7 @@ const About = () => {
                 </div>
                 <div className="relative">
                   <img
-                    src="https://images.unsplash.com/photo-1539650116574-75c0c6d73f6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                    src={our_story}
                     alt="Bihar Heritage"
                     className="rounded-3xl shadow-2xl w-full h-[500px] object-cover transform hover:scale-105 transition-transform duration-500"
                   />
@@ -153,16 +205,16 @@ const About = () => {
             )}
 
             {activeTab === 'mission' && (
-              <div className="text-center max-w-4xl mx-auto">
-                <h2 className="text-4xl font-bold text-gray-900 mb-12">Mission & Vision</h2>
-                <div className="grid md:grid-cols-2 gap-12">
+              <div className="text-center max-w-6xl mx-auto">
+                <h2 className="text-4xl font-bold text-gray-900 mb-12">Mission, Vision & Commitment</h2>
+                <div className="grid md:grid-cols-3 gap-6">
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl p-8">
                     <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
                       <span className="text-2xl">🎯</span>
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h3>
                     <p className="text-gray-600 leading-relaxed">
-                      To provide exceptional travel experiences that showcase Bihar's rich cultural heritage while ensuring comfort, safety, and authenticity for every traveler.
+Our mission is to redefine road travel in Bihar by delivering safe, affordable, and dependable transportation services. Safety is our highest priority — from professionally trained drivers and regularly sanitized, well-maintained vehicles to strict safety standards and 24/7 customer support.
                     </p>
                   </div>
                   <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-3xl p-8">
@@ -171,7 +223,16 @@ const About = () => {
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Vision</h3>
                     <p className="text-gray-600 leading-relaxed">
-                      To become Bihar's leading travel platform, promoting sustainable tourism that benefits local communities while preserving our cultural heritage for future generations.
+Our vision is to become Bihar’s most trusted and customer-focused car rental company, setting the benchmark for safety, reliability, and service excellence. We aim to connect cities, communities, and people through seamless travel experiences powered by innovation, integrity, and care.
+                    </p>
+                  </div>
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-3xl p-8">
+                    <div className="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                      <span className="text-2xl">🔮</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Commitment</h3>
+                    <p className="text-gray-600 leading-relaxed">
+At Next Drive Bihar, safety is not just a priority — it is our promise. We ensure experienced and verified drivers, clean and regularly sanitized vehicles, transparent billing with no hidden charges, 24/7 customer assistance, and punctual, professional service — so every journey is secure, comfortable, and worry-free.
                     </p>
                   </div>
                 </div>
@@ -181,7 +242,7 @@ const About = () => {
             {activeTab === 'team' && (
               <div>
                 <h2 className="text-4xl font-bold text-gray-900 text-center mb-12">Meet Our Team</h2>
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {teamMembers.map((member, index) => (
                     <div key={index} className="text-center group">
                       <div className="relative mb-6">
@@ -195,6 +256,59 @@ const About = () => {
                       <h3 className="text-xl font-bold text-gray-900 mb-2">{member.name}</h3>
                       <p className={`text-${member.color}-600 font-medium mb-4`}>{member.role}</p>
                       <p className="text-gray-600 text-sm leading-relaxed">{member.bio}</p>
+<div className="flex flex-col items-center justify-center text-center text-gray-700 text-sm leading-relaxed mt-3 space-y-3 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 shadow-lg">
+
+                      {/* Email */}
+                      {member?.email && (
+                        <div className="flex items-center justify-center gap-2">
+                          <svg
+                            className="w-4 h-4 text-purple-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                            />
+                          </svg>
+
+                          <a
+                            href={`mailto:${member.email}`}
+                            className="text-sm font-medium text-purple-600 hover:text-purple-800 transition duration-200 break-all"
+                          >
+                            {member.email}
+                          </a>
+                        </div>
+                      )}
+
+                      {/* WhatsApp Contact */}
+                      {member?.contact && (
+                        <div className="flex items-center justify-center gap-2">
+                          <p className="text-xs text-gray-500 mb-0 flex items-center gap-2">
+                            <svg
+                              className="w-4 h-4 text-green-600 flex-shrink-0"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                            </svg>
+
+                            <a
+                              href={`https://wa.me/${member.contact.replace(/\D/g, "")}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm font-medium text-green-600 hover:text-green-800 transition duration-200 leading-none"
+                            >
+                              {member.contact}
+                            </a>
+                          </p>
+                        </div>
+                      )}
+
+                    </div>
                     </div>
                   ))}
                 </div>
@@ -208,7 +322,7 @@ const About = () => {
                   {achievements.map((achievement, index) => (
                     <div key={index} className="text-center bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2">
                       <div className="text-4xl mb-4">{achievement.icon}</div>
-                      <div className="text-3xl font-bold text-gray-900 mb-2">{achievement.number}</div>
+                      <div className="text-3xl font-bold text-gray-900 mb-2">{achievement.number}{achievement.suffix}</div>
                       <div className="text-gray-600">{achievement.label}</div>
                     </div>
                   ))}
