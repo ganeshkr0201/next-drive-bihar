@@ -214,8 +214,8 @@ const Contact = () => {
                     <div>
                       <h3 className="text-xl font-semibold text-gray-900 mb-2">Email Us</h3>
                       <p className="text-gray-700 leading-relaxed">
-                        <a href="mailto:nextdrivebihar@gmail.com" className="hover:text-purple-600 transition-colors">
-                          nextdrivebihar@gmail.com
+                        <a href="mailto:info@nextdrivebihar.in" className="hover:text-purple-600 transition-colors">
+                          info@nextdrivebihar.in
                         </a><br />
                         We'll respond within 24 hours
                       </p>
