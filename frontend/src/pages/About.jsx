@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import our_story from '../assets/our_story.jpeg';
-import founder from "../assets/founder.jpeg";
-import no_img from '../assets/no_img.png'
+import avinash from "../assets/avinash.jpeg";
+import sonu from "../assets/sonu.jpeg";
+import amit from "../assets/amit.jpeg";
+import no_img from '../assets/no_img.png';
 
 
 
@@ -20,29 +22,29 @@ const About = () => {
     {
       name: 'Avinash Kumar',
       role: 'Founder',
-      image: founder,
+      image: avinash,
       bio: 'Passionate about Bihar\'s heritage with 3+ years in tourism industry.',
       color: 'blue',
-      contact: '917484037926',
-      email: "ganeshkr0201@gmail.com"
+      contact: '9835193378',
+      email: "avinash@nextdrivebihar.com"
     },
     {
       name: 'Sonu Kumar',
       role: 'Operation Manager',
-      image: no_img,
+      image: sonu,
       bio: 'Maintains our premium fleet and ensures vehicle safety standards.',
       color: 'green',
-      contact: '917484037926',
-      email: "ganeshkr0201@gmail.com"
+      contact: '8271896816',
+      email: "sonu@nextdrivebihar.in"
     },
     {
       name: 'Amit Kumar',
       role: 'Tour Guide Coordinator',
-      image: no_img,
+      image: amit,
       bio: 'Coordinates with local guides to provide authentic cultural experiences.',
       color: 'orange',
-      contact: '917484037926',
-      email: "ganeshkr0201@gmail.com"
+      contact: '6200294846',
+      email: "amit@nextdrivebihar.in"
     }
   ];
 
@@ -109,7 +111,7 @@ const Counter = ({ end, suffix = "", duration = 2000 }) => {
                 About NextDrive Bihar
               </h1>
               <p className="text-base sm:text-xl md:text-2xl text-blue-100 max-w-4xl mx-auto leading-relaxed px-4">
-                Your trusted partner for exploring Bihar's rich heritage through premium car rentals and curated tour experiences
+                    Your trusted travel partner for exploring Bihar’s rich heritage through premium car rentals and thoughtfully curated tour experiences. Travel in comfort and safety — arrive with confidence
               </p>
             </div>
             
