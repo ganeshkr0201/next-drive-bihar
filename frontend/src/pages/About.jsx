@@ -165,7 +165,7 @@ const Counter = ({ end, suffix = "", duration = 2000 }) => {
                   <h2 className="text-4xl font-bold text-gray-900 mb-6">Our Story</h2>
                   <div className="space-y-6 text-gray-600 text-lg leading-relaxed">
                     <p>
-Driving Bihar Forward - (बिहार को आगे बढ़ाते हुए)
+Driving Bihar Forward - ( बिहार को आगे बढ़ाते हुए )
 </p>
 <p>
 Next Drive Bihar was founded with a simple vision — to make travel in Bihar safe, affordable, and comfortable for everyone. What started as a small local car rental service has grown into a trusted travel partner for families, tourists, students, and business professionals.
