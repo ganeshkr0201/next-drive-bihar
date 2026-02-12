@@ -14,8 +14,8 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    // Redirect to home page with the attempted location
-    return <Navigate to="/" state={{ from: location }} replace />;
+    // Redirect to login page with the attempted location
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;

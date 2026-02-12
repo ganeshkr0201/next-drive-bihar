@@ -85,6 +85,7 @@ userSchema.pre('findOneAndDelete', async function() {
                 const { default: Query } = await import('./Query.js');
                 const { default: Notification } = await import('./Notification.js');
                 const { default: TourPackage } = await import('./TourPackage.js');
+                const { default: Feedback } = await import('./Feedback.js');
 
                 // Delete all user's bookings
                 const deletedBookings = await Booking.deleteMany({ user: userId });
@@ -94,6 +95,9 @@ userSchema.pre('findOneAndDelete', async function() {
 
                 // Delete all user's queries
                 const deletedQueries = await Query.deleteMany({ user: userId });
+
+                // Delete all user's feedback/ratings
+                const deletedFeedback = await Feedback.deleteMany({ user: userId });
 
                 // Delete all notifications sent to this user
                 const deletedReceivedNotifications = await Notification.deleteMany({ recipient: userId });
@@ -109,6 +113,17 @@ userSchema.pre('findOneAndDelete', async function() {
 
                 // Clean up any orphaned queries that reference this user by email
                 const deletedEmailQueries = await Query.deleteMany({ email: user.email, user: { $exists: false } });
+
+                console.log(`🗑️ Cascade delete completed for user ${user.name}:`, {
+                    bookings: deletedBookings.deletedCount,
+                    carBookings: deletedCarBookings.deletedCount,
+                    queries: deletedQueries.deletedCount,
+                    feedback: deletedFeedback.deletedCount,
+                    receivedNotifications: deletedReceivedNotifications.deletedCount,
+                    sentNotifications: deletedSentNotifications.deletedCount,
+                    tourPackagesUpdated: updatedTourPackages.modifiedCount,
+                    emailQueries: deletedEmailQueries.deletedCount
+                });
 
             } catch (cascadeError) {
                 console.error('Error in cascade delete operations:', cascadeError);
@@ -147,6 +162,7 @@ userSchema.pre('deleteOne', { document: true }, async function() {
             const { default: Query } = await import('./Query.js');
             const { default: Notification } = await import('./Notification.js');
             const { default: TourPackage } = await import('./TourPackage.js');
+            const { default: Feedback } = await import('./Feedback.js');
 
             // Delete all user's bookings
             const deletedBookings = await Booking.deleteMany({ user: userId });
@@ -156,6 +172,9 @@ userSchema.pre('deleteOne', { document: true }, async function() {
 
             // Delete all user's queries
             const deletedQueries = await Query.deleteMany({ user: userId });
+
+            // Delete all user's feedback/ratings
+            const deletedFeedback = await Feedback.deleteMany({ user: userId });
 
             // Delete all notifications sent to this user
             const deletedReceivedNotifications = await Notification.deleteMany({ recipient: userId });
@@ -171,6 +190,17 @@ userSchema.pre('deleteOne', { document: true }, async function() {
 
             // Clean up any orphaned queries that reference this user by email
             const deletedEmailQueries = await Query.deleteMany({ email: this.email, user: { $exists: false } });
+
+            console.log(`🗑️ Cascade delete completed for user ${this.name}:`, {
+                bookings: deletedBookings.deletedCount,
+                carBookings: deletedCarBookings.deletedCount,
+                queries: deletedQueries.deletedCount,
+                feedback: deletedFeedback.deletedCount,
+                receivedNotifications: deletedReceivedNotifications.deletedCount,
+                sentNotifications: deletedSentNotifications.deletedCount,
+                tourPackagesUpdated: updatedTourPackages.modifiedCount,
+                emailQueries: deletedEmailQueries.deletedCount
+            });
 
         } catch (cascadeError) {
             console.error('Error in cascade delete operations:', cascadeError);

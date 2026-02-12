@@ -7,8 +7,6 @@ const TourPackages = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [tourPackages, setTourPackages] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('featured');
@@ -17,19 +15,10 @@ const TourPackages = () => {
     loadData();
   }, []);
 
-  useEffect(() => {
-    loadTourPackages();
-  }, [selectedCategory]);
-
   const loadData = async () => {
     try {
-      const [packages, cats] = await Promise.all([
-        tourService.getTourPackages(),
-        tourService.getTourCategories()
-      ]);
-      
+      const packages = await tourService.getTourPackages();
       setTourPackages(packages.map(pkg => tourService.formatTourPackage(pkg)));
-      setCategories(cats);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -37,28 +26,19 @@ const TourPackages = () => {
     }
   };
 
-  const loadTourPackages = async () => {
-    if (!selectedCategory) return;
-    
-    setIsLoading(true);
-    try {
-      const packages = await tourService.getTourPackages({ 
-        category: selectedCategory 
-      });
-      setTourPackages(packages.map(pkg => tourService.formatTourPackage(pkg)));
-    } catch (error) {
-      console.error('Error loading filtered packages:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Filter and sort packages
   const filteredPackages = tourPackages
-    .filter(pkg => 
-      pkg.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pkg.description.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter(pkg => {
+      const searchLower = searchTerm.toLowerCase();
+      const titleMatch = pkg.title.toLowerCase().includes(searchLower);
+      const descriptionMatch = pkg.description.toLowerCase().includes(searchLower);
+      const highlightsMatch = Array.isArray(pkg.highlights) && 
+        pkg.highlights.some(highlight => 
+          highlight.toLowerCase().includes(searchLower)
+        );
+      
+      return titleMatch || descriptionMatch || highlightsMatch;
+    })
     .sort((a, b) => {
       switch (sortBy) {
         case 'price-low':
@@ -96,7 +76,7 @@ const TourPackages = () => {
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 mb-8">
           <div className="flex flex-col lg:flex-row gap-4 items-center">
             {/* Search Bar */}
-            <div className="flex-1 relative">
+            <div className="w-full lg:flex-1 relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -107,16 +87,16 @@ const TourPackages = () => {
                 placeholder="Search tour packages..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-base"
               />
             </div>
 
             {/* Sort Dropdown */}
-            <div className="relative">
+            <div className="w-full lg:w-auto relative">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="appearance-none bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-base"
               >
                 <option value="featured">Featured</option>
                 <option value="price-low">Price: Low to High</option>
@@ -131,37 +111,6 @@ const TourPackages = () => {
               </div>
             </div>
           </div>
-
-          {/* Category Filter */}
-          {categories.length > 0 && (
-            <div className="mt-6">
-              <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={() => setSelectedCategory('')}
-                  className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
-                    selectedCategory === '' 
-                      ? 'bg-blue-600 text-white shadow-lg transform scale-105' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-800'
-                  }`}
-                >
-                  All Categories
-                </button>
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
-                      selectedCategory === category 
-                        ? 'bg-blue-600 text-white shadow-lg transform scale-105' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-800'
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Loading State */}
@@ -198,10 +147,8 @@ const TourPackages = () => {
             ) : (
               <EmptyState 
                 searchTerm={searchTerm}
-                selectedCategory={selectedCategory}
                 onClearFilters={() => {
                   setSearchTerm('');
-                  setSelectedCategory('');
                 }}
               />
             )}
@@ -337,7 +284,7 @@ const TourPackageCard = ({ pkg, isAuthenticated, navigate }) => {
 };
 
 // Empty State Component
-const EmptyState = ({ searchTerm, selectedCategory, onClearFilters }) => (
+const EmptyState = ({ searchTerm, onClearFilters }) => (
   <div className="text-center py-16">
     <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
       <img src="/tour_logo.svg" alt="Tour Package" className="w-12 h-12 opacity-40" />
@@ -346,11 +293,9 @@ const EmptyState = ({ searchTerm, selectedCategory, onClearFilters }) => (
     <p className="text-gray-600 mb-6 max-w-md mx-auto">
       {searchTerm 
         ? `No tour packages match "${searchTerm}". Try different keywords or clear filters.`
-        : selectedCategory 
-        ? `No packages found in "${selectedCategory}" category.`
         : 'No tour packages are currently available.'}
     </p>
-    {(searchTerm || selectedCategory) && (
+    {searchTerm && (
       <button
         onClick={onClearFilters}
         className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"

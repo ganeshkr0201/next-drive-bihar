@@ -17,6 +17,7 @@ const TourDetail = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
+  const [sameAsPhone, setSameAsPhone] = useState(false);
   
   // Booking form state
   const [bookingForm, setBookingForm] = useState({
@@ -351,12 +352,30 @@ const TourDetail = () => {
                         </label>
                         <div className="relative">
                           <input
-                            type="number"
-                            min="1"
-                            max={tourPackage.maxGroupSize}
+                            type="text"
+                            inputMode="numeric"
                             required
                             value={bookingForm.numberOfTravelers}
-                            onChange={(e) => setBookingForm(prev => ({ ...prev, numberOfTravelers: e.target.value }))}
+                            onChange={(e) => {
+                              let value = e.target.value;
+                              // Allow only numbers
+                              value = value.replace(/[^\d]/g, '');
+                              // Remove leading zeros
+                              value = value.replace(/^0+(?=\d)/, '');
+                              const numValue = parseInt(value) || 1;
+                              if (numValue >= 1 && numValue <= tourPackage.maxGroupSize) {
+                                setBookingForm(prev => ({ ...prev, numberOfTravelers: numValue }));
+                              } else if (value === '') {
+                                setBookingForm(prev => ({ ...prev, numberOfTravelers: 1 }));
+                              }
+                            }}
+                            onBlur={(e) => {
+                              const numValue = parseInt(e.target.value) || 1;
+                              setBookingForm(prev => ({ 
+                                ...prev, 
+                                numberOfTravelers: Math.max(1, Math.min(tourPackage.maxGroupSize, numValue))
+                              }));
+                            }}
                             className="w-full px-3 py-2.5 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-gray-900 font-medium"
                             placeholder="1"
                           />
@@ -396,6 +415,25 @@ const TourDetail = () => {
                       <h4 className="text-lg font-semibold text-gray-900">Contact Details</h4>
                     </div>
                     
+                    {/* Checkbox to use same number - Above inputs */}
+                    <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5">
+                      <input
+                        type="checkbox"
+                        id="sameAsPhoneTour"
+                        checked={sameAsPhone}
+                        onChange={(e) => {
+                          setSameAsPhone(e.target.checked);
+                          if (e.target.checked) {
+                            setBookingForm(prev => ({ ...prev, emergencyContact: prev.contactNumber }));
+                          }
+                        }}
+                        className="w-3.5 h-3.5 text-blue-600 bg-white border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <label htmlFor="sameAsPhoneTour" className="text-xs text-gray-700 cursor-pointer select-none font-medium">
+                        WhatsApp number is same as phone number
+                      </label>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -411,10 +449,14 @@ const TourDetail = () => {
                               const value = e.target.value.replace(/\D/g, '');
                               if (value.length <= envConfig.phoneNumberLength) {
                                 setBookingForm(prev => ({ ...prev, contactNumber: value }));
+                                // If checkbox is checked, also update WhatsApp number
+                                if (sameAsPhone) {
+                                  setBookingForm(prev => ({ ...prev, emergencyContact: value }));
+                                }
                               }
                             }}
                             maxLength={envConfig.phoneNumberLength.toString()}
-                            className="w-full px-3 py-2.5 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-gray-900 font-medium"
+                            className="w-full px-3 py-2.5 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-gray-900 font-medium text-base"
                           />
                           <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -437,10 +479,15 @@ const TourDetail = () => {
                               const value = e.target.value.replace(/\D/g, '');
                               if (value.length <= envConfig.phoneNumberLength) {
                                 setBookingForm(prev => ({ ...prev, emergencyContact: value }));
+                                // Uncheck the checkbox if user manually edits WhatsApp number
+                                if (sameAsPhone && value !== bookingForm.contactNumber) {
+                                  setSameAsPhone(false);
+                                }
                               }
                             }}
                             maxLength={envConfig.phoneNumberLength.toString()}
-                            className="w-full px-3 py-2.5 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-gray-900 font-medium"
+                            disabled={sameAsPhone}
+                            className="w-full px-3 py-2.5 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-gray-900 font-medium text-base disabled:opacity-60 disabled:cursor-not-allowed"
                           />
                           <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                             <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24">

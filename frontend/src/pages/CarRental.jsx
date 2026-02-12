@@ -13,9 +13,11 @@ const CarRental = () => {
   
   // Booking type tabs
   const [activeBookingType, setActiveBookingType] = useState('one-way');
+  const [selectedCarCategory, setSelectedCarCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingCars, setLoadingCars] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [sameAsPhone, setSameAsPhone] = useState(false);
 
   // Available cars from database
   const [availableCars, setAvailableCars] = useState([]);
@@ -47,6 +49,7 @@ const CarRental = () => {
     selectedCar: '',
     pickupDate: '',
     pickupTime: '09:00',
+    numberOfPassengers: 1,
     
     // Round trip specific
     dropDate: '',
@@ -321,7 +324,8 @@ const CarRental = () => {
         cost = 0;
     }
 
-    return cost.toFixed(2);
+    // Return rounded whole number
+    return Math.round(cost);
   };
 
   // Handle car selection
@@ -403,6 +407,20 @@ const CarRental = () => {
       return;
     }
 
+    // Validate number of passengers for applicable booking types
+    if ((activeBookingType === 'one-way' || activeBookingType === 'round-trip' || activeBookingType === 'outstation')) {
+      if (!bookingForm.numberOfPassengers || bookingForm.numberOfPassengers < 1) {
+        console.log('❌ Invalid number of passengers');
+        showError('Please enter a valid number of passengers (minimum 1)');
+        return;
+      }
+      if (selectedCarData && bookingForm.numberOfPassengers > selectedCarData.numberOfSeats) {
+        console.log('❌ Too many passengers for selected vehicle');
+        showError(`Selected vehicle has only ${selectedCarData.numberOfSeats} seats. Please select a larger vehicle or reduce passengers.`);
+        return;
+      }
+    }
+
     // Validate contact number
     if (!/^\d{10}$/.test(bookingForm.contactNumber)) {
       console.log('❌ Invalid contact number:', bookingForm.contactNumber);
@@ -438,7 +456,7 @@ const CarRental = () => {
         ...prev,
         distance: estimatedDistance,
         estimatedTime: 'To be confirmed',
-        estimatedCost: estimatedCost.toFixed(2),
+        estimatedCost: Math.round(estimatedCost),
         estimatedHours: 2
       }));
     }
@@ -473,7 +491,9 @@ const CarRental = () => {
         estimatedCost: bookingForm.estimatedCost,
         estimatedHours: bookingForm.estimatedHours,
         tripType: activeBookingType,
-        numberOfPassengers: selectedCarData.numberOfSeats || 4,
+        numberOfPassengers: (activeBookingType === 'one-way' || activeBookingType === 'round-trip' || activeBookingType === 'outstation') 
+          ? bookingForm.numberOfPassengers 
+          : selectedCarData.numberOfSeats || 4,
         pricingDetails: {
           perKm: selectedCarData.pricing[activeBookingType === 'one-way' ? 'oneWay' : 
                  activeBookingType === 'round-trip' ? 'roundTrip' : 
@@ -496,6 +516,7 @@ const CarRental = () => {
         selectedCar: '',
         pickupDate: '',
         pickupTime: '09:00',
+        numberOfPassengers: 1,
         dropDate: '',
         dropTime: '18:00',
         contactNumber: '',
@@ -522,21 +543,32 @@ const CarRental = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 py-8">
-      <div className="container mx-auto px-4 max-w-6xl">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-            Car Rental
-          </h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Book your ride with ease. Choose from multiple booking options and get instant distance calculations.
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white py-12 md:py-16 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 md:px-4 md:py-2 rounded-full mb-4 md:mb-6 border border-white/20">
+              <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-blue-300" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span className="text-xs md:text-sm font-medium">Premium Car Rental Service</span>
+            </div>
+            <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold mb-3 md:mb-4 tracking-tight">
+              Book Your Perfect Ride
+            </h1>
+            <p className="text-base md:text-lg lg:text-xl text-blue-100 max-w-2xl mx-auto px-4">
+              Professional drivers, well-maintained vehicles, and transparent pricing for all your travel needs
+            </p>
+          </div>
         </div>
+      </div>
+
+      <div className="container mx-auto px-4 max-w-6xl -mt-6 md:-mt-8 relative z-10">{/* Content continues */}
 
         {/* Authentication Notice */}
         {!isAuthenticated && (
-          <div className="mb-8">
+          <div className="mb-4 md:mb-6">
             <AuthRequiredMessage 
               title="Login Required for Booking"
               message="Please login to book cars and track your reservations."
@@ -546,66 +578,76 @@ const CarRental = () => {
         )}
 
         {/* Booking Type Tabs */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden mb-8">
-          <div className="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-            <div className="flex overflow-x-auto scrollbar-hide">
+        <div className="bg-white rounded-2xl md:rounded-3xl shadow-xl border border-gray-100 overflow-hidden mb-4 md:mb-6">
+          <div className="bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-200 p-1.5 md:p-2">
+            <div className="flex overflow-x-auto scrollbar-hide gap-1.5 md:gap-2">
               {bookingTypes.map((type) => (
                 <button
                   key={type.id}
                   onClick={() => handleBookingTypeChange(type.id)}
-                  className={`flex-1 min-w-[140px] px-4 py-4 text-center font-medium transition-all border-b-4 ${
+                  className={`flex-1 min-w-[110px] md:min-w-[130px] px-2 md:px-3 py-2 md:py-2.5 rounded-lg md:rounded-xl text-center font-medium transition-all ${
                     activeBookingType === type.id
-                      ? 'border-blue-600 bg-white text-blue-600'
-                      : 'border-transparent text-gray-600 hover:bg-white/50'
+                      ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/30'
+                      : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
                   }`}
                 >
-                  <div className="text-2xl mb-1">{type.icon}</div>
-                  <div className="text-sm font-semibold">{type.label}</div>
+                  <div className="text-base md:text-lg mb-0.5">{type.icon}</div>
+                  <div className="text-[10px] md:text-xs font-semibold leading-tight">{type.label}</div>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Booking Form */}
-          <form onSubmit={handleBookingSubmit} className="p-6 space-y-6">
+          <form onSubmit={handleBookingSubmit} className="p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8">
             {/* Location Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                </svg>
-                Location Details
-              </h3>
+            <div className="space-y-4 md:space-y-5">
+              <div className="flex items-center gap-2 md:gap-3 pb-2 md:pb-3 border-b border-gray-200">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                  <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900">Journey Details</h3>
+                  <p className="text-xs md:text-sm text-gray-500">Enter your pickup and drop locations</p>
+                </div>
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {/* Source City */}
                 <div className="relative">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Source City *
+                  <label className="block text-sm font-bold text-gray-700 mb-2 md:mb-3 flex items-center gap-2">
+                    <div className="w-5 h-5 md:w-6 md:h-6 bg-green-100 rounded-full flex items-center justify-center">
+                      <div className="w-2 md:w-2.5 h-2 md:h-2.5 bg-green-600 rounded-full"></div>
+                    </div>
+                    Pickup Location *
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Enter source city"
+                    placeholder="Enter pickup city or location"
                     value={bookingForm.sourceCity}
                     onChange={(e) => handleSourceCityChange(e.target.value)}
                     onFocus={() => setShowSourceSuggestions(true)}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    className="w-full px-4 md:px-5 py-3 md:py-4 bg-gray-50 border-2 border-gray-200 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-base font-medium placeholder:text-gray-400"
                   />
                   {showSourceSuggestions && sourceSuggestions.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border-2 border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                    <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-60 overflow-y-auto">
                       {sourceSuggestions.map((city, index) => (
                         <button
                           key={index}
                           type="button"
                           onClick={() => selectSourceCity(city)}
-                          className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0"
+                          className="w-full px-5 py-3.5 text-left hover:bg-blue-50 transition-all border-b border-gray-100 last:border-b-0 first:rounded-t-2xl last:rounded-b-2xl"
                         >
-                          <div className="flex items-center gap-2">
-                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            </svg>
-                            <span className="text-sm text-gray-900">{city.description}</span>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              </svg>
+                            </div>
+                            <span className="text-sm font-medium text-gray-900">{city.description}</span>
                           </div>
                         </button>
                       ))}
@@ -615,32 +657,37 @@ const CarRental = () => {
 
                 {/* Destination City */}
                 <div className="relative">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Destination City *
+                  <label className="block text-sm font-bold text-gray-700 mb-2 md:mb-3 flex items-center gap-2">
+                    <div className="w-5 h-5 md:w-6 md:h-6 bg-red-100 rounded-full flex items-center justify-center">
+                      <div className="w-2 md:w-2.5 h-2 md:h-2.5 bg-red-600 rounded-full"></div>
+                    </div>
+                    Drop Location *
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Enter destination city"
+                    placeholder="Enter destination city or location"
                     value={bookingForm.destinationCity}
                     onChange={(e) => handleDestinationCityChange(e.target.value)}
                     onFocus={() => setShowDestinationSuggestions(true)}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    className="w-full px-4 md:px-5 py-3 md:py-4 bg-gray-50 border-2 border-gray-200 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-base font-medium placeholder:text-gray-400"
                   />
                   {showDestinationSuggestions && destinationSuggestions.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border-2 border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                    <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-60 overflow-y-auto">
                       {destinationSuggestions.map((city, index) => (
                         <button
                           key={index}
                           type="button"
                           onClick={() => selectDestinationCity(city)}
-                          className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0"
+                          className="w-full px-5 py-3.5 text-left hover:bg-blue-50 transition-all border-b border-gray-100 last:border-b-0 first:rounded-t-2xl last:rounded-b-2xl"
                         >
-                          <div className="flex items-center gap-2">
-                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            </svg>
-                            <span className="text-sm text-gray-900">{city.description}</span>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              </svg>
+                            </div>
+                            <span className="text-sm font-medium text-gray-900">{city.description}</span>
                           </div>
                         </button>
                       ))}
@@ -651,95 +698,209 @@ const CarRental = () => {
 
               {/* Distance and Time Display */}
               {bookingForm.distance > 0 ? (
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4">
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className="text-2xl font-bold text-blue-600">{bookingForm.distance} km</div>
-                      <div className="text-xs text-gray-600">Distance</div>
+                <div className="bg-gradient-to-br from-slate-900 to-blue-900 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-xl">
+                  <div className="grid grid-cols-3 gap-3 md:gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl md:text-3xl font-bold text-white mb-1">{bookingForm.distance}</div>
+                      <div className="text-[10px] md:text-xs font-medium text-blue-200 uppercase tracking-wide">Kilometers</div>
                     </div>
-                    <div>
-                      <div className="text-2xl font-bold text-green-600">{bookingForm.estimatedTime}</div>
-                      <div className="text-xs text-gray-600">Est. Time</div>
+                    <div className="text-center border-x border-white/20">
+                      <div className="text-2xl md:text-3xl font-bold text-white mb-1">{bookingForm.estimatedTime}</div>
+                      <div className="text-[10px] md:text-xs font-medium text-blue-200 uppercase tracking-wide">Duration</div>
                     </div>
-                    <div>
-                      <div className="text-2xl font-bold text-purple-600">₹{bookingForm.estimatedCost}</div>
-                      <div className="text-xs text-gray-600">Est. Cost</div>
+                    <div className="text-center">
+                      <div className="text-2xl md:text-3xl font-bold text-green-400 mb-1">₹{bookingForm.estimatedCost}</div>
+                      <div className="text-[10px] md:text-xs font-medium text-blue-200 uppercase tracking-wide">Estimated</div>
                     </div>
                   </div>
                 </div>
               ) : bookingForm.sourceCity && bookingForm.destinationCity && activeBookingType !== 'monthly' ? (
-                <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
-                  <div className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p className="text-sm text-blue-800">
-                      Distance and cost will be calculated and confirmed by our team after booking.
-                    </p>
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-xl md:rounded-2xl p-4 md:p-5">
+                  <div className="flex items-start gap-3 md:gap-4">
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-amber-100 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 md:w-5 md:h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-amber-900 mb-1 text-sm md:text-base">Price Confirmation Pending</h4>
+                      <p className="text-xs md:text-sm text-amber-800 leading-relaxed">
+                        Our team will calculate the exact distance and provide you with the final pricing after reviewing your booking.
+                      </p>
+                    </div>
                   </div>
                 </div>
               ) : null}
             </div>
 
             {/* Car Selection */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-                Select Car *
-              </h3>
+            <div className="space-y-4 md:space-y-5">
+              <div className="flex items-center gap-2 md:gap-3 pb-2 md:pb-3 border-b border-gray-200">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30">
+                  <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900">Choose Your Vehicle</h3>
+                  <p className="text-xs md:text-sm text-gray-500">Select from our premium fleet</p>
+                </div>
+              </div>
 
               {loadingCars ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="relative">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-blue-600"></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                      </svg>
+                    </div>
+                  </div>
+                  <p className="text-gray-600 font-medium mt-4">Loading vehicles...</p>
                 </div>
               ) : availableCars.length === 0 ? (
-                <div className="text-center py-8 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
-                  <div className="text-4xl mb-2">🚗</div>
-                  <p className="text-gray-700 font-medium">No cars available at the moment</p>
-                  <p className="text-sm text-gray-600 mt-1">Please check back later or contact support</p>
+                <div className="text-center py-12 bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed border-gray-300 rounded-2xl">
+                  <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-900 font-bold text-lg mb-1">No Vehicles Available</p>
+                  <p className="text-sm text-gray-600">Please check back later or contact our support team</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {availableCars.map((car) => (
-                    <button
-                      key={car._id}
-                      type="button"
-                      onClick={() => handleCarSelection(car._id)}
-                      className={`p-4 rounded-xl border-2 transition-all ${
-                        bookingForm.selectedCar === car._id
-                          ? 'border-blue-600 bg-blue-50 shadow-lg'
-                          : 'border-gray-300 hover:border-blue-300 hover:bg-gray-50'
-                      }`}
+                <div className="space-y-4">
+                  {/* Dropdown Select */}
+                  <div className="relative">
+                    <select
+                      required
+                      value={bookingForm.selectedCar}
+                      onChange={(e) => handleCarSelection(e.target.value)}
+                      className="w-full px-4 md:px-5 py-3 md:py-4 pr-10 md:pr-12 bg-gray-50 border-2 border-gray-200 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all appearance-none text-base font-medium cursor-pointer hover:border-gray-300"
                     >
-                      <div className="text-4xl mb-2">🚗</div>
-                      <div className="font-semibold text-gray-900">{car.name}</div>
-                      <div className="text-xs text-gray-600">{car.numberOfSeats} Seater</div>
-                      <div className="text-xs text-gray-500 mt-1">{car.carType}</div>
-                      {car.features && car.features.length > 0 && (
-                        <div className="text-xs text-blue-600 mt-1">
-                          {car.features.slice(0, 2).join(', ')}
+                      <option value="" className="text-gray-400">Select your preferred vehicle</option>
+                      {availableCars.map((car) => (
+                        <option key={car._id} value={car._id} className="py-2">
+                          {car.name} • {car.carType} • {car.numberOfSeats} Seats • ₹
+                          {car.pricing[activeBookingType === 'one-way' ? 'oneWay' : 
+                             activeBookingType === 'round-trip' ? 'roundTrip' : 
+                             activeBookingType === 'outstation' ? 'outstation' : 
+                             activeBookingType === 'marriage' ? 'marriage' : 'monthly']
+                             [activeBookingType === 'marriage' ? 'perHour' : 
+                              activeBookingType === 'monthly' ? 'price' : 'perKm']}
+                          {activeBookingType === 'marriage' ? '/hr' : 
+                           activeBookingType === 'monthly' ? '/month' : '/km'}
+                          {car.isAvailable ? ' ✓' : ' ✗'}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Selected Car Details Card */}
+                  {selectedCarData && (
+                    <div className="bg-gradient-to-br from-slate-900 to-blue-900 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-2xl border border-blue-800">
+                      <div className="flex items-start gap-3 md:gap-5">
+                        {/* Car Details */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between mb-2 md:mb-3 gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-xl md:text-2xl font-bold text-white mb-1.5 md:mb-2">{selectedCarData.name}</h4>
+                              <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+                                <span className="inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-0.5 md:py-1 bg-blue-500/30 backdrop-blur-sm text-white rounded-md md:rounded-lg text-[10px] md:text-xs font-bold border border-blue-400/30">
+                                  <svg className="w-3 h-3 md:w-3.5 md:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                  </svg>
+                                  {selectedCarData.carType}
+                                </span>
+                                <span className="inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-0.5 md:py-1 bg-purple-500/30 backdrop-blur-sm text-white rounded-md md:rounded-lg text-[10px] md:text-xs font-bold border border-purple-400/30">
+                                  <svg className="w-3 h-3 md:w-3.5 md:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                  </svg>
+                                  {selectedCarData.numberOfSeats} Seats
+                                </span>
+                              </div>
+                            </div>
+                            <span className={`inline-flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold shadow-lg flex-shrink-0 ${
+                              selectedCarData.isAvailable 
+                                ? 'bg-green-500 text-white' 
+                                : 'bg-red-500 text-white'
+                            }`}>
+                              <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-white animate-pulse"></span>
+                              {selectedCarData.isAvailable ? 'Available' : 'Not Available'}
+                            </span>
+                          </div>
+
+                          {/* Features */}
+                          {selectedCarData.features && selectedCarData.features.length > 0 && (
+                            <div className="mb-3 md:mb-4">
+                              <p className="text-[10px] md:text-xs font-bold text-blue-200 mb-1.5 md:mb-2 uppercase tracking-wide">Included Features</p>
+                              <div className="flex flex-wrap gap-1.5 md:gap-2">
+                                {selectedCarData.features.map((feature, idx) => (
+                                  <span key={idx} className="inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-1 md:py-1.5 bg-white/10 backdrop-blur-sm text-white rounded-md md:rounded-lg text-[10px] md:text-xs font-medium border border-white/20">
+                                    <svg className="w-2.5 h-2.5 md:w-3 md:h-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                    {feature}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Pricing */}
+                          <div className="flex items-center justify-between pt-3 md:pt-4 border-t border-white/20">
+                            <div>
+                              <p className="text-[10px] md:text-xs text-blue-200 mb-0.5 md:mb-1 font-medium uppercase tracking-wide">Rate</p>
+                              <p className="text-2xl md:text-3xl font-bold text-white">
+                                ₹{selectedCarData.pricing[activeBookingType === 'one-way' ? 'oneWay' : 
+                                   activeBookingType === 'round-trip' ? 'roundTrip' : 
+                                   activeBookingType === 'outstation' ? 'outstation' : 
+                                   activeBookingType === 'marriage' ? 'marriage' : 'monthly']
+                                   [activeBookingType === 'marriage' ? 'perHour' : 
+                                    activeBookingType === 'monthly' ? 'price' : 'perKm']}
+                                <span className="text-sm md:text-base text-blue-200 font-normal ml-1">
+                                  {activeBookingType === 'marriage' ? '/ hour' : 
+                                   activeBookingType === 'monthly' ? '/ month' : '/ km'}
+                                </span>
+                              </p>
+                            </div>
+                            <div className="w-10 h-10 md:w-12 md:h-12 bg-green-500 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg shadow-green-500/30">
+                              <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                    </button>
-                  ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
             {/* Date and Time Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Pickup Details
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-5">
+              <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/30">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <h3 className="text-xl font-bold text-gray-900">Schedule</h3>
+                  <p className="text-sm text-gray-500">Select your pickup date and time</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-3">
                     Pickup Date *
                   </label>
                   <input
@@ -748,12 +909,12 @@ const CarRental = () => {
                     min={new Date().toISOString().split('T')[0]}
                     value={bookingForm.pickupDate}
                     onChange={(e) => setBookingForm(prev => ({ ...prev, pickupDate: e.target.value }))}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-base font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-gray-700 mb-3">
                     Pickup Time *
                   </label>
                   <input
@@ -761,25 +922,63 @@ const CarRental = () => {
                     required
                     value={bookingForm.pickupTime}
                     onChange={(e) => setBookingForm(prev => ({ ...prev, pickupTime: e.target.value }))}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-base font-medium"
                   />
                 </div>
               </div>
+
+              {/* Number of Passengers - Only for one-way, round-trip, and outstation */}
+              {(activeBookingType === 'one-way' || activeBookingType === 'round-trip' || activeBookingType === 'outstation') && (
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-3">
+                    Number of Passengers *
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    required
+                    placeholder="Enter number of passengers"
+                    value={bookingForm.numberOfPassengers}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/^0+(?=\d)/, '').replace(/\D/g, '');
+                      if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 50)) {
+                        setBookingForm(prev => ({ ...prev, numberOfPassengers: value === '' ? '' : parseInt(value) }));
+                      }
+                    }}
+                    className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-base font-medium placeholder:text-gray-400"
+                  />
+                  {selectedCarData && bookingForm.numberOfPassengers && bookingForm.numberOfPassengers > selectedCarData.numberOfSeats && (
+                    <div className="mt-2 flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3">
+                      <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <p className="text-sm text-red-800 font-medium">
+                        Warning: Selected vehicle has only {selectedCarData.numberOfSeats} seats. Please select a larger vehicle or reduce passengers.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Round Trip - Drop Date */}
             {activeBookingType === 'round-trip' && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  Return Details
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+                  <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <h3 className="text-xl font-bold text-gray-900">Return Schedule</h3>
+                    <p className="text-sm text-gray-500">Select your return date and time</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-3">
                       Return Date *
                     </label>
                     <input
@@ -788,12 +987,12 @@ const CarRental = () => {
                       min={bookingForm.pickupDate || new Date().toISOString().split('T')[0]}
                       value={bookingForm.dropDate}
                       onChange={(e) => setBookingForm(prev => ({ ...prev, dropDate: e.target.value }))}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-base font-medium"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-bold text-gray-700 mb-3">
                       Return Time *
                     </label>
                     <input
@@ -801,7 +1000,7 @@ const CarRental = () => {
                       required
                       value={bookingForm.dropTime}
                       onChange={(e) => setBookingForm(prev => ({ ...prev, dropTime: e.target.value }))}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-base font-medium"
                     />
                   </div>
                 </div>
@@ -809,76 +1008,114 @@ const CarRental = () => {
             )}
 
             {/* Contact Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                Contact Information
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-5">
+              <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <h3 className="text-xl font-bold text-gray-900">Contact Details</h3>
+                  <p className="text-sm text-gray-500">How can we reach you?</p>
+                </div>
+              </div>
+
+              {/* Checkbox to use same number - Above inputs */}
+              <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                <input
+                  type="checkbox"
+                  id="sameAsPhone"
+                  checked={sameAsPhone}
+                  onChange={(e) => {
+                    setSameAsPhone(e.target.checked);
+                    if (e.target.checked) {
+                      setBookingForm(prev => ({ ...prev, emergencyContact: prev.contactNumber }));
+                    }
+                  }}
+                  className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                />
+                <label htmlFor="sameAsPhone" className="text-xs sm:text-sm text-gray-700 cursor-pointer select-none font-medium">
+                  WhatsApp number is same as phone number
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-3">
                     Phone Number *
                   </label>
                   <input
                     type="tel"
                     required
-                    placeholder="Enter 10-digit mobile"
+                    placeholder="Enter 10-digit mobile number"
                     value={bookingForm.contactNumber}
                     onChange={(e) => {
                       const value = e.target.value.replace(/\D/g, '');
                       if (value.length <= 10) {
                         setBookingForm(prev => ({ ...prev, contactNumber: value }));
+                        // If checkbox is checked, also update WhatsApp number
+                        if (sameAsPhone) {
+                          setBookingForm(prev => ({ ...prev, emergencyContact: value }));
+                        }
                       }
                     }}
                     maxLength="10"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-base font-medium placeholder:text-gray-400"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-gray-700 mb-3">
                     WhatsApp Number
                   </label>
                   <input
                     type="tel"
-                    placeholder="Enter WhatsApp number"
+                    placeholder="Enter WhatsApp number (optional)"
                     value={bookingForm.emergencyContact}
                     onChange={(e) => {
                       const value = e.target.value.replace(/\D/g, '');
                       if (value.length <= 10) {
                         setBookingForm(prev => ({ ...prev, emergencyContact: value }));
+                        // Uncheck the checkbox if user manually edits WhatsApp number
+                        if (sameAsPhone && value !== bookingForm.contactNumber) {
+                          setSameAsPhone(false);
+                        }
                       }
                     }}
                     maxLength="10"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    disabled={sameAsPhone}
+                    className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-base font-medium placeholder:text-gray-400 disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
             </div>
 
             {/* Special Requests */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Special Requests
-              </h3>
+            <div className="space-y-5">
+              <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+                <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg shadow-pink-500/30">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Additional Requirements</h3>
+                  <p className="text-sm text-gray-500">Any special requests or preferences?</p>
+                </div>
+              </div>
 
               <textarea
-                rows={3}
-                placeholder="Any special requirements or requests..."
+                rows={4}
+                placeholder="Tell us about any special requirements, preferences, or additional information..."
                 value={bookingForm.specialRequests}
                 onChange={(e) => setBookingForm(prev => ({ ...prev, specialRequests: e.target.value }))}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+                className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all resize-none text-base font-medium placeholder:text-gray-400"
               />
             </div>
 
             {/* Submit Button */}
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-2 md:pt-4">
               <button
                 type="button"
                 onClick={() => {
@@ -888,6 +1125,7 @@ const CarRental = () => {
                     selectedCar: '',
                     pickupDate: '',
                     pickupTime: '09:00',
+                    numberOfPassengers: 1,
                     dropDate: '',
                     dropTime: '18:00',
                     contactNumber: '',
@@ -897,29 +1135,35 @@ const CarRental = () => {
                     estimatedTime: '',
                     estimatedCost: 0
                   });
+                  setSelectedCarData(null);
                 }}
-                className="flex-1 px-6 py-4 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all"
+                className="flex-1 px-6 md:px-8 py-3.5 md:py-4 bg-gray-100 text-gray-700 rounded-xl md:rounded-2xl font-bold hover:bg-gray-200 transition-all text-base border-2 border-gray-200"
               >
-                Reset Form
+                Clear Form
               </button>
               <button
                 type="submit"
                 disabled={isLoading || !isAuthenticated}
-                className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="flex-1 px-6 md:px-8 py-3.5 md:py-4 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white rounded-xl md:rounded-2xl font-bold hover:from-blue-700 hover:via-blue-800 hover:to-indigo-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-blue-500/30 hover:shadow-2xl hover:shadow-blue-600/40 transform hover:-translate-y-0.5 text-base"
               >
                 {isLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Processing...
+                  <div className="flex items-center justify-center gap-2 md:gap-3">
+                    <div className="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-2 border-white border-t-transparent"></div>
+                    <span>Processing...</span>
                   </div>
                 ) : !isAuthenticated ? (
-                  'Login to Book'
+                  <div className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span>Login to Book</span>
+                  </div>
                 ) : (
                   <div className="flex items-center justify-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Confirm Booking
+                    <span>Proceed to Booking</span>
                   </div>
                 )}
               </button>
@@ -928,62 +1172,62 @@ const CarRental = () => {
         </div>
 
         {/* Information Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mt-8">
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-6 md:mt-8">
+          <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-6 md:p-8 text-center border border-gray-100 hover:shadow-xl transition-all">
+            <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-5 shadow-lg shadow-blue-500/30">
+              <svg className="w-7 h-7 md:w-8 md:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Safe & Reliable</h3>
-            <p className="text-gray-600 text-sm">Well-maintained vehicles with professional drivers</p>
+            <h3 className="text-base md:text-lg font-bold text-gray-900 mb-2">Safe & Reliable</h3>
+            <p className="text-gray-600 text-sm leading-relaxed">Well-maintained vehicles with professional, verified drivers</p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-6 md:p-8 text-center border border-gray-100 hover:shadow-xl transition-all">
+            <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-5 shadow-lg shadow-green-500/30">
+              <svg className="w-7 h-7 md:w-8 md:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">24/7 Support</h3>
-            <p className="text-gray-600 text-sm">Round-the-clock customer support and assistance</p>
+            <h3 className="text-base md:text-lg font-bold text-gray-900 mb-2">24/7 Support</h3>
+            <p className="text-gray-600 text-sm leading-relaxed">Round-the-clock customer support and roadside assistance</p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-6 md:p-8 text-center border border-gray-100 hover:shadow-xl transition-all">
+            <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-5 shadow-lg shadow-purple-500/30">
+              <svg className="w-7 h-7 md:w-8 md:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Best Prices</h3>
-            <p className="text-gray-600 text-sm">Competitive rates with transparent pricing</p>
+            <h3 className="text-base md:text-lg font-bold text-gray-900 mb-2">Best Prices</h3>
+            <p className="text-gray-600 text-sm leading-relaxed">Competitive rates with transparent, no-hidden-cost pricing</p>
           </div>
         </div>
       </div>
 
       {/* Confirmation Modal */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl sm:rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden max-h-[95vh] flex flex-col">
             {/* Modal Header */}
-            <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-3 sm:p-4 md:p-6 flex-shrink-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-bold">Confirm Your Booking</h3>
-                    <p className="text-blue-100 text-sm">Please review your booking details</p>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold truncate">Confirm Your Booking</h3>
+                    <p className="text-blue-100 text-xs sm:text-sm hidden sm:block">Please review your booking details</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowConfirmModal(false)}
-                  className="text-white/80 hover:text-white hover:bg-white/10 p-2 rounded-lg transition-all"
+                  className="text-white/80 hover:text-white hover:bg-white/10 p-1.5 sm:p-2 rounded-lg transition-all flex-shrink-0"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -991,82 +1235,90 @@ const CarRental = () => {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+            <div className="p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4 md:space-y-6 overflow-y-auto flex-1">
               {/* Trip Summary */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-200">
-                <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 border-2 border-blue-200">
+                <h4 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4 flex items-center gap-2">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
                   Trip Summary
                 </h4>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center bg-white rounded-lg p-4 shadow-sm">
-                    <div className="text-3xl font-bold text-blue-600">
-                      {bookingForm.distance > 0 ? `${bookingForm.distance} km` : 'TBD'}
+                <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+                  <div className="text-center bg-white rounded-lg p-2 sm:p-3 md:p-4 shadow-sm">
+                    <div className="text-lg sm:text-2xl md:text-3xl font-bold text-blue-600">
+                      {bookingForm.distance > 0 ? `${bookingForm.distance}` : 'TBD'}
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">Total Distance</div>
+                    <div className="text-[10px] sm:text-xs md:text-sm text-gray-600 mt-0.5 sm:mt-1">
+                      {bookingForm.distance > 0 ? 'km' : 'Distance'}
+                    </div>
                   </div>
-                  <div className="text-center bg-white rounded-lg p-4 shadow-sm">
-                    <div className="text-3xl font-bold text-green-600">
+                  <div className="text-center bg-white rounded-lg p-2 sm:p-3 md:p-4 shadow-sm">
+                    <div className="text-lg sm:text-2xl md:text-3xl font-bold text-green-600">
                       {bookingForm.estimatedTime || 'TBD'}
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">Estimated Time</div>
+                    <div className="text-[10px] sm:text-xs md:text-sm text-gray-600 mt-0.5 sm:mt-1">Time</div>
                   </div>
-                  <div className="text-center bg-white rounded-lg p-4 shadow-sm">
-                    <div className="text-3xl font-bold text-purple-600">
-                      {bookingForm.estimatedCost > 0 ? `₹${bookingForm.estimatedCost}` : 'TBD'}
+                  <div className="text-center bg-white rounded-lg p-2 sm:p-3 md:p-4 shadow-sm border-2 border-purple-200">
+                    <div className="text-lg sm:text-2xl md:text-3xl font-bold text-purple-600">
+                      {bookingForm.estimatedCost > 0 ? `₹${bookingForm.estimatedCost.toLocaleString('en-IN')}` : 'TBD'}
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">Estimated Cost</div>
+                    <div className="text-[10px] sm:text-xs md:text-sm text-gray-600 mt-0.5 sm:mt-1 font-semibold">Cost</div>
                   </div>
                 </div>
               </div>
 
               {/* Car Details */}
-              <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                <h4 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-gray-50 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5 border border-gray-200">
+                <h4 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-2 sm:mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
                   Car Details
                 </h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600">Car:</span>
-                    <span className="font-semibold text-gray-900">{selectedCarData?.name}</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between py-1.5 border-b border-gray-200">
+                    <span className="text-xs sm:text-sm text-gray-600">Car</span>
+                    <span className="text-xs sm:text-sm font-semibold text-gray-900">{selectedCarData?.name}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600">Type:</span>
-                    <span className="font-semibold text-gray-900">{selectedCarData?.carType}</span>
+                  <div className="flex items-center justify-between py-1.5 border-b border-gray-200">
+                    <span className="text-xs sm:text-sm text-gray-600">Type</span>
+                    <span className="text-xs sm:text-sm font-semibold text-gray-900">{selectedCarData?.carType}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600">Seats:</span>
-                    <span className="font-semibold text-gray-900">{selectedCarData?.numberOfSeats} Seater</span>
+                  <div className="flex items-center justify-between py-1.5 border-b border-gray-200">
+                    <span className="text-xs sm:text-sm text-gray-600">Seats</span>
+                    <span className="text-xs sm:text-sm font-semibold text-gray-900">{selectedCarData?.numberOfSeats} Seater</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600">Booking Type:</span>
-                    <span className="font-semibold text-gray-900 capitalize">{activeBookingType.replace('-', ' ')}</span>
+                  <div className="flex items-center justify-between py-1.5 border-b border-gray-200">
+                    <span className="text-xs sm:text-sm text-gray-600">Booking Type</span>
+                    <span className="text-xs sm:text-sm font-semibold text-gray-900 capitalize">{activeBookingType.replace('-', ' ')}</span>
                   </div>
+                  {(activeBookingType === 'one-way' || activeBookingType === 'round-trip' || activeBookingType === 'outstation') && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-xs sm:text-sm text-gray-600">Passengers</span>
+                      <span className="text-xs sm:text-sm font-semibold text-gray-900">{bookingForm.numberOfPassengers} {bookingForm.numberOfPassengers === 1 ? 'Person' : 'People'}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Journey Details */}
-              <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                <h4 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-gray-50 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5 border border-gray-200">
+                <h4 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-2 sm:mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   </svg>
                   Journey Details
                 </h4>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-600 rounded-full"></div>
                     </div>
-                    <div className="flex-1">
-                      <div className="text-sm text-gray-600">Pickup Location</div>
-                      <div className="font-semibold text-gray-900">{bookingForm.sourceCity}</div>
-                      <div className="text-sm text-gray-600 mt-1">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] sm:text-xs text-gray-600">Pickup Location</div>
+                      <div className="text-xs sm:text-sm font-semibold text-gray-900 break-words">{bookingForm.sourceCity}</div>
+                      <div className="text-[10px] sm:text-xs text-gray-600 mt-0.5 sm:mt-1">
                         {new Date(bookingForm.pickupDate).toLocaleDateString('en-IN', { 
                           weekday: 'short', 
                           year: 'numeric', 
@@ -1076,15 +1328,15 @@ const CarRental = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <div className="w-3 h-3 bg-red-600 rounded-full"></div>
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-red-600 rounded-full"></div>
                     </div>
-                    <div className="flex-1">
-                      <div className="text-sm text-gray-600">Drop Location</div>
-                      <div className="font-semibold text-gray-900">{bookingForm.destinationCity}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] sm:text-xs text-gray-600">Drop Location</div>
+                      <div className="text-xs sm:text-sm font-semibold text-gray-900 break-words">{bookingForm.destinationCity}</div>
                       {activeBookingType === 'round-trip' && bookingForm.dropDate && (
-                        <div className="text-sm text-gray-600 mt-1">
+                        <div className="text-[10px] sm:text-xs text-gray-600 mt-0.5 sm:mt-1">
                           {new Date(bookingForm.dropDate).toLocaleDateString('en-IN', { 
                             weekday: 'short', 
                             year: 'numeric', 
@@ -1099,42 +1351,42 @@ const CarRental = () => {
               </div>
 
               {/* Contact Details */}
-              <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                <h4 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-gray-50 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5 border border-gray-200">
+                <h4 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-2 sm:mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
                   Contact Information
                 </h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <div className="text-sm text-gray-600">Phone Number</div>
-                    <div className="font-semibold text-gray-900">+91 {bookingForm.contactNumber}</div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between py-1.5 border-b border-gray-200">
+                    <div className="text-[10px] sm:text-xs text-gray-600">Phone Number</div>
+                    <div className="text-xs sm:text-sm font-semibold text-gray-900">+91 {bookingForm.contactNumber}</div>
                   </div>
                   {bookingForm.emergencyContact && (
-                    <div>
-                      <div className="text-sm text-gray-600">WhatsApp Number</div>
-                      <div className="font-semibold text-gray-900">+91 {bookingForm.emergencyContact}</div>
+                    <div className="flex items-center justify-between py-1.5 border-b border-gray-200">
+                      <div className="text-[10px] sm:text-xs text-gray-600">WhatsApp Number</div>
+                      <div className="text-xs sm:text-sm font-semibold text-gray-900">+91 {bookingForm.emergencyContact}</div>
                     </div>
                   )}
                 </div>
                 {bookingForm.specialRequests && (
-                  <div className="mt-3">
-                    <div className="text-sm text-gray-600">Special Requests</div>
-                    <div className="text-gray-900 mt-1">{bookingForm.specialRequests}</div>
+                  <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-200">
+                    <div className="text-[10px] sm:text-xs text-gray-600 mb-1">Special Requests</div>
+                    <div className="text-xs sm:text-sm text-gray-900">{bookingForm.specialRequests}</div>
                   </div>
                 )}
               </div>
 
               {/* Important Note */}
-              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4">
-                <div className="flex gap-3">
-                  <svg className="w-6 h-6 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
+                <div className="flex gap-2 sm:gap-3">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <div>
-                    <h5 className="font-semibold text-yellow-900 mb-1">Important Note</h5>
-                    <p className="text-sm text-yellow-800">
+                  <div className="flex-1 min-w-0">
+                    <h5 className="text-xs sm:text-sm font-semibold text-yellow-900 mb-1">Important Note</h5>
+                    <p className="text-[10px] sm:text-xs text-yellow-800">
                       Your booking will be sent to the admin for confirmation. You will receive a notification once your booking is approved. 
                       {bookingForm.distance > 0 
                         ? ' The estimated cost is subject to change based on actual distance and time.'
@@ -1147,30 +1399,32 @@ const CarRental = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex gap-3">
+            <div className="bg-gray-50 px-3 py-3 sm:px-4 sm:py-3 md:px-6 md:py-4 border-t border-gray-200 flex gap-2 sm:gap-3 flex-shrink-0">
               <button
                 onClick={() => setShowConfirmModal(false)}
                 disabled={isLoading}
-                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 sm:px-6 sm:py-3 bg-gray-200 text-gray-700 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:bg-gray-300 transition-all disabled:opacity-50"
               >
                 Go Back
               </button>
               <button
                 onClick={confirmBooking}
                 disabled={isLoading}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-green-700 transition-all disabled:opacity-50 shadow-lg"
+                className="flex-1 px-4 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:from-blue-700 hover:to-green-700 transition-all disabled:opacity-50 shadow-lg"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Confirming...
+                    <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
+                    <span className="hidden sm:inline">Confirming...</span>
+                    <span className="sm:hidden">Wait...</span>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Confirm Booking
+                    <span className="hidden sm:inline">Confirm Booking</span>
+                    <span className="sm:hidden">Confirm</span>
                   </div>
                 )}
               </button>

@@ -93,13 +93,34 @@ const MyBookings = () => {
   };
 
   const handleCancelBooking = async (bookingId, bookingType) => {
+    const reason = prompt('Please provide a reason for cancellation:');
+    if (!reason || !reason.trim()) {
+      showToast('Cancellation reason is required', 'error');
+      return;
+    }
+
     if (window.confirm('Are you sure you want to cancel this booking?')) {
       try {
-        await bookingService.cancelBooking(bookingId, 'Cancelled by user');
+        setLoading(true);
+        const response = await bookingService.cancelBooking(bookingId, reason.trim());
+        
+        // Update the booking in local state immediately
+        if (response.booking) {
+          setBookings(prevBookings => 
+            prevBookings.map(b => 
+              b._id === bookingId ? response.booking : b
+            )
+          );
+        }
+        
         showToast('Booking cancelled successfully', 'success');
-        loadBookings();
+        
+        // Reload bookings to ensure consistency
+        await loadBookings();
       } catch (error) {
         showToast(error.message || 'Failed to cancel booking', 'error');
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -127,8 +148,12 @@ const MyBookings = () => {
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Scroll to top whenever page changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentPage]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">

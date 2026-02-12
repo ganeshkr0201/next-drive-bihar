@@ -110,46 +110,46 @@ const LoginPage = () => {
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
       
-      <div className="relative flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="relative flex flex-col justify-center py-8 px-4 sm:py-12 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           {/* Logo */}
-          <Link to="/" className="flex items-center justify-center space-x-3 mb-8 group">
+          <Link to="/" className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-3 mb-6 sm:mb-8 group">
             <div className="relative">
               <img 
                 src="/nextDriveLogo.png" 
                 alt="NextDrive Bihar" 
-                className="w-20 h-20 object-contain transition-transform duration-300 group-hover:scale-105"
+                className="w-16 h-16 sm:w-20 sm:h-20 object-contain transition-transform duration-300 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-blue-500 opacity-0 group-hover:opacity-10 rounded-full transition-opacity duration-300"></div>
             </div>
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900">
+            <div className="text-center sm:text-left">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 NextDrive Bihar
               </h1>
             </div>
           </Link>
           
           {/* Welcome Message */}
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
               Welcome Back
             </h2>
-            <p className="text-gray-600">
+            <p className="text-sm sm:text-base text-gray-600 px-4 sm:px-0">
               Sign in to access your account and continue your journey
             </p>
           </div>
           
           {/* Show message if redirected from protected pages */}
           {location.state?.from?.pathname === '/contact' && (
-            <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
-              <div className="flex items-center">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+            <div className="mb-4 sm:mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 sm:p-4">
+              <div className="flex items-start sm:items-center">
+                <div className="w-8 h-8 flex-shrink-0 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                   <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <p className="text-blue-700 text-sm font-medium">
+                <p className="text-blue-700 text-xs sm:text-sm font-medium leading-relaxed">
                   Please log in to submit your query. You'll be redirected to the contact page after login.
                 </p>
               </div>
@@ -157,12 +157,12 @@ const LoginPage = () => {
           )}
           
           {location.state?.from?.pathname?.startsWith('/tour-packages/') && (
-            <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4">
-              <div className="flex items-center">
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+            <div className="mb-4 sm:mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-3 sm:p-4">
+              <div className="flex items-start sm:items-center">
+                <div className="w-8 h-8 flex-shrink-0 bg-green-100 rounded-lg flex items-center justify-center mr-3">
                   <img src="/tour_logo.svg" alt="Tour" className="w-4 h-4" />
                 </div>
-                <p className="text-green-700 text-sm font-medium">
+                <p className="text-green-700 text-xs sm:text-sm font-medium leading-relaxed">
                   {location.state?.message || 'Please log in to book this tour package. You\'ll be redirected back after login.'}
                 </p>
               </div>
@@ -172,8 +172,8 @@ const LoginPage = () => {
 
         {/* Login Form */}
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white/80 backdrop-blur-sm py-10 px-8 shadow-2xl rounded-2xl border border-white/20">
-            <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="bg-white/80 backdrop-blur-sm py-6 px-4 sm:py-10 sm:px-8 shadow-2xl rounded-2xl border border-white/20">
+            <form className="space-y-5 sm:space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
                   Email Address
@@ -192,7 +192,7 @@ const LoginPage = () => {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="block w-full pl-12 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200 text-sm"
+                    className="block w-full pl-12 pr-4 py-3.5 sm:py-3 bg-gray-50 border-2 border-gray-200 rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200 text-base sm:text-sm"
                     placeholder="Enter your email address"
                   />
                 </div>
@@ -216,7 +216,7 @@ const LoginPage = () => {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="block w-full pl-12 pr-12 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200 text-sm"
+                    className="block w-full pl-12 pr-12 py-3.5 sm:py-3 bg-gray-50 border-2 border-gray-200 rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200 text-base sm:text-sm"
                     placeholder="Enter your password"
                   />
                   <button
@@ -238,15 +238,15 @@ const LoginPage = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                 <div className="flex items-center">
                   <input
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-colors duration-200"
+                    className="h-5 w-5 sm:h-4 sm:w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-colors duration-200"
                   />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 font-medium">
+                  <label htmlFor="remember-me" className="ml-2 block text-sm sm:text-sm text-gray-700 font-medium">
                     Remember me
                   </label>
                 </div>
@@ -262,7 +262,7 @@ const LoginPage = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  className="group relative w-full flex justify-center py-4 sm:py-3 px-4 border border-transparent text-base sm:text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   {isLoading ? (
                     <div className="flex items-center">
@@ -282,7 +282,7 @@ const LoginPage = () => {
             </form>
 
             {/* Divider */}
-            <div className="mt-8">
+            <div className="mt-6 sm:mt-8">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-200" />
@@ -294,11 +294,11 @@ const LoginPage = () => {
             </div>
 
             {/* Google Login */}
-            <div className="mt-6">
+            <div className="mt-5 sm:mt-6">
               <button
                 onClick={handleGoogleLogin}
                 disabled={isGoogleLoading || isLoading}
-                className="w-full inline-flex justify-center items-center py-3 px-4 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-md"
+                className="w-full inline-flex justify-center items-center py-3.5 sm:py-3 px-4 border border-gray-200 rounded-xl shadow-sm bg-white text-base sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-md"
               >
                 {isGoogleLoading ? (
                   <>
@@ -320,8 +320,8 @@ const LoginPage = () => {
             </div>
 
             {/* Register Link */}
-            <div className="mt-8 text-center">
-              <p className="text-sm text-gray-600">
+            <div className="mt-6 sm:mt-8 text-center">
+              <p className="text-sm sm:text-sm text-gray-600">
                 Don't have an account?{' '}
                 <Link
                   to="/register"

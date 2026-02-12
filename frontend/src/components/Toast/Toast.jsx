@@ -39,7 +39,7 @@ const Toast = ({ message, type = 'success', duration = 4000, onClose }) => {
   if (!isVisible) return null;
 
   const getToastStyles = () => {
-    const baseStyles = "relative max-w-sm w-full bg-white rounded-xl shadow-2xl border-0 p-0 transition-all duration-300 transform overflow-hidden";
+    const baseStyles = "relative w-full bg-white rounded-lg sm:rounded-xl shadow-2xl border-0 p-0 transition-all duration-300 transform overflow-hidden";
     
     const typeStyles = {
       success: "ring-2 ring-green-100",
@@ -49,8 +49,8 @@ const Toast = ({ message, type = 'success', duration = 4000, onClose }) => {
     };
 
     const animationStyles = isAnimating 
-      ? "translate-x-0 opacity-100 scale-100" 
-      : "translate-x-full opacity-0 scale-95";
+      ? "translate-y-0 opacity-100 scale-100" 
+      : "-translate-y-4 opacity-0 scale-95";
 
     return `${baseStyles} ${typeStyles[type]} ${animationStyles}`;
   };
@@ -76,12 +76,12 @@ const Toast = ({ message, type = 'success', duration = 4000, onClose }) => {
   };
 
   const getIcon = () => {
-    const iconStyles = "h-6 w-6 flex-shrink-0";
+    const iconStyles = "h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0";
     
     switch (type) {
       case 'success':
         return (
-          <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-full">
+          <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-full flex-shrink-0">
             <svg className={`${iconStyles} text-green-600`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
@@ -89,7 +89,7 @@ const Toast = ({ message, type = 'success', duration = 4000, onClose }) => {
         );
       case 'error':
         return (
-          <div className="flex items-center justify-center w-10 h-10 bg-red-100 rounded-full">
+          <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-red-100 rounded-full flex-shrink-0">
             <svg className={`${iconStyles} text-red-600`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -97,7 +97,7 @@ const Toast = ({ message, type = 'success', duration = 4000, onClose }) => {
         );
       case 'warning':
         return (
-          <div className="flex items-center justify-center w-10 h-10 bg-yellow-100 rounded-full">
+          <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-yellow-100 rounded-full flex-shrink-0">
             <svg className={`${iconStyles} text-yellow-600`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
@@ -105,7 +105,7 @@ const Toast = ({ message, type = 'success', duration = 4000, onClose }) => {
         );
       case 'info':
         return (
-          <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
+          <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex-shrink-0">
             <svg className={`${iconStyles} text-blue-600`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -142,19 +142,20 @@ const Toast = ({ message, type = 'success', duration = 4000, onClose }) => {
       <div className={`absolute left-0 top-0 bottom-0 w-1 ${getAccentColor()}`} />
       
       {/* Main content */}
-      <div className={`${getGradientBackground()} p-4`}>
-        <div className="flex items-start space-x-3">
+      <div className={`${getGradientBackground()} p-3 sm:p-4`}>
+        <div className="flex items-start gap-2 sm:gap-3">
           {getIcon()}
           
           <div className="flex-1 min-w-0">
-            <p className={`text-sm font-semibold leading-5 ${getTextColor()}`}>
+            <p className={`text-xs sm:text-sm font-semibold leading-snug sm:leading-5 ${getTextColor()} break-words`}>
               {message}
             </p>
           </div>
           
           <button
             onClick={handleClose}
-            className="flex-shrink-0 ml-4 inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition-colors duration-200 rounded-full p-1 hover:bg-white/50"
+            className="flex-shrink-0 inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition-colors duration-200 rounded-full p-1 hover:bg-white/50 touch-manipulation"
+            aria-label="Close notification"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

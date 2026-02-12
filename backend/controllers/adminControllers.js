@@ -623,6 +623,10 @@ export const cancelBooking = async (req, res) => {
     booking.cancelledByType = 'admin';
     booking.cancelledAt = new Date();
     
+    // Reset payment details when booking is cancelled
+    booking.paidAmount = 0;
+    booking.discount = 0;
+    
     await booking.save();
 
     // Send cancellation notification to user
@@ -865,6 +869,10 @@ export const cancelCarBooking = async (req, res) => {
     booking.cancelledByType = 'admin';
     booking.cancelledAt = new Date();
     
+    // Reset payment details when booking is cancelled
+    booking.paidAmount = 0;
+    booking.discount = 0;
+    
     await booking.save();
 
     // Send cancellation notification to user
@@ -974,12 +982,12 @@ export const updateBookingPayment = async (req, res) => {
       });
     }
 
-    // Update payment fields
+    // Update payment fields with rounding
     if (paidAmount !== undefined) {
-      booking.paidAmount = parseFloat(paidAmount);
+      booking.paidAmount = Math.round(parseFloat(paidAmount));
     }
     if (discount !== undefined) {
-      booking.discount = parseFloat(discount);
+      booking.discount = Math.round(parseFloat(discount));
     }
 
     // Validate that paid amount + discount doesn't exceed total
@@ -1142,10 +1150,10 @@ export const deleteUser = async (req, res) => {
     }
 
     // Get user statistics before deletion for response
-    let tourBookings = 0, carBookings = 0, queries = 0, notifications = 0;
+    let tourBookings = 0, carBookings = 0, queries = 0, notifications = 0, feedback = 0;
     
     try {
-      [tourBookings, carBookings, queries, notifications] = await Promise.all([
+      [tourBookings, carBookings, queries, notifications, feedback] = await Promise.all([
         Booking.countDocuments({ user: id }),
         CarBooking.countDocuments({ user: id }),
         Query.countDocuments({ user: id }),
@@ -1154,7 +1162,15 @@ export const deleteUser = async (req, res) => {
             { recipient: id },
             { sender: id }
           ]
-        })
+        }),
+        (async () => {
+          try {
+            const { default: Feedback } = await import('../models/Feedback.js');
+            return await Feedback.countDocuments({ user: id });
+          } catch (err) {
+            return 0;
+          }
+        })()
       ]);
     } catch (statsError) {
       console.error('Error getting user statistics:', statsError);
@@ -1172,6 +1188,7 @@ export const deleteUser = async (req, res) => {
         tourBookings,
         carBookings,
         queries,
+        feedback,
         notifications,
         avatar: user.avatar ? 'Yes' : 'No'
       }

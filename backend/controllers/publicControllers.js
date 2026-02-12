@@ -1,6 +1,7 @@
 import TourPackage from '../models/TourPackage.js';
 import Booking from '../models/Booking.js';
 import CarBooking from '../models/CarBooking.js';
+import Car from '../models/Car.js';
 import Query from '../models/Query.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
@@ -157,6 +158,9 @@ export const tourBookings = async (req, res) => {
     const formattedContactNumber = formatPhoneNumber(contactNumber);
     const formattedEmergencyContact = emergencyContact ? formatPhoneNumber(emergencyContact) : null;
 
+    // Round off the total amount to nearest integer
+    const roundedAmount = Math.round(parseFloat(totalAmount));
+
     // Create booking
     const booking = new Booking({
       user: req.user._id,
@@ -164,7 +168,7 @@ export const tourBookings = async (req, res) => {
       type: 'tour',
       numberOfTravelers: parseInt(numberOfTravelers),
       travelDate: travelDateTime,
-      totalAmount: parseFloat(totalAmount),
+      totalAmount: roundedAmount,
       specialRequests,
       contactNumber: formattedContactNumber,
       emergencyContact: formattedEmergencyContact,
@@ -231,19 +235,17 @@ export const carBookings = async (req, res) => {
       specialRequests,
       distance,
       estimatedTime,
-      estimatedCost,
       estimatedHours,
       tripType,
-      pricingDetails,
       numberOfPassengers
     } = req.body;
 
     // Validate required fields
-    if (!carType || !sourceCity || !destinationCity || !pickupDate || !contactNumber) {
+    if (!carId || !carType || !sourceCity || !destinationCity || !pickupDate || !contactNumber) {
       console.log('❌ Validation failed: Missing required fields');
       return res.status(400).json({
         success: false,
-        message: 'Car type, source city, destination city, pickup date, and contact number are required'
+        message: 'Car ID, car type, source city, destination city, pickup date, and contact number are required'
       });
     }
 
@@ -257,11 +259,64 @@ export const carBookings = async (req, res) => {
       });
     }
 
+    // Fetch car details from database to get pricing
+    const car = await Car.findById(carId);
+    if (!car) {
+      console.log('❌ Car not found');
+      return res.status(404).json({
+        success: false,
+        message: 'Selected car not found'
+      });
+    }
+
+    if (!car.isAvailable || car.status !== 'Active') {
+      console.log('❌ Car not available');
+      return res.status(400).json({
+        success: false,
+        message: 'Selected car is not available for booking'
+      });
+    }
+
+    // Calculate price on backend for security
+    const bookingTypeKey = (tripType || bookingType || 'one-way').toLowerCase();
+    let calculatedCost = 0;
+    const distanceKm = parseFloat(distance) || 0;
+    const hours = parseFloat(estimatedHours) || 0;
+
+    console.log('💰 Calculating price for booking type:', bookingTypeKey);
+    console.log('📏 Distance:', distanceKm, 'km, Hours:', hours);
+
+    switch (bookingTypeKey) {
+      case 'one-way':
+        calculatedCost = (distanceKm * car.pricing.oneWay.perKm) + car.pricing.oneWay.extraAmount;
+        break;
+      case 'round-trip':
+        calculatedCost = (distanceKm * 2 * car.pricing.roundTrip.perKm) + car.pricing.roundTrip.extraAmount;
+        break;
+      case 'outstation':
+        calculatedCost = (distanceKm * car.pricing.outstation.perKm) + car.pricing.outstation.extraAmount;
+        break;
+      case 'marriage':
+        const marriageHours = Math.max(hours, 8); // Minimum 8 hours for marriage
+        calculatedCost = (marriageHours * car.pricing.marriage.perHour) + car.pricing.marriage.extraAmount;
+        break;
+      case 'monthly':
+        calculatedCost = car.pricing.monthly.price + car.pricing.monthly.extraAmount;
+        break;
+      default:
+        calculatedCost = 0;
+    }
+
+    console.log('💵 Calculated cost:', calculatedCost);
+
     // Format phone numbers to include +91 prefix
     const formattedContactNumber = formatPhoneNumber(contactNumber);
     const formattedEmergencyContact = emergencyContact ? formatPhoneNumber(emergencyContact) : null;
 
     console.log('✅ Validation passed, creating car booking...');
+
+    // Round off the calculated cost to nearest integer
+    const roundedAmount = Math.round(calculatedCost);
 
     // Create car booking with correct field mapping
     const carBooking = new CarBooking({
@@ -273,8 +328,8 @@ export const carBookings = async (req, res) => {
       dropoffDate: dropDate ? new Date(`${dropDate}T${dropTime || '18:00'}`) : pickupDateTime,
       pickupTime: pickupTime || '09:00',
       numberOfPassengers: numberOfPassengers || 4,
-      tripType: (tripType || bookingType || 'one-way').toLowerCase(),
-      totalAmount: parseFloat(estimatedCost) || 0,
+      tripType: bookingTypeKey,
+      totalAmount: roundedAmount,
       paidAmount: 0,
       discount: 0,
       status: 'pending',
@@ -284,15 +339,22 @@ export const carBookings = async (req, res) => {
       notes: [{
         content: JSON.stringify({
           carId,
-          carName,
+          carName: car.name,
+          carModel: car.carType,
           sourceCity,
           destinationCity,
           contactNumber: formattedContactNumber,
           emergencyContact: formattedEmergencyContact,
-          distance,
+          distance: distanceKm,
           estimatedTime,
-          estimatedHours,
-          pricingDetails
+          estimatedHours: hours,
+          bookingType: bookingTypeKey,
+          pricingUsed: car.pricing[bookingTypeKey === 'one-way' ? 'oneWay' : 
+                                     bookingTypeKey === 'round-trip' ? 'roundTrip' : 
+                                     bookingTypeKey === 'outstation' ? 'outstation' : 
+                                     bookingTypeKey === 'marriage' ? 'marriage' : 'monthly'],
+          calculatedCost: calculatedCost,
+          roundedAmount: roundedAmount
         }),
         addedBy: req.user._id,
         addedAt: new Date()
@@ -425,7 +487,7 @@ export const cancelBookings = async (req, res) => {
     let booking = await Booking.findOne({ 
       _id: req.params.id, 
       user: req.user._id 
-    });
+    }).populate('user', 'name email').populate('tourPackage', 'title');
 
     let isCarBooking = false;
     
@@ -434,7 +496,7 @@ export const cancelBookings = async (req, res) => {
       booking = await CarBooking.findOne({ 
         _id: req.params.id, 
         user: req.user._id 
-      });
+      }).populate('user', 'name email');
       isCarBooking = true;
     }
 
@@ -452,13 +514,32 @@ export const cancelBookings = async (req, res) => {
       });
     }
 
+    if (booking.status === 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot cancel completed booking'
+      });
+    }
+
     booking.status = 'cancelled';
-    booking.cancellationReason = reason;
+    booking.cancellationReason = reason || 'Cancelled by user';
     booking.cancelledBy = req.user._id;
     booking.cancelledByType = 'user';
     booking.cancelledAt = new Date();
     
+    // Reset payment details when booking is cancelled
+    booking.paidAmount = 0;
+    booking.discount = 0;
+    
     await booking.save();
+
+    // Populate again to ensure we have fresh data
+    if (isCarBooking) {
+      await booking.populate('user', 'name email');
+    } else {
+      await booking.populate('user', 'name email');
+      await booking.populate('tourPackage', 'title');
+    }
 
     res.json({
       success: true,

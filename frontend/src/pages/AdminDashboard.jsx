@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -516,6 +516,9 @@ const AdminDashboard = () => {
               setVerificationFilter={setVerificationFilter}
               onDeleteUser={handleDeleteUser}
               isLoading={isLoading}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              itemsPerPage={10}
             />
           )}
 
@@ -528,6 +531,9 @@ const AdminDashboard = () => {
               onDeletePackage={handleDeleteTourPackage}
               onAddPackage={() => setActiveTab('add-package')}
               isLoading={isLoading}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              itemsPerPage={12}
             />
           )}
 
@@ -591,8 +597,12 @@ const QueriesSection = ({ queries, searchTerm, setSearchTerm, statusFilter, setS
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentPage]);
 
   return (
     <div className="p-4 sm:p-6">
@@ -727,71 +737,167 @@ const QueriesSection = ({ queries, searchTerm, setSearchTerm, statusFilter, setS
   );
 };
 
-// Simplified Query Card
+// Simplified Query Card - Redesigned to match Booking Card theme with Mobile Optimization
 const QueryCard = ({ query, response, setResponse, onRespond, isLoading }) => {
   const getStatusColor = (status) => {
     switch (status) {
-      case 'resolved': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'closed': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-blue-100 text-blue-800';
+      case 'resolved': return 'bg-green-100 text-green-800 border-green-200';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'closed': return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-blue-100 text-blue-800 border-blue-200';
     }
   };
 
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'pending':
+        return <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+      case 'resolved':
+        return <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+      case 'closed':
+        return <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
+      default:
+        return null;
+    }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{query.subject}</h3>
-          <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-xs sm:text-sm text-gray-600">
-            <span className="truncate">👤 {query.name}</span>
-            <span className="truncate">📧 {query.email}</span>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${getStatusColor(query.status)}`}>
-              {query.status}
-            </span>
+    <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300">
+      {/* Header Section - Mobile Optimized */}
+      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+        <div className="flex flex-col gap-3">
+          {/* Top Row: Icon + Title + Status */}
+          <div className="flex items-start gap-2 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2 leading-tight">{query.subject}</h3>
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs font-semibold border-2 ${getStatusColor(query.status)}`}>
+                {getStatusIcon(query.status)}
+                <span className="capitalize">{query.status}</span>
+              </span>
+            </div>
+          </div>
+
+          {/* User Info Row - Stacked on Mobile */}
+          <div className="flex flex-col gap-2 text-xs sm:text-sm text-gray-600 pl-11 sm:pl-0">
+            <div className="flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span className="font-medium truncate">{query.name}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <span className="truncate">{query.email}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-gray-500">
+              <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-xs">{formatDate(query.createdAt)}</span>
+            </div>
           </div>
         </div>
-        <span className="text-xs sm:text-sm text-gray-500 flex-shrink-0">
-          {new Date(query.createdAt).toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-          })}
-        </span>
       </div>
 
-      <div className="mb-4">
-        <p className="text-sm sm:text-base text-gray-700 bg-gray-50 p-3 sm:p-4 rounded-lg">{query.message}</p>
+      {/* Content Section - Mobile Optimized */}
+      <div className="px-3 sm:px-6 py-3 sm:py-4 space-y-3 sm:space-y-4">
+        {/* Query Message */}
+        <div>
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
+            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+            </svg>
+            <h4 className="text-xs sm:text-sm font-semibold text-gray-700">Customer Message</h4>
+          </div>
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 sm:p-4 border-l-4 border-purple-400">
+            <p className="text-sm sm:text-base text-gray-700 leading-relaxed break-words">{query.message}</p>
+          </div>
+        </div>
+
+        {/* Admin Response */}
+        {query.response && (
+          <div>
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h4 className="text-xs sm:text-sm font-semibold text-gray-700">Admin Response</h4>
+            </div>
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-3 sm:p-4 border-l-4 border-green-400">
+              <p className="text-sm sm:text-base text-gray-700 leading-relaxed break-words">{query.response}</p>
+              {query.respondedAt && (
+                <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                  <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Responded on {formatDate(query.respondedAt)}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Response Form for Pending Queries - Mobile Optimized */}
+        {query.status === 'pending' && (
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 sm:p-4 border-2 border-blue-200">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-3">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <h4 className="text-xs sm:text-sm font-semibold text-gray-900">Write Your Response</h4>
+            </div>
+            <div className="space-y-3">
+              <textarea
+                value={response}
+                onChange={(e) => setResponse(e.target.value)}
+                placeholder="Type your response to the customer..."
+                className="w-full px-3 py-2.5 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all resize-none"
+                rows={4}
+              />
+              <button
+                onClick={() => onRespond(query._id, response)}
+                disabled={isLoading || !response.trim()}
+                className="w-full px-4 py-3 sm:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm sm:text-base font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Sending...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    <span>Send Response</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-
-      {query.response && (
-        <div className="mb-4">
-          <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2">Admin Response:</h4>
-          <p className="text-sm sm:text-base text-gray-700 bg-blue-50 p-3 sm:p-4 rounded-lg border-l-4 border-blue-400">{query.response}</p>
-        </div>
-      )}
-
-      {query.status === 'pending' && (
-        <div className="flex flex-col sm:flex-row gap-2">
-          <textarea
-            value={response}
-            onChange={(e) => setResponse(e.target.value)}
-            placeholder="Type your response..."
-            className="flex-1 px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            rows={3}
-          />
-          <button
-            onClick={() => onRespond(query._id, response)}
-            disabled={isLoading || !response.trim()}
-            className="px-4 py-2 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-          >
-            {isLoading ? 'Sending...' : 'Send Response'}
-          </button>
-        </div>
-      )}
     </div>
   );
 };
@@ -805,8 +911,12 @@ const BookingsSection = ({ bookings, searchTerm, setSearchTerm, statusFilter, se
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentPage]);
 
   return (
     <div className="p-4 sm:p-6">
@@ -943,6 +1053,7 @@ const BookingsSection = ({ bookings, searchTerm, setSearchTerm, statusFilter, se
 
 // Payment Details Section Component
 const PaymentDetailsSection = ({ booking, onUpdate, isLoading }) => {
+  const { showSuccess, showError } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [paidAmount, setPaidAmount] = useState(booking.paidAmount || 0);
   const [discount, setDiscount] = useState(booking.discount || 0);
@@ -952,29 +1063,61 @@ const PaymentDetailsSection = ({ booking, onUpdate, isLoading }) => {
   const dueAmount = Math.max(0, totalAmount - discount - paidAmount);
 
   const handleSave = async () => {
-    if (paidAmount + discount > totalAmount) {
-      alert('Paid amount plus discount cannot exceed total amount');
+    // Keep discount as entered, but cap paid amount if needed
+    let finalDiscount = parseFloat(discount) || 0;
+    let finalPaidAmount = parseFloat(paidAmount) || 0;
+    
+    // Calculate maximum allowed paid amount
+    const maxAllowedPaid = totalAmount - finalDiscount;
+    
+    // Cap paid amount if it exceeds the allowed amount
+    if (finalPaidAmount > maxAllowedPaid) {
+      finalPaidAmount = Math.max(0, maxAllowedPaid);
+    }
+
+    // Confirmation dialog
+    if (!window.confirm('Are you sure you want to update the payment details?')) {
       return;
     }
 
     setIsSaving(true);
     try {
       await adminService.updateBookingPayment(booking._id, {
-        paidAmount: parseFloat(paidAmount),
-        discount: parseFloat(discount)
+        paidAmount: finalPaidAmount,
+        discount: finalDiscount
       });
       
       // Update local booking object
-      booking.paidAmount = parseFloat(paidAmount);
-      booking.discount = parseFloat(discount);
+      booking.paidAmount = finalPaidAmount;
+      booking.discount = finalDiscount;
       
-      setIsEditing(false);
-      // Trigger a refresh if needed
-      if (onUpdate) {
-        onUpdate();
+      // Update local state to reflect the capped paid amount
+      setPaidAmount(finalPaidAmount);
+      
+      // Calculate due amount (will be 0 if paid amount was capped)
+      const calculatedDue = Math.max(0, totalAmount - finalDiscount - finalPaidAmount);
+      
+      // Send notification to user
+      try {
+        await notificationService.createNotification({
+          recipientEmail: booking.user?.email,
+          type: 'payment_update',
+          title: 'Payment Details Updated',
+          message: `Your payment details have been updated. Paid: ₹${finalPaidAmount.toLocaleString()}, Discount: ₹${finalDiscount.toLocaleString()}, Due: ₹${calculatedDue.toLocaleString()}`,
+          relatedBooking: booking._id,
+          priority: 'high'
+        });
+      } catch (notificationError) {
+        console.warn('Failed to send notification:', notificationError);
       }
+      
+      showSuccess('Payment details updated successfully!');
+      setIsEditing(false);
+      
+      // Don't call onUpdate as it triggers status update confirmation
+      // The payment update is complete and doesn't need status change
     } catch (error) {
-      alert(error.message || 'Failed to update payment details');
+      showError(error.message || 'Failed to update payment details');
     } finally {
       setIsSaving(false);
     }
@@ -1024,12 +1167,37 @@ const PaymentDetailsSection = ({ booking, onUpdate, isLoading }) => {
           </label>
           {isEditing ? (
             <input
-              type="number"
+              type="text"
+              inputMode="decimal"
               value={paidAmount}
-              onChange={(e) => setPaidAmount(Math.max(0, parseFloat(e.target.value) || 0))}
+              onChange={(e) => {
+                let value = e.target.value;
+                // Allow only numbers and decimal point
+                value = value.replace(/[^\d.]/g, '');
+                // Remove leading zeros before digits (but keep single 0 or 0.)
+                value = value.replace(/^0+(?=\d)/, '');
+                // Allow only one decimal point
+                const parts = value.split('.');
+                if (parts.length > 2) {
+                  value = parts[0] + '.' + parts.slice(1).join('');
+                }
+                // Update state with cleaned value
+                if (value === '' || value === '.') {
+                  setPaidAmount(0);
+                } else {
+                  const numValue = parseFloat(value);
+                  if (!isNaN(numValue) && numValue >= 0) {
+                    setPaidAmount(value);
+                  }
+                }
+              }}
+              onBlur={(e) => {
+                // On blur, convert to proper number
+                const numValue = parseFloat(e.target.value) || 0;
+                setPaidAmount(numValue);
+              }}
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              min="0"
-              step="0.01"
+              placeholder="0.00"
             />
           ) : (
             <p className="text-lg font-bold text-green-600">{formatCurrency(paidAmount)}</p>
@@ -1046,12 +1214,37 @@ const PaymentDetailsSection = ({ booking, onUpdate, isLoading }) => {
           </label>
           {isEditing ? (
             <input
-              type="number"
+              type="text"
+              inputMode="decimal"
               value={discount}
-              onChange={(e) => setDiscount(Math.max(0, parseFloat(e.target.value) || 0))}
+              onChange={(e) => {
+                let value = e.target.value;
+                // Allow only numbers and decimal point
+                value = value.replace(/[^\d.]/g, '');
+                // Remove leading zeros before digits (but keep single 0 or 0.)
+                value = value.replace(/^0+(?=\d)/, '');
+                // Allow only one decimal point
+                const parts = value.split('.');
+                if (parts.length > 2) {
+                  value = parts[0] + '.' + parts.slice(1).join('');
+                }
+                // Update state with cleaned value
+                if (value === '' || value === '.') {
+                  setDiscount(0);
+                } else {
+                  const numValue = parseFloat(value);
+                  if (!isNaN(numValue) && numValue >= 0) {
+                    setDiscount(value);
+                  }
+                }
+              }}
+              onBlur={(e) => {
+                // On blur, convert to proper number
+                const numValue = parseFloat(e.target.value) || 0;
+                setDiscount(numValue);
+              }}
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              min="0"
-              step="0.01"
+              placeholder="0.00"
             />
           ) : (
             <p className="text-lg font-bold text-orange-600">{formatCurrency(discount)}</p>
@@ -1066,7 +1259,7 @@ const PaymentDetailsSection = ({ booking, onUpdate, isLoading }) => {
             </svg>
             Due Amount
           </label>
-          <p className={`text-lg font-bold ${dueAmount > 0 ? 'text-red-600' : 'text-gray-400'}`}>
+          <p className="text-lg font-bold text-red-600">
             {formatCurrency(dueAmount)}
           </p>
         </div>
@@ -1161,7 +1354,12 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
       }
     }
     
-    if (window.confirm(`Are you sure you want to ${newStatus} this booking?`)) {
+    // Create proper confirmation message
+    const actionText = newStatus === 'confirmed' ? 'confirm' : 
+                       newStatus === 'cancelled' ? 'cancel' : 
+                       newStatus === 'completed' ? 'mark as completed' : newStatus;
+    
+    if (window.confirm(`Are you sure you want to ${actionText} this booking?`)) {
       console.log('✅ User confirmed, calling onStatusUpdate with type:', type);
       onStatusUpdate(booking._id, newStatus, reason, type);
     } else {
@@ -1320,7 +1518,7 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0">
                 <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 515.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
               <div className="min-w-0 flex-1">
@@ -1644,10 +1842,25 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
 };
 
 // Enhanced Users Section with Admin/User Separation and Verification Filters
-const UsersSection = ({ users, searchTerm, setSearchTerm, verificationFilter, setVerificationFilter, onDeleteUser, isLoading }) => {
+const UsersSection = ({ users, searchTerm, setSearchTerm, verificationFilter, setVerificationFilter, onDeleteUser, isLoading, currentPage, setCurrentPage, itemsPerPage }) => {
   // Separate admin and regular users
   const adminUsers = users.filter(user => user.role === 'admin');
   const regularUsers = users.filter(user => user.role !== 'admin');
+
+  // Pagination for regular users only (admins always shown)
+  const totalPages = Math.ceil(regularUsers.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentRegularUsers = regularUsers.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentPage]);
 
   // Get verification counts for filter badges
   const verifiedCount = users.filter(user => user.isVerified).length;
@@ -1812,8 +2025,16 @@ const UsersSection = ({ users, searchTerm, setSearchTerm, verificationFilter, se
                   {regularUsers.length}
                 </span>
               </div>
+
+              {/* Results Summary */}
+              {regularUsers.length > itemsPerPage && (
+                <div className="mb-4 text-sm text-gray-600">
+                  Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, regularUsers.length)} of {regularUsers.length} users
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                {regularUsers.map((user) => (
+                {currentRegularUsers.map((user) => (
                   <UserCard
                     key={user._id}
                     user={user}
@@ -1823,6 +2044,81 @@ const UsersSection = ({ users, searchTerm, setSearchTerm, verificationFilter, se
                   />
                 ))}
               </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    {/* Page Info */}
+                    <div className="text-sm text-gray-700">
+                      Page <span className="font-medium">{currentPage}</span> of{' '}
+                      <span className="font-medium">{totalPages}</span>
+                    </div>
+
+                    {/* Pagination Buttons */}
+                    <div className="flex items-center gap-2">
+                      {/* Previous Button */}
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Previous
+                      </button>
+
+                      {/* Page Numbers */}
+                      <div className="hidden sm:flex items-center gap-1">
+                        {[...Array(totalPages)].map((_, index) => {
+                          const pageNumber = index + 1;
+                          if (
+                            pageNumber === 1 ||
+                            pageNumber === totalPages ||
+                            (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                          ) {
+                            return (
+                              <button
+                                key={pageNumber}
+                                onClick={() => handlePageChange(pageNumber)}
+                                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                  currentPage === pageNumber
+                                    ? 'bg-blue-600 text-white'
+                                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                                }`}
+                              >
+                                {pageNumber}
+                              </button>
+                            );
+                          } else if (
+                            pageNumber === currentPage - 2 ||
+                            pageNumber === currentPage + 2
+                          ) {
+                            return (
+                              <span key={pageNumber} className="px-2 text-gray-500">
+                                ...
+                              </span>
+                            );
+                          }
+                          return null;
+                        })}
+                      </div>
+
+                      {/* Next Button */}
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Next
+                      </button>
+                    </div>
+
+                    {/* Mobile Page Numbers */}
+                    <div className="sm:hidden text-sm text-gray-600">
+                      {currentPage} / {totalPages}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1990,62 +2286,165 @@ const UserCard = ({ user, onDelete, isLoading, isAdmin }) => {
   );
 };
 
-// Simplified Tour Packages Section
-const TourPackagesSection = ({ packages, searchTerm, setSearchTerm, onDeletePackage, onAddPackage, isLoading }) => {
+// Simplified Tour Packages Section - Mobile Optimized
+const TourPackagesSection = ({ packages, searchTerm, setSearchTerm, onDeletePackage, onAddPackage, isLoading, currentPage, setCurrentPage, itemsPerPage }) => {
+  // Pagination calculations
+  const totalPages = Math.ceil(packages.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentPackages = packages.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentPage]);
+
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Tour Packages</h2>
-        <div className="flex gap-4">
-          <input
-            type="text"
-            placeholder="Search packages..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+    <div className="p-3 sm:p-6">
+      {/* Header Section - Mobile Optimized */}
+      <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg sm:text-xl font-semibold">Tour Packages</h2>
           <button
             onClick={onAddPackage}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-3 py-2 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base flex items-center gap-1.5"
           >
-            ➕ Add Package
+            <span className="text-base sm:text-lg">➕</span>
+            <span className="hidden sm:inline">Add Package</span>
+            <span className="sm:hidden">Add</span>
           </button>
         </div>
+        <input
+          type="text"
+          placeholder="Search packages..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-3 py-2.5 sm:px-4 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+        />
       </div>
 
+      {/* Results Summary */}
+      {packages.length > 0 && (
+        <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-gray-600">
+          Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, packages.length)} of {packages.length} packages
+        </div>
+      )}
+
       {packages.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-4xl mb-4">📦</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No tour packages found</h3>
-          <p className="text-gray-500 mb-4">Create your first tour package to get started.</p>
+        <div className="text-center py-8 sm:py-12">
+          <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">📦</div>
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No tour packages found</h3>
+          <p className="text-sm sm:text-base text-gray-500 mb-3 sm:mb-4">Create your first tour package to get started.</p>
           <button
             onClick={onAddPackage}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-4 py-2.5 sm:px-6 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base"
           >
             Create Tour Package
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {packages.map((pkg) => (
-            <PackageCard
-              key={pkg._id}
-              package={pkg}
-              onDelete={onDeletePackage}
-              isLoading={isLoading}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+            {currentPackages.map((pkg) => (
+              <PackageCard
+                key={pkg._id}
+                package={pkg}
+                onDelete={onDeletePackage}
+                isLoading={isLoading}
+              />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+                {/* Page Info */}
+                <div className="text-xs sm:text-sm text-gray-700">
+                  Page <span className="font-medium">{currentPage}</span> of{' '}
+                  <span className="font-medium">{totalPages}</span>
+                </div>
+
+                {/* Pagination Buttons */}
+                <div className="flex items-center gap-2">
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+
+                  {/* Page Numbers */}
+                  <div className="hidden sm:flex items-center gap-1">
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      if (
+                        pageNumber === 1 ||
+                        pageNumber === totalPages ||
+                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => handlePageChange(pageNumber)}
+                            className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                              currentPage === pageNumber
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      } else if (
+                        pageNumber === currentPage - 2 ||
+                        pageNumber === currentPage + 2
+                      ) {
+                        return (
+                          <span key={pageNumber} className="px-2 text-gray-500">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+
+                  {/* Next Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+
+                {/* Mobile Page Numbers */}
+                <div className="sm:hidden text-sm text-gray-600">
+                  {currentPage} / {totalPages}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 };
 
-// Simplified Package Card
+// Simplified Package Card - Mobile Optimized
 const PackageCard = ({ package: pkg, onDelete, isLoading }) => {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-      <div className="h-48 bg-gray-200">
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+      {/* Image Section */}
+      <div className="h-40 sm:h-48 bg-gray-200 relative">
         <img
           src={pkg.images?.featured ? 
             (pkg.images.featured.startsWith('http') ? 
@@ -2056,41 +2455,73 @@ const PackageCard = ({ package: pkg, onDelete, isLoading }) => {
           alt={pkg.title}
           className="w-full h-full object-cover"
         />
+        {/* Duration Badge */}
+        <div className="absolute top-2 right-2 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-md">
+          <div className="flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-xs font-semibold text-gray-700">
+              {pkg.duration?.days} Days
+            </span>
+          </div>
+        </div>
       </div>
       
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 mb-2">{pkg.title}</h3>
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+      {/* Content Section */}
+      <div className="p-3 sm:p-4">
+        {/* Title */}
+        <h3 className="font-bold text-gray-900 mb-2 text-sm sm:text-base line-clamp-2 leading-tight">
+          {pkg.title}
+        </h3>
+        
+        {/* Description */}
+        <p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2 leading-relaxed">
           {pkg.shortDescription || pkg.description}
         </p>
         
-        <div className="flex justify-between items-center mb-3">
-          <span className="text-lg font-bold text-green-600">
-            ₹{pkg.pricing?.basePrice?.toLocaleString()}
-          </span>
-          <span className="text-sm text-gray-500">
-            {pkg.duration?.days} Days
-          </span>
+        {/* Price Section */}
+        <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-200">
+          <div>
+            <p className="text-xs text-gray-500 mb-0.5">Starting from</p>
+            <span className="text-lg sm:text-xl font-bold text-green-600">
+              ₹{pkg.pricing?.basePrice?.toLocaleString()}
+            </span>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-gray-500 mb-0.5">Bookings</p>
+            <span className="text-base sm:text-lg font-bold text-blue-600">
+              {pkg.bookingStats?.totalBookings || 0}
+            </span>
+          </div>
         </div>
 
-        <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
-          <span>Bookings: {pkg.bookingStats?.totalBookings || 0}</span>
-          <span>{new Date(pkg.createdAt).toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-          })}</span>
+        {/* Meta Info */}
+        <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+          <div className="flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span className="truncate">
+              {new Date(pkg.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+              })}
+            </span>
+          </div>
         </div>
 
+        {/* Delete Button */}
         <button
           onClick={() => onDelete(pkg._id, pkg.title)}
           disabled={isLoading}
-          className="w-full px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+          className="w-full px-3 py-2.5 sm:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-all text-sm sm:text-base font-medium flex items-center justify-center gap-2"
         >
-          🗑️ Delete Package
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span>Delete Package</span>
         </button>
       </div>
     </div>
@@ -2131,10 +2562,25 @@ const AddPackageSection = ({ form, setForm, onSubmit, onImageChange, isLoading }
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹) *</label>
             <input
-              type="number"
+              type="text"
+              inputMode="decimal"
               required
               value={form.price}
-              onChange={(e) => setForm(prev => ({ ...prev, price: e.target.value }))}
+              onChange={(e) => {
+                let value = e.target.value;
+                // Allow only numbers and decimal point
+                value = value.replace(/[^\d.]/g, '');
+                // Remove leading zeros
+                value = value.replace(/^0+(?=\d)/, '');
+                // Allow only one decimal point
+                const parts = value.split('.');
+                if (parts.length > 2) value = parts[0] + '.' + parts.slice(1).join('');
+                setForm(prev => ({ ...prev, price: value === '' ? '' : value }));
+              }}
+              onBlur={(e) => {
+                const numValue = parseFloat(e.target.value) || 0;
+                setForm(prev => ({ ...prev, price: numValue }));
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="e.g., 15999"
             />
@@ -2143,9 +2589,24 @@ const AddPackageSection = ({ form, setForm, onSubmit, onImageChange, isLoading }
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Discount (₹)</label>
             <input
-              type="number"
+              type="text"
+              inputMode="decimal"
               value={form.discount}
-              onChange={(e) => setForm(prev => ({ ...prev, discount: e.target.value }))}
+              onChange={(e) => {
+                let value = e.target.value;
+                // Allow only numbers and decimal point
+                value = value.replace(/[^\d.]/g, '');
+                // Remove leading zeros
+                value = value.replace(/^0+(?=\d)/, '');
+                // Allow only one decimal point
+                const parts = value.split('.');
+                if (parts.length > 2) value = parts[0] + '.' + parts.slice(1).join('');
+                setForm(prev => ({ ...prev, discount: value === '' ? '' : value }));
+              }}
+              onBlur={(e) => {
+                const numValue = parseFloat(e.target.value) || 0;
+                setForm(prev => ({ ...prev, discount: numValue }));
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="e.g., 4000"
             />

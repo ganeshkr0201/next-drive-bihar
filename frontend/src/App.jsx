@@ -4,6 +4,7 @@ import { ToastProvider } from './context/ToastContext';
 import { DataProvider } from './context/DataContext';
 import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
+import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
 import ContactProtectedRoute from './components/ContactProtectedRoute';
@@ -33,6 +34,7 @@ function App() {
       <AuthProvider>
         <DataProvider>
           <Router>
+          <ScrollToTop />
           <div className="min-h-screen bg-gray-50 flex flex-col relative overflow-hidden">
           {/* Global animated background elements */}
           <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -56,7 +58,11 @@ function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/verify-email" element={<EmailVerification />} />
               <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
-              <Route path="/car-rental" element={<CarRental />} />
+              <Route path="/car-rental" element={
+                <ProtectedRoute>
+                  <CarRental />
+                </ProtectedRoute>
+              } />
               <Route path="/tour-packages" element={<TourPackages />} />
               <Route path="/tour-packages/:id" element={
                 <TourBookingProtectedRoute>

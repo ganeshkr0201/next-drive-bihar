@@ -60,7 +60,7 @@ const Home = () => {
                     
                     {/* Car Types - Single Line Layout */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                      <Link to="/car-rental" className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
                         <div className="flex items-center space-x-4">
                           <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                             <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -72,13 +72,13 @@ const Home = () => {
                             <h4 className="font-semibold text-gray-900 mb-1">Economy Cars</h4>
                             <p className="text-sm text-gray-600 mb-2">Perfect for city rides</p>
                             <div className="flex items-center text-blue-600">
-                              <span className="text-sm font-semibold">From ₹12/km</span>
+                              {/* <span className="text-sm font-semibold">From ₹12/km</span> */}
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                       
-                      <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                      <Link to="/car-rental" className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
                         <div className="flex items-center space-x-4">
                           <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                             <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -90,13 +90,13 @@ const Home = () => {
                             <h4 className="font-semibold text-gray-900 mb-1">SUVs</h4>
                             <p className="text-sm text-gray-600 mb-2">Spacious family trips</p>
                             <div className="flex items-center text-green-600">
-                              <span className="text-sm font-semibold">From ₹18/km</span>
+                              {/* <span className="text-sm font-semibold">From ₹18/km</span> */}
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                       
-                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                      <Link to="/car-rental" className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
                         <div className="flex items-center space-x-4">
                           <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                             <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -108,13 +108,13 @@ const Home = () => {
                             <h4 className="font-semibold text-gray-900 mb-1">Luxury Cars</h4>
                             <p className="text-sm text-gray-600 mb-2">Premium experience</p>
                             <div className="flex items-center text-purple-600">
-                              <span className="text-sm font-semibold">From ₹25/km</span>
+                              {/* <span className="text-sm font-semibold">From ₹25/km</span> */}
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                       
-                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                      <Link to="/car-rental" className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
                         <div className="flex items-center space-x-4">
                           <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                             <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -126,11 +126,11 @@ const Home = () => {
                             <h4 className="font-semibold text-gray-900 mb-1">Tempo Traveller</h4>
                             <p className="text-sm text-gray-600 mb-2">Group travel</p>
                             <div className="flex items-center text-orange-600">
-                              <span className="text-sm font-semibold">From ₹22/km</span>
+                              {/* <span className="text-sm font-semibold">From ₹22/km</span> */}
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     </div>
                     
                     <Link
@@ -152,7 +152,7 @@ const Home = () => {
                     
                     {/* Popular Destinations */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-gradient-to-br from-amber-50 to-orange-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                      <Link to="/tour-packages" className="bg-gradient-to-br from-amber-50 to-orange-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
                         <div className="flex items-center space-x-4">
                           <div className="w-16 h-16 bg-amber-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                             <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -163,13 +163,13 @@ const Home = () => {
                             <h4 className="font-semibold text-gray-900 mb-1">Bodh Gaya</h4>
                             <p className="text-sm text-gray-600 mb-2">Buddhist pilgrimage site</p>
                             <div className="flex items-center text-amber-600">
-                              <span className="text-sm font-semibold">3 Days from ₹8,999</span>
+                              {/* <span className="text-sm font-semibold">3 Days from ₹8,999</span> */}
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                       
-                      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                      <Link to="/tour-packages" className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
                         <div className="flex items-center space-x-4">
                           <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                             <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -180,13 +180,13 @@ const Home = () => {
                             <h4 className="font-semibold text-gray-900 mb-1">Nalanda</h4>
                             <p className="text-sm text-gray-600 mb-2">Ancient university ruins</p>
                             <div className="flex items-center text-blue-600">
-                              <span className="text-sm font-semibold">2 Days from ₹6,499</span>
+                              {/* <span className="text-sm font-semibold">2 Days from ₹6,499</span> */}
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                       
-                      <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                      <Link to="/tour-packages" className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
                         <div className="flex items-center space-x-4">
                           <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                             <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -197,13 +197,13 @@ const Home = () => {
                             <h4 className="font-semibold text-gray-900 mb-1">Rajgir</h4>
                             <p className="text-sm text-gray-600 mb-2">Hot springs & hills</p>
                             <div className="flex items-center text-green-600">
-                              <span className="text-sm font-semibold">2 Days from ₹7,299</span>
+                              {/* <span className="text-sm font-semibold">2 Days from ₹7,299</span> */}
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                       
-                      <div className="bg-gradient-to-br from-purple-50 to-violet-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                      <Link to="/tour-packages" className="bg-gradient-to-br from-purple-50 to-violet-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group cursor-pointer">
                         <div className="flex items-center space-x-4">
                           <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                             <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -214,11 +214,11 @@ const Home = () => {
                             <h4 className="font-semibold text-gray-900 mb-1">Patna Heritage</h4>
                             <p className="text-sm text-gray-600 mb-2">Capital city tour</p>
                             <div className="flex items-center text-purple-600">
-                              <span className="text-sm font-semibold">1 Day from ₹4,999</span>
+                              {/* <span className="text-sm font-semibold">1 Day from ₹4,999</span> */}
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     </div>
                     
                     <Link

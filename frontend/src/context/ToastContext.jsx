@@ -48,8 +48,8 @@ export const ToastProvider = ({ children }) => {
     <ToastContext.Provider value={value}>
       {children}
       
-      {/* Toast Container */}
-      <div className="fixed top-4 right-4 z-50 space-y-3 max-w-sm w-full pointer-events-none">
+      {/* Toast Container - Mobile Optimized */}
+      <div className="fixed top-2 left-2 right-2 sm:top-4 sm:right-4 sm:left-auto z-50 space-y-2 sm:space-y-3 sm:max-w-sm w-auto sm:w-full pointer-events-none">
         {toasts.map((toast, index) => (
           <div
             key={toast.id}
