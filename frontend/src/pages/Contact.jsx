@@ -198,7 +198,7 @@ const Contact = () => {
                         <a href="tel:+918709083341" className="hover:text-green-600 transition-colors">
                           +91 87090 83341
                         </a><br />
-                        Available 24/7 for emergencies
+                        Available 24/7
                       </p>
                     </div>
                   </div>
@@ -217,7 +217,7 @@ const Contact = () => {
                         <a href="mailto:info@nextdrivebihar.in" className="hover:text-purple-600 transition-colors">
                           info@nextdrivebihar.in
                         </a><br />
-                        We'll respond within 24 hours
+                        We'll respond within 1 hour
                       </p>
                     </div>
                   </div>
@@ -229,7 +229,7 @@ const Contact = () => {
                 <h3 className="text-xl font-semibold text-gray-900 mb-6">Connect With Us</h3>
                 <div className="flex space-x-4">
                   <a
-                    href="https://facebook.com/nextdrivebihar"
+                    href="https://www.facebook.com/share/16v7dyqh1X/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl flex items-center justify-center transition-all duration-300 hover:scale-110"

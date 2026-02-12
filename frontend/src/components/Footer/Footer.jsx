@@ -31,7 +31,7 @@ const Footer = () => {
             <div className="flex space-x-4">
               {/* Facebook */}
               <a
-                href="https://facebook.com/nextdrivebihar"
+                href="https://www.facebook.com/share/16v7dyqh1X/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-blue-600 hover:bg-blue-700 p-2 rounded-full transition-colors"
