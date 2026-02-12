@@ -26,7 +26,7 @@ const About = () => {
       bio: 'Passionate about Bihar\'s heritage with 3+ years in tourism industry.',
       color: 'blue',
       contact: '9835193378',
-      email: "avinash@nextdrivebihar.com"
+      email: "avinash@nextdrivebihar.in"
     },
     {
       name: 'Sonu Kumar',
@@ -44,7 +44,7 @@ const About = () => {
       bio: 'Coordinates with local guides to provide authentic cultural experiences.',
       color: 'orange',
       contact: '6200294846',
-      email: "amit@nextdrivebihar.in"
+      email: "amit@nextdrivebihar.com"
     }
   ];
 
