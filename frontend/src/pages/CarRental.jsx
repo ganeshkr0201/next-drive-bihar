@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -10,6 +10,9 @@ const CarRental = () => {
   const { isAuthenticated, user } = useAuth();
   const { showSuccess, showError } = useToast();
   const navigate = useNavigate();
+  
+  // Get today's date in YYYY-MM-DD format
+  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
   
   // Booking type tabs
   const [activeBookingType, setActiveBookingType] = useState('one-way');
@@ -898,7 +901,7 @@ const CarRental = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-6 md:space-y-0 md:grid md:grid-cols-2 md:gap-6">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-3">
                     Pickup Date *
@@ -906,7 +909,7 @@ const CarRental = () => {
                   <input
                     type="date"
                     required
-                    min={new Date().toISOString().split('T')[0]}
+                    min={today}
                     value={bookingForm.pickupDate}
                     onChange={(e) => setBookingForm(prev => ({ ...prev, pickupDate: e.target.value }))}
                     className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-base font-medium"
@@ -976,7 +979,7 @@ const CarRental = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-6 md:space-y-0 md:grid md:grid-cols-2 md:gap-6">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-3">
                       Return Date *
@@ -984,7 +987,7 @@ const CarRental = () => {
                     <input
                       type="date"
                       required
-                      min={bookingForm.pickupDate || new Date().toISOString().split('T')[0]}
+                      min={bookingForm.pickupDate || today}
                       value={bookingForm.dropDate}
                       onChange={(e) => setBookingForm(prev => ({ ...prev, dropDate: e.target.value }))}
                       className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-base font-medium"

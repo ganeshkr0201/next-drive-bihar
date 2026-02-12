@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import api from '../../config/axios';
@@ -7,6 +7,10 @@ import envConfig from '../../config/env';
 const UserQueries = () => {
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
+  
+  // Get today's date in YYYY-MM-DD format
+  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
+  
   const [queries, setQueries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showNewQueryForm, setShowNewQueryForm] = useState(false);
@@ -421,7 +425,7 @@ const UserQueries = () => {
                     </label>
                     <input
                       type="date"
-                      min={new Date().toISOString().split('T')[0]}
+                      min={today}
                       value={queryForm.preferredContactDate}
                       onChange={(e) => setQueryForm(prev => ({ ...prev, preferredContactDate: e.target.value }))}
                       className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-gray-900 font-medium"

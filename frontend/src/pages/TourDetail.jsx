@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -11,6 +11,9 @@ const TourDetail = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const { showSuccess, showError } = useToast();
+  
+  // Get today's date in YYYY-MM-DD format
+  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
   
   const [tourPackage, setTourPackage] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -395,7 +398,7 @@ const TourDetail = () => {
                         <input
                           type="date"
                           required
-                          min={new Date().toISOString().split('T')[0]}
+                          min={today}
                           value={bookingForm.travelDate}
                           onChange={(e) => setBookingForm(prev => ({ ...prev, travelDate: e.target.value }))}
                           className="w-full px-3 py-2.5 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-gray-900 font-medium"
