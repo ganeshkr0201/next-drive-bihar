@@ -1,8 +1,3 @@
-/**
- * Format phone number to include +91 prefix for Indian numbers
- * @param {string} phoneNumber - The phone number to format
- * @returns {string} - Formatted phone number with +91 prefix and space
- */
 export const formatPhoneNumber = (phoneNumber) => {
   if (!phoneNumber) return phoneNumber;
   
@@ -29,12 +24,7 @@ export const formatPhoneNumber = (phoneNumber) => {
   return phoneNumber;
 };
 
-/**
- * Format multiple phone fields in an object
- * @param {Object} data - Object containing phone fields
- * @param {Array<string>} fields - Array of field names to format
- * @returns {Object} - Object with formatted phone fields
- */
+
 export const formatPhoneFields = (data, fields = ['contactNumber', 'emergencyContact', 'phone', 'whatsapp']) => {
   const formatted = { ...data };
   

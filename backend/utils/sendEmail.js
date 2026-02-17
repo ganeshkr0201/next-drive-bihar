@@ -1,5 +1,11 @@
-import { configDotenv } from "dotenv";
-configDotenv();
+import dotenv from "dotenv";
+
+const env = process.env.NODE_ENV || "development";
+
+dotenv.config({
+  path: `.env.${env}`
+});
+
 
 import nodemailer from "nodemailer";
 import { google } from "googleapis";

@@ -1,16 +1,13 @@
-#!/usr/bin/env node
 
-/**
- * 🧪 Upstash Redis Connection Test
- * 
- * This script tests your Upstash Redis connection and basic operations.
- * Run this before starting your application to ensure everything works.
- */
 
 import { Redis } from '@upstash/redis';
 import dotenv from 'dotenv';
 
-dotenv.config();
+const env = process.env.NODE_ENV || "development";
+
+dotenv.config({
+  path: `.env.${env}`
+});
 
 const colors = {
   green: '\x1b[32m',

@@ -189,12 +189,6 @@ class RedisOTPManager {
         totalOTPOperations: 'N/A (Upstash limitation)',
         note: 'OTP statistics not available on Upstash Redis'
       };
-      
-      return {
-        activeOTPs: otpKeys.length,
-        activeCooldowns: cooldownKeys.length,
-        totalOTPOperations: otpKeys.length + cooldownKeys.length
-      };
     } catch (error) {
       console.error('❌ Get OTP stats error:', error);
       return {

@@ -1,7 +1,12 @@
 import { Redis } from '@upstash/redis';
 import dotenv from 'dotenv';
 
-dotenv.config();
+const env = process.env.NODE_ENV || "development";
+
+dotenv.config({
+  path: `.env.${env}`
+});
+
 
 class RedisManager {
   constructor() {

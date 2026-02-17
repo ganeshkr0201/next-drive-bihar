@@ -1,7 +1,14 @@
 import dotenv from 'dotenv';
-dotenv.config();
+
+const env = process.env.NODE_ENV || "development";
+
+dotenv.config({
+  path: `.env.${env}`
+});
+
 
 import cors from 'cors';
+import helmet from 'helmet';
 import express from 'express'
 import passport from 'passport';
 
@@ -56,6 +63,7 @@ app.use(cors({
 // Trust proxy for production
 if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', 1);
+    app.use(helmet());
 }
 
 // Initialize passport for Google OAuth

@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 import passport from 'passport';
 import User from '../models/User.js';
 import { sendEmail } from '../utils/sendEmail.js';
-import { generateOTP } from '../utils/generateOtp.js';
 import { cloudinaryUtils } from '../config/cloudinary.js';
 import { generateTokenPair, verifyToken } from '../utils/jwt.js';
 import redisOTPManager from '../utils/redisOtp.js';
@@ -55,7 +54,6 @@ export const register = async (req, res) => {
             name,
             email,
             password: hashedPassword,
-            // Remove MongoDB OTP fields since we're using Redis
             isVerified: false
         });
 

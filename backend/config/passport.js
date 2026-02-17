@@ -4,7 +4,11 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import User from "../models/User.js";
 
 // Load environment variables
-dotenv.config();
+const env = process.env.NODE_ENV || "development";
+
+dotenv.config({
+  path: `.env.${env}`
+});
 
 // GOOGLE STRATEGY - Updated for JWT (no sessions)
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_AUTH_CALLBACK) {
@@ -51,5 +55,4 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
     ));
 } else {
     console.warn('⚠️ Google OAuth not configured - missing environment variables');
-    console.warn('Required: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_AUTH_CALLBACK');
 }
