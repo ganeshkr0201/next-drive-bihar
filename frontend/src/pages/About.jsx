@@ -104,7 +104,7 @@ const Counter = ({ end, suffix = "", duration = 2000 }) => {
                 <img 
                   src="/favicon.png" 
                   alt="NextDrive Bihar" 
-                  className="w-24 h-24 sm:w-32 sm:h-32 object-contain"
+                  className="w-20 h-20 sm:w-28 sm:h-28 object-contain"
                 />
               </div>
               <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
