@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import home_logo from '../assets/home_logo.jpeg';
 
 const Home = () => {
   const { isAuthenticated } = useAuth();
@@ -239,7 +240,7 @@ const Home = () => {
             <div className="relative">
               <div className="relative z-10">
                 <img
-                  src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                  src={home_logo}
                   alt="Travel in Bihar"
                   className="rounded-3xl shadow-2xl w-full h-[600px] object-cover"
                 />
