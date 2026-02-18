@@ -213,16 +213,42 @@ const TourDetail = () => {
 
               {/* Highlights */}
               {tourPackage.highlights && tourPackage.highlights.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Tour Highlights</h3>
-                  <p className="text-blue-600 text-base leading-relaxed">
-                    {Array.isArray(tourPackage.highlights) 
-                      ? tourPackage.highlights.join(', ')
-                      : typeof tourPackage.highlights === 'string' 
-                        ? tourPackage.highlights.replace(/[\[\]"]/g, '').split(',').map(h => h.trim()).join(', ')
-                        : tourPackage.highlights
-                    }
-                  </p>
+                <div className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">Tour Highlights</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {(() => {
+                      let highlightsList = [];
+                      if (Array.isArray(tourPackage.highlights)) {
+                        highlightsList = tourPackage.highlights;
+                      } else if (typeof tourPackage.highlights === 'string') {
+                        try {
+                          // Try to parse as JSON first
+                          const parsed = JSON.parse(tourPackage.highlights);
+                          highlightsList = Array.isArray(parsed) ? parsed : [tourPackage.highlights];
+                        } catch (e) {
+                          // If not JSON, clean up and split
+                          highlightsList = tourPackage.highlights
+                            .replace(/[\[\]"]/g, '')
+                            .split(/[,\n]/)
+                            .map(h => h.trim())
+                            .filter(h => h);
+                        }
+                      }
+                      return highlightsList.map((highlight, index) => (
+                        <div key={index} className="flex items-start gap-3 bg-white rounded-lg p-3 shadow-sm">
+                          <span className="text-blue-600 mt-0.5 flex-shrink-0 font-bold text-lg">•</span>
+                          <span className="text-gray-700 text-sm leading-snug">{highlight}</span>
+                        </div>
+                      ));
+                    })()}
+                  </div>
                 </div>
               )}
 
