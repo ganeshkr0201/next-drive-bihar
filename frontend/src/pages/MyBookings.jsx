@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import bookingService from '../services/bookingService';
 
 const MyBookings = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [bookings, setBookings] = useState([]);
   const [filteredBookings, setFilteredBookings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -27,6 +30,40 @@ const MyBookings = () => {
     applyFilters();
     setCurrentPage(1); // Reset to first page when filters change
   }, [bookings, filters]);
+
+  // Scroll to specific booking if bookingId is in URL
+  useEffect(() => {
+    const bookingId = searchParams.get('bookingId');
+    if (bookingId && filteredBookings.length > 0) {
+      // Find which page the booking is on
+      const bookingIndex = filteredBookings.findIndex(b => b._id === bookingId);
+      if (bookingIndex !== -1) {
+        const targetPage = Math.floor(bookingIndex / itemsPerPage) + 1;
+        
+        // Set the page first if needed
+        if (targetPage !== currentPage) {
+          setCurrentPage(targetPage);
+        }
+        
+        // Wait for the DOM to update
+        setTimeout(() => {
+          const bookingElement = document.getElementById(`booking-${bookingId}`);
+          if (bookingElement) {
+            // Scroll to the booking with smooth behavior and offset for header
+            const yOffset = -100; // Offset for fixed header
+            const y = bookingElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+            
+            // Add a highlight effect
+            bookingElement.classList.add('highlight-booking');
+            setTimeout(() => {
+              bookingElement.classList.remove('highlight-booking');
+            }, 3000);
+          }
+        }, 500);
+      }
+    }
+  }, [searchParams, filteredBookings, currentPage, itemsPerPage]);
 
   const loadBookings = async () => {
     setLoading(true);
@@ -535,7 +572,10 @@ const BookingCard = ({ booking, onCancel }) => {
   };
 
   return (
-    <div className="p-4 sm:p-6 bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+    <div 
+      id={`booking-${booking._id}`}
+      className="p-4 sm:p-6 bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200"
+    >
       {/* Header Section */}
       <div className="flex items-start gap-3 sm:gap-4 mb-4">
         {/* Icon */}

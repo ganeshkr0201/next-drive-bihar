@@ -57,7 +57,7 @@ class NotificationService {
         message: `Great news! Your booking for ${booking.tourPackage?.title || 'tour package'} has been confirmed. Get ready for an amazing trip on ${new Date(booking.travelDate).toLocaleDateString()}!`,
         relatedBooking: booking._id,
         priority: 'high',
-        actionUrl: '/my-bookings'
+        actionUrl: `/my-bookings?bookingId=${booking._id}`
       });
 
       await notification.save();
@@ -79,7 +79,7 @@ class NotificationService {
         message: `Your booking for ${booking.tourPackage?.title || 'tour package'} has been cancelled. ${booking.cancellationReason ? `Reason: ${booking.cancellationReason}` : ''}`,
         relatedBooking: booking._id,
         priority: 'high',
-        actionUrl: '/my-bookings'
+        actionUrl: `/my-bookings?bookingId=${booking._id}`
       });
 
       await notification.save();
@@ -101,7 +101,7 @@ class NotificationService {
         message: `Hope you had an amazing time on your ${booking.tourPackage?.title || 'tour package'} trip! We'd love to hear about your experience.`,
         relatedBooking: booking._id,
         priority: 'medium',
-        actionUrl: '/my-bookings'
+        actionUrl: `/my-bookings?bookingId=${booking._id}`
       });
 
       await notification.save();
@@ -134,7 +134,7 @@ class NotificationService {
         message: `Great news! Your car booking for ${carName} has been confirmed. Pickup: ${new Date(carBooking.pickupDate).toLocaleDateString()} at ${carBooking.pickupTime}. From ${carBooking.pickupLocation} to ${carBooking.dropoffLocation}.`,
         relatedBooking: carBooking._id,
         priority: 'high',
-        actionUrl: '/my-bookings'
+        actionUrl: `/my-bookings?bookingId=${carBooking._id}`
       });
 
       await notification.save();
@@ -167,7 +167,7 @@ class NotificationService {
         message: `Your car booking for ${carName} has been cancelled. ${carBooking.cancellationReason ? `Reason: ${carBooking.cancellationReason}` : ''} Please contact us if you have any questions.`,
         relatedBooking: carBooking._id,
         priority: 'high',
-        actionUrl: '/my-bookings'
+        actionUrl: `/my-bookings?bookingId=${carBooking._id}`
       });
 
       await notification.save();
@@ -200,7 +200,7 @@ class NotificationService {
         message: `Hope you had a great journey with ${carName}! We'd love to hear about your experience. Thank you for choosing NextDrive Bihar!`,
         relatedBooking: carBooking._id,
         priority: 'medium',
-        actionUrl: '/my-bookings'
+        actionUrl: `/my-bookings?bookingId=${carBooking._id}`
       });
 
       await notification.save();

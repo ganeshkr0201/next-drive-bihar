@@ -643,3 +643,20 @@ html {
     width: 100%;
   }
 }
+
+/* Highlight animation for booking cards when navigating from notifications */
+@keyframes highlight-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    border-color: rgb(229, 231, 235);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.2);
+    border-color: rgb(59, 130, 246);
+  }
+}
+
+.highlight-booking {
+  animation: highlight-pulse 1.5s ease-in-out 2;
+  border-color: rgb(59, 130, 246) !important;
+}
