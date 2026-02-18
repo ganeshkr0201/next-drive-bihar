@@ -213,32 +213,17 @@ const TourPackageCard = ({ pkg, isAuthenticated, navigate }) => {
         {/* Highlights */}
         {(Array.isArray(pkg.highlights) ? pkg.highlights : []).length > 0 && (
           <div className="mb-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
               <h4 className="text-sm font-semibold text-gray-800">Tour Highlights</h4>
             </div>
-            <div className="space-y-2">
-              {(Array.isArray(pkg.highlights) ? pkg.highlights : []).slice(0, 4).map((highlight, index) => (
-                <div key={index} className="flex items-start gap-2.5">
-                  <span className="text-blue-600 mt-0.5 flex-shrink-0 font-bold">•</span>
-                  <span className="text-sm text-gray-700 leading-snug">{highlight}</span>
-                </div>
-              ))}
-              {(Array.isArray(pkg.highlights) ? pkg.highlights : []).length > 4 && (
-                <div className="flex items-center gap-2 pt-1 pl-4">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span className="text-xs text-blue-700 font-semibold">
-                    {(Array.isArray(pkg.highlights) ? pkg.highlights : []).length - 4} more amazing destinations
-                  </span>
-                </div>
-              )}
-            </div>
+            <p className="text-gray-700 text-sm leading-relaxed italic pl-7">
+              {(Array.isArray(pkg.highlights) ? pkg.highlights : []).join(', ')}
+            </p>
           </div>
         )}
 

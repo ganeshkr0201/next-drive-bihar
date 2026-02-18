@@ -162,28 +162,16 @@ const TourPackagesSection = () => {
               </p>
 
               {/* Highlights */}
-              <div className="mb-4">
-                <div className="flex items-center gap-1 mb-2">
+              <div className="mb-4 bg-blue-50 rounded-lg p-3 border border-blue-100">
+                <div className="flex items-center gap-1.5 mb-2">
                   <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <h4 className="text-sm font-semibold text-gray-700">Key Highlights</h4>
+                  <h4 className="text-xs font-semibold text-gray-700">Highlights</h4>
                 </div>
-                <div className="space-y-1.5">
-                  {(Array.isArray(pkg.highlights) ? pkg.highlights : []).slice(0, 3).map((highlight, index) => (
-                    <div key={index} className="flex items-start gap-2">
-                      <span className="text-blue-500 mt-0.5 flex-shrink-0">•</span>
-                      <span className="text-sm text-gray-700 leading-tight">{highlight}</span>
-                    </div>
-                  ))}
-                  {(Array.isArray(pkg.highlights) ? pkg.highlights : []).length > 3 && (
-                    <div className="flex items-center gap-2 pt-1">
-                      <span className="text-xs text-blue-600 font-medium">
-                        +{(Array.isArray(pkg.highlights) ? pkg.highlights : []).length - 3} more destinations
-                      </span>
-                    </div>
-                  )}
-                </div>
+                <p className="text-gray-700 text-xs leading-relaxed italic">
+                  {(Array.isArray(pkg.highlights) ? pkg.highlights : []).join(', ')}
+                </p>
               </div>
 
               {/* Price and CTA */}

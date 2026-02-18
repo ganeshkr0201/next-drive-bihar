@@ -222,7 +222,7 @@ const TourDetail = () => {
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900">Tour Highlights</h3>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <p className="text-gray-700 text-base leading-relaxed italic">
                     {(() => {
                       let highlightsList = [];
                       if (Array.isArray(tourPackage.highlights)) {
@@ -241,14 +241,9 @@ const TourDetail = () => {
                             .filter(h => h);
                         }
                       }
-                      return highlightsList.map((highlight, index) => (
-                        <div key={index} className="flex items-start gap-3 bg-white rounded-lg p-3 shadow-sm">
-                          <span className="text-blue-600 mt-0.5 flex-shrink-0 font-bold text-lg">•</span>
-                          <span className="text-gray-700 text-sm leading-snug">{highlight}</span>
-                        </div>
-                      ));
+                      return highlightsList.join(', ');
                     })()}
-                  </div>
+                  </p>
                 </div>
               )}
 
