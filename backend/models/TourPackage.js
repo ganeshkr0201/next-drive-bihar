@@ -81,24 +81,6 @@ const tourPackageSchema = new mongoose.Schema({
     attractions: [String]
   }],
   highlights: [String],
-  category: {
-    type: String,
-    required: true,
-    default: 'Heritage & Culture'
-  },
-  difficulty: {
-    type: String,
-    enum: ["Easy", "Moderate", "Challenging", "Expert"],
-    default: "Easy"
-  },
-  maxGroupSize: {
-    type: Number,
-    default: 50
-  },
-  minGroupSize: {
-    type: Number,
-    default: 2
-  },
   status: {
     type: String,
     enum: ["Draft", "Published", "Archived", "Sold Out"],
@@ -152,7 +134,6 @@ tourPackageSchema.pre('save', async function() {
 
 // Indexes
 tourPackageSchema.index({ slug: 1 });
-tourPackageSchema.index({ category: 1 });
 tourPackageSchema.index({ status: 1 });
 tourPackageSchema.index({ featured: 1 });
 tourPackageSchema.index({ createdAt: -1 });

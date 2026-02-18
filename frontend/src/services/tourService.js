@@ -88,9 +88,6 @@ class TourService {
       rating: 4.5, // Default rating - you can add rating system later
       reviews: Math.floor(Math.random() * 200) + 50, // Random reviews for now
       description: pkg.shortDescription || pkg.description,
-      category: pkg.category,
-      difficulty: pkg.difficulty,
-      maxGroupSize: pkg.maxGroupSize,
       inclusions: pkg.inclusions || [],
       exclusions: pkg.exclusions || [],
       destinations: pkg.destinations || []
