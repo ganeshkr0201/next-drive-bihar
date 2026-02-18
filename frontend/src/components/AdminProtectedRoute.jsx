@@ -34,15 +34,16 @@ const LoadingScreen = () => {
 
 const AdminProtectedRoute = ({ children }) => {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
 
   // Show loading screen while checking authentication
   if (isLoading) {
     return <LoadingScreen />;
   }
 
-  // If not authenticated, redirect to login
+  // If not authenticated, redirect to login with location state
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Wait for user data to be loaded before checking role

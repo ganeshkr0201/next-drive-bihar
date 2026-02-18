@@ -90,16 +90,9 @@ const Counter = ({ end, suffix = "", duration = 2000 }) => {
     <div className="min-h-screen bg-white">
       {/* Hero Section with Parallax Effect */}
       <section className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 pt-16 sm:pt-20 pb-20 sm:pb-32 overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500 rounded-full opacity-10 animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500 rounded-full opacity-10 animate-pulse" style={{ animationDelay: '1s' }}></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-500 rounded-full opacity-5 animate-spin" style={{ animationDuration: '20s' }}></div>
-        </div>
-
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="mb-6 sm:mb-8 animate-fade-in-up">
+            <div className="mb-6 sm:mb-8">
               <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-2xl transform hover:scale-110 transition-transform duration-300">
                 <img 
                   src="/favicon.png" 
@@ -453,11 +446,6 @@ At Next Drive Bihar, safety is not just a priority — it is our promise. We ens
 
       {/* CTA Section with Gradient */}
       <section className="py-16 sm:py-24 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 relative overflow-hidden">
-        {/* Animated Background */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-blue-600/20 to-purple-600/20 animate-pulse"></div>
-        </div>
-        
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
             Ready to Explore Bihar?

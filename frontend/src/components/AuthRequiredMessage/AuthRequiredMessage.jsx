@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const AuthRequiredMessage = ({ 
   title = "Authentication Required", 
@@ -7,6 +7,12 @@ const AuthRequiredMessage = ({
   className = ""
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleLoginClick = () => {
+    // Pass current location to login page so user can be redirected back after login
+    navigate('/login', { state: { from: location } });
+  };
 
   return (
     <div className={`bg-yellow-50 border border-yellow-200 rounded-lg p-6 ${className}`}>
@@ -20,7 +26,7 @@ const AuthRequiredMessage = ({
       {showButtons && (
         <div className="flex space-x-3">
           <button
-            onClick={() => navigate('/login')}
+            onClick={handleLoginClick}
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
           >
             Login

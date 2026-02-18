@@ -398,7 +398,7 @@ const CarRental = () => {
 
     if (!isAuthenticated) {
       console.log('❌ User not authenticated');
-      navigate('/login');
+      navigate('/login', { state: { from: location } });
       return;
     }
 

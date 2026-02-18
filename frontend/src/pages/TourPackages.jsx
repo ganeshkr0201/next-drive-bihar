@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import tourService from '../services/tourService';
 
 const TourPackages = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [tourPackages, setTourPackages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -264,7 +265,7 @@ const TourPackageCard = ({ pkg, isAuthenticated, navigate }) => {
           {/* Book Now Button */}
           {!isAuthenticated ? (
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/login', { state: { from: location } })}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
               Login to Book

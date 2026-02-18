@@ -22,8 +22,10 @@ const LoginPage = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      // Check if there's a redirect location from ContactProtectedRoute
-      const from = location.state?.from?.pathname || '/user-dashboard';
+      // Check if there's a redirect location from any protected route
+      // Handle both location.state.from.pathname (from ProtectedRoute/ContactProtectedRoute)
+      // and location.state.from as string (from TourBookingProtectedRoute)
+      const from = location.state?.from?.pathname || location.state?.from || '/user-dashboard';
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, navigate, location]);
@@ -56,11 +58,13 @@ const LoginPage = () => {
       const result = await login(formData.email, formData.password);
       showSuccess(`Welcome back, ${result.user.name}!`);
       
-      // Check if there's a redirect location from ContactProtectedRoute
-      const from = location.state?.from?.pathname;
+      // Check if there's a redirect location from any protected route
+      // Handle both location.state.from.pathname (from ProtectedRoute/ContactProtectedRoute)
+      // and location.state.from as string (from TourBookingProtectedRoute)
+      const from = location.state?.from?.pathname || location.state?.from;
       
       if (from) {
-        // Redirect to the original intended page (like /contact)
+        // Redirect to the original intended page
         navigate(from, { replace: true });
       } else {
         // Default redirect based on user role
@@ -141,33 +145,57 @@ const LoginPage = () => {
           </div>
           
           {/* Show message if redirected from protected pages */}
-          {location.state?.from?.pathname === '/contact' && (
-            <div className="mb-4 sm:mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 sm:p-4">
-              <div className="flex items-start sm:items-center">
-                <div className="w-8 h-8 flex-shrink-0 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+          {location.state?.from && (() => {
+            const fromPath = location.state.from?.pathname || location.state.from;
+            
+            if (fromPath === '/contact') {
+              return (
+                <div className="mb-4 sm:mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 sm:p-4">
+                  <div className="flex items-start sm:items-center">
+                    <div className="w-8 h-8 flex-shrink-0 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <p className="text-blue-700 text-xs sm:text-sm font-medium leading-relaxed">
+                      Please log in to submit your query. You'll be redirected to the contact page after login.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-blue-700 text-xs sm:text-sm font-medium leading-relaxed">
-                  Please log in to submit your query. You'll be redirected to the contact page after login.
-                </p>
-              </div>
-            </div>
-          )}
-          
-          {location.state?.from?.pathname?.startsWith('/tour-packages/') && (
-            <div className="mb-4 sm:mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-3 sm:p-4">
-              <div className="flex items-start sm:items-center">
-                <div className="w-8 h-8 flex-shrink-0 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                  <img src="/tour_logo.svg" alt="Tour" className="w-4 h-4" />
+              );
+            }
+            
+            if (fromPath?.startsWith('/tour-packages/')) {
+              return (
+                <div className="mb-4 sm:mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-3 sm:p-4">
+                  <div className="flex items-start sm:items-center">
+                    <div className="w-8 h-8 flex-shrink-0 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                      <img src="/tour_logo.svg" alt="Tour" className="w-4 h-4" />
+                    </div>
+                    <p className="text-green-700 text-xs sm:text-sm font-medium leading-relaxed">
+                      {location.state?.message || 'Please log in to book this tour package. You\'ll be redirected back after login.'}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-green-700 text-xs sm:text-sm font-medium leading-relaxed">
-                  {location.state?.message || 'Please log in to book this tour package. You\'ll be redirected back after login.'}
-                </p>
+              );
+            }
+            
+            // Generic message for other protected pages
+            return (
+              <div className="mb-4 sm:mb-6 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-3 sm:p-4">
+                <div className="flex items-start sm:items-center">
+                  <div className="w-8 h-8 flex-shrink-0 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-purple-700 text-xs sm:text-sm font-medium leading-relaxed">
+                    Please log in to continue. You'll be redirected back to your previous page after login.
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Login Form */}
