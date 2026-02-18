@@ -46,8 +46,6 @@ const TourPackages = () => {
           return parseInt(a.price.replace(/[₹,]/g, '')) - parseInt(b.price.replace(/[₹,]/g, ''));
         case 'price-high':
           return parseInt(b.price.replace(/[₹,]/g, '')) - parseInt(a.price.replace(/[₹,]/g, ''));
-        case 'rating':
-          return parseFloat(b.rating) - parseFloat(a.rating);
         case 'duration':
           return parseInt(a.duration) - parseInt(b.duration);
         default:
@@ -102,7 +100,6 @@ const TourPackages = () => {
                 <option value="featured">Featured</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
                 <option value="duration">Duration</option>
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -191,14 +188,6 @@ const TourPackageCard = ({ pkg, isAuthenticated, navigate }) => {
             {calculateDiscount()}% OFF
           </div>
         )}
-        
-        {/* Rating Badge */}
-        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center shadow-lg">
-          <svg className="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
-          <span className="text-sm font-semibold text-gray-700">{pkg.rating}</span>
-        </div>
 
         {/* Duration Badge */}
         <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center shadow-lg">
@@ -223,32 +212,35 @@ const TourPackageCard = ({ pkg, isAuthenticated, navigate }) => {
 
         {/* Highlights */}
         {(Array.isArray(pkg.highlights) ? pkg.highlights : []).length > 0 && (
-          <div className="mb-4">
-            <div className="flex flex-wrap gap-2">
-              {(Array.isArray(pkg.highlights) ? pkg.highlights : []).slice(0, 3).map((highlight, index) => (
-                <span
-                  key={index}
-                  className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium border border-blue-100"
-                >
-                  {highlight}
-                </span>
+          <div className="mb-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h4 className="text-sm font-semibold text-gray-800">Tour Highlights</h4>
+            </div>
+            <div className="space-y-2">
+              {(Array.isArray(pkg.highlights) ? pkg.highlights : []).slice(0, 4).map((highlight, index) => (
+                <div key={index} className="flex items-start gap-2.5">
+                  <span className="text-blue-600 mt-0.5 flex-shrink-0 font-bold">•</span>
+                  <span className="text-sm text-gray-700 leading-snug">{highlight}</span>
+                </div>
               ))}
-              {(Array.isArray(pkg.highlights) ? pkg.highlights : []).length > 3 && (
-                <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium">
-                  +{(Array.isArray(pkg.highlights) ? pkg.highlights : []).length - 3} more
-                </span>
+              {(Array.isArray(pkg.highlights) ? pkg.highlights : []).length > 4 && (
+                <div className="flex items-center gap-2 pt-1 pl-4">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span className="text-xs text-blue-700 font-semibold">
+                    {(Array.isArray(pkg.highlights) ? pkg.highlights : []).length - 4} more amazing destinations
+                  </span>
+                </div>
               )}
             </div>
           </div>
         )}
-
-        {/* Reviews */}
-        <div className="flex items-center mb-4 text-sm text-gray-500">
-          <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2v-6a2 2 0 012-2h8z" />
-          </svg>
-          <span className="font-medium">{pkg.reviews}</span> reviews
-        </div>
 
         {/* Price and CTA */}
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">

@@ -85,8 +85,6 @@ class TourService {
         envConfig.getAssetUrl(pkg.images.featured) :
         'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
       highlights: highlights,
-      rating: 4.5, // Default rating - you can add rating system later
-      reviews: Math.floor(Math.random() * 200) + 50, // Random reviews for now
       description: pkg.shortDescription || pkg.description,
       inclusions: pkg.inclusions || [],
       exclusions: pkg.exclusions || [],
