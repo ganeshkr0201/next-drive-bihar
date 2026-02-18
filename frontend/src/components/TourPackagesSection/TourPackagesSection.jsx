@@ -169,8 +169,14 @@ const TourPackagesSection = () => {
                   </svg>
                   <h4 className="text-xs font-semibold text-gray-700">Highlights</h4>
                 </div>
-                <p className="text-gray-700 text-xs leading-relaxed italic">
-                  {(Array.isArray(pkg.highlights) ? pkg.highlights : []).join(', ')}
+                <p className="text-gray-700 text-xs leading-relaxed font-bold italic">
+                  {(() => {
+                    const highlights = Array.isArray(pkg.highlights) ? pkg.highlights : [];
+                    return highlights.map(h => {
+                      // Clean up any quotes or brackets
+                      return typeof h === 'string' ? h.replace(/[\[\]"']/g, '').trim() : h;
+                    }).filter(h => h).join(', ');
+                  })()}
                 </p>
               </div>
 

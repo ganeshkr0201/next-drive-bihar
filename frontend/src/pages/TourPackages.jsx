@@ -221,8 +221,14 @@ const TourPackageCard = ({ pkg, isAuthenticated, navigate }) => {
               </div>
               <h4 className="text-sm font-semibold text-gray-800">Tour Highlights</h4>
             </div>
-            <p className="text-gray-700 text-sm leading-relaxed italic pl-7">
-              {(Array.isArray(pkg.highlights) ? pkg.highlights : []).join(', ')}
+            <p className="text-gray-700 text-sm leading-relaxed font-bold italic pl-7">
+              {(() => {
+                const highlights = Array.isArray(pkg.highlights) ? pkg.highlights : [];
+                return highlights.map(h => {
+                  // Clean up any quotes or brackets
+                  return typeof h === 'string' ? h.replace(/[\[\]"']/g, '').trim() : h;
+                }).filter(h => h).join(', ');
+              })()}
             </p>
           </div>
         )}

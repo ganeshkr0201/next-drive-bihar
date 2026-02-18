@@ -222,7 +222,7 @@ const TourDetail = () => {
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900">Tour Highlights</h3>
                   </div>
-                  <p className="text-gray-700 text-base leading-relaxed italic">
+                  <p className="text-gray-700 text-base leading-relaxed font-bold italic">
                     {(() => {
                       let highlightsList = [];
                       if (Array.isArray(tourPackage.highlights)) {
@@ -235,7 +235,7 @@ const TourDetail = () => {
                         } catch (e) {
                           // If not JSON, clean up and split
                           highlightsList = tourPackage.highlights
-                            .replace(/[\[\]"]/g, '')
+                            .replace(/[\[\]"']/g, '')
                             .split(/[,\n]/)
                             .map(h => h.trim())
                             .filter(h => h);
