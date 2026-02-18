@@ -660,3 +660,19 @@ html {
   animation: highlight-pulse 1.5s ease-in-out 2;
   border-color: rgb(59, 130, 246) !important;
 }
+
+/* Fade in animation for collapsible content */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}
