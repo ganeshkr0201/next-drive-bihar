@@ -1247,19 +1247,39 @@ const BookingCard = ({ booking, onCancel }) => {
             {/* Tour Package Highlights (for tour bookings) */}
             {!isCarBooking && booking.tourPackage?.highlights && (
               <div className="mt-6 pt-4 border-t border-gray-200">
-                <p className="text-xs text-gray-500 mb-2">Tour Highlights</p>
-                <div className="bg-white p-3 rounded border">
-                  <ul className="text-sm text-gray-900 space-y-1">
-                    {(Array.isArray(booking.tourPackage.highlights) 
-                      ? booking.tourPackage.highlights 
-                      : booking.tourPackage.highlights.split('\n')
-                    ).map((highlight, index) => (
-                      <li key={index} className="flex items-start">
-                        <span className="text-blue-600 mr-2">•</span>
-                        <span>{highlight.trim()}</span>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-700">Tour Highlights</p>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">
+                  <p className="text-sm text-gray-700 leading-relaxed font-bold italic">
+                    {(() => {
+                      let highlightsList = [];
+                      if (Array.isArray(booking.tourPackage.highlights)) {
+                        highlightsList = booking.tourPackage.highlights;
+                      } else if (typeof booking.tourPackage.highlights === 'string') {
+                        try {
+                          // Try to parse as JSON first
+                          const parsed = JSON.parse(booking.tourPackage.highlights);
+                          highlightsList = Array.isArray(parsed) ? parsed : [booking.tourPackage.highlights];
+                        } catch (e) {
+                          // If not JSON, clean up and split
+                          highlightsList = booking.tourPackage.highlights
+                            .replace(/[\[\]"']/g, '')
+                            .split(/[,\n]/)
+                            .map(h => h.trim())
+                            .filter(h => h);
+                        }
+                      }
+                      return highlightsList.map(h => {
+                        return typeof h === 'string' ? h.replace(/[\[\]"']/g, '').trim() : h;
+                      }).filter(h => h).join(', ');
+                    })()}
+                  </p>
                 </div>
               </div>
             )}
