@@ -2551,157 +2551,343 @@ const PackageCard = ({ package: pkg, onDelete, isLoading }) => {
   );
 };
 
-// Simplified Add Package Section
+// Modern Add Package Section with Sectioned Layout
 const AddPackageSection = ({ form, setForm, onSubmit, onImageChange, isLoading }) => {
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleImageChange = (e) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      // Create preview URLs
+      const previews = Array.from(files).map(file => URL.createObjectURL(file));
+      setImagePreviews(previews);
+    }
+    onImageChange(e);
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const files = e.dataTransfer.files;
+      const previews = Array.from(files).map(file => URL.createObjectURL(file));
+      setImagePreviews(previews);
+      
+      // Create a synthetic event for onImageChange
+      const syntheticEvent = {
+        target: { files: files }
+      };
+      onImageChange(syntheticEvent);
+    }
+  };
+
+  const handleClearForm = () => {
+    setForm({
+      name: '',
+      duration: '',
+      summary: '',
+      highlights: '',
+      price: '',
+      discount: '',
+      inclusions: '',
+      exclusions: '',
+      pickupLocations: '',
+      dropLocations: '',
+      images: []
+    });
+    setImagePreviews([]);
+  };
+
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-semibold mb-6">Add New Tour Package</h2>
-      <form onSubmit={onSubmit} className="space-y-6 max-w-2xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Package Name *</label>
-            <input
-              type="text"
-              required
-              value={form.name}
-              onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="e.g., Buddhist Circuit Tour"
-            />
+    <div className="p-4 md:p-6">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <span className="text-3xl">📦</span>
+          Add New Tour Package
+        </h2>
+        <p className="text-gray-600 mt-1">Create a new tour package with all the details</p>
+      </div>
+
+      <form onSubmit={onSubmit} className="space-y-6 max-w-5xl">
+        {/* Basic Information Section */}
+        <div className="bg-white rounded-xl border-2 border-blue-100 shadow-sm overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-blue-100">
+            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+              <span>ℹ️</span>
+              Basic Information
+            </h3>
           </div>
+          <div className="p-4 md:p-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                  <span>📝</span>
+                  Package Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={form.name}
+                  onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  placeholder="e.g., Buddhist Circuit Tour"
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Duration *</label>
-            <input
-              type="text"
-              required
-              value={form.duration}
-              onChange={(e) => setForm(prev => ({ ...prev, duration: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="e.g., 5 Days / 4 Nights"
-            />
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                  <span>⏱️</span>
+                  Duration <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={form.duration}
+                  onChange={(e) => setForm(prev => ({ ...prev, duration: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  placeholder="e.g., 5 Days / 4 Nights"
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹) *</label>
-            <input
-              type="text"
-              inputMode="decimal"
-              required
-              value={form.price}
-              onChange={(e) => {
-                let value = e.target.value;
-                // Allow only numbers and decimal point
-                value = value.replace(/[^\d.]/g, '');
-                // Remove leading zeros
-                value = value.replace(/^0+(?=\d)/, '');
-                // Allow only one decimal point
-                const parts = value.split('.');
-                if (parts.length > 2) value = parts[0] + '.' + parts.slice(1).join('');
-                setForm(prev => ({ ...prev, price: value === '' ? '' : value }));
-              }}
-              onBlur={(e) => {
-                const numValue = parseFloat(e.target.value) || 0;
-                setForm(prev => ({ ...prev, price: numValue }));
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="e.g., 15999"
-            />
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                  <span>💰</span>
+                  Price (₹) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  required
+                  value={form.price}
+                  onChange={(e) => {
+                    let value = e.target.value;
+                    value = value.replace(/[^\d.]/g, '');
+                    value = value.replace(/^0+(?=\d)/, '');
+                    const parts = value.split('.');
+                    if (parts.length > 2) value = parts[0] + '.' + parts.slice(1).join('');
+                    setForm(prev => ({ ...prev, price: value === '' ? '' : value }));
+                  }}
+                  onBlur={(e) => {
+                    const numValue = parseFloat(e.target.value) || 0;
+                    setForm(prev => ({ ...prev, price: numValue }));
+                  }}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  placeholder="e.g., 15999"
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Discount (₹)</label>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={form.discount}
-              onChange={(e) => {
-                let value = e.target.value;
-                // Allow only numbers and decimal point
-                value = value.replace(/[^\d.]/g, '');
-                // Remove leading zeros
-                value = value.replace(/^0+(?=\d)/, '');
-                // Allow only one decimal point
-                const parts = value.split('.');
-                if (parts.length > 2) value = parts[0] + '.' + parts.slice(1).join('');
-                setForm(prev => ({ ...prev, discount: value === '' ? '' : value }));
-              }}
-              onBlur={(e) => {
-                const numValue = parseFloat(e.target.value) || 0;
-                setForm(prev => ({ ...prev, discount: numValue }));
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="e.g., 4000"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Summary *</label>
-          <textarea
-            required
-            rows={3}
-            value={form.summary}
-            onChange={(e) => setForm(prev => ({ ...prev, summary: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Brief description of the tour package..."
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Highlights (one per line) *</label>
-          <textarea
-            required
-            rows={4}
-            value={form.highlights}
-            onChange={(e) => setForm(prev => ({ ...prev, highlights: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Bodh Gaya&#10;Nalanda&#10;Rajgir&#10;Vaishali"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Inclusions</label>
-            <textarea
-              rows={3}
-              value={form.inclusions}
-              onChange={(e) => setForm(prev => ({ ...prev, inclusions: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Transportation&#10;Accommodation&#10;Meals"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Exclusions</label>
-            <textarea
-              rows={3}
-              value={form.exclusions}
-              onChange={(e) => setForm(prev => ({ ...prev, exclusions: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Personal expenses&#10;Travel insurance&#10;Tips"
-            />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                  <span>🏷️</span>
+                  Discount (₹)
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={form.discount}
+                  onChange={(e) => {
+                    let value = e.target.value;
+                    value = value.replace(/[^\d.]/g, '');
+                    value = value.replace(/^0+(?=\d)/, '');
+                    const parts = value.split('.');
+                    if (parts.length > 2) value = parts[0] + '.' + parts.slice(1).join('');
+                    setForm(prev => ({ ...prev, discount: value === '' ? '' : value }));
+                  }}
+                  onBlur={(e) => {
+                    const numValue = parseFloat(e.target.value) || 0;
+                    setForm(prev => ({ ...prev, discount: numValue }));
+                  }}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  placeholder="e.g., 4000"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Package Images</label>
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={onImageChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+        {/* Description Section */}
+        <div className="bg-white rounded-xl border-2 border-green-100 shadow-sm overflow-hidden">
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3 border-b border-green-100">
+            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+              <span>📄</span>
+              Description & Highlights
+            </h3>
+          </div>
+          <div className="p-4 md:p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                <span>✍️</span>
+                Summary <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                required
+                rows={3}
+                value={form.summary}
+                onChange={(e) => setForm(prev => ({ ...prev, summary: e.target.value }))}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                placeholder="Brief description of the tour package..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                <span>⭐</span>
+                Highlights (one per line) <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                required
+                rows={5}
+                value={form.highlights}
+                onChange={(e) => setForm(prev => ({ ...prev, highlights: e.target.value }))}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all font-mono text-sm"
+                placeholder="Bodh Gaya&#10;Nalanda&#10;Rajgir&#10;Vaishali"
+              />
+              <p className="text-xs text-gray-500 mt-1">Enter each highlight on a new line</p>
+            </div>
+          </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
-        >
-          {isLoading ? 'Creating...' : '➕ Create Tour Package'}
-        </button>
+        {/* Inclusions & Exclusions Section */}
+        <div className="bg-white rounded-xl border-2 border-purple-100 shadow-sm overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-3 border-b border-purple-100">
+            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+              <span>📋</span>
+              Inclusions & Exclusions
+            </h3>
+          </div>
+          <div className="p-4 md:p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                  <span>✅</span>
+                  Inclusions
+                </label>
+                <textarea
+                  rows={5}
+                  value={form.inclusions}
+                  onChange={(e) => setForm(prev => ({ ...prev, inclusions: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all font-mono text-sm"
+                  placeholder="Transportation&#10;Accommodation&#10;Meals&#10;Guide Services"
+                />
+                <p className="text-xs text-gray-500 mt-1">What's included in the package</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                  <span>❌</span>
+                  Exclusions
+                </label>
+                <textarea
+                  rows={5}
+                  value={form.exclusions}
+                  onChange={(e) => setForm(prev => ({ ...prev, exclusions: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all font-mono text-sm"
+                  placeholder="Personal expenses&#10;Travel insurance&#10;Tips&#10;Entry fees"
+                />
+                <p className="text-xs text-gray-500 mt-1">What's not included in the package</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Images Section */}
+        <div className="bg-white rounded-xl border-2 border-orange-100 shadow-sm overflow-hidden">
+          <div className="bg-gradient-to-r from-orange-50 to-amber-50 px-4 py-3 border-b border-orange-100">
+            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+              <span>🖼️</span>
+              Package Images
+            </h3>
+          </div>
+          <div className="p-4 md:p-6">
+            <div
+              className={`relative border-2 border-dashed rounded-lg p-6 transition-all ${
+                dragActive 
+                  ? 'border-orange-500 bg-orange-50' 
+                  : 'border-gray-300 hover:border-orange-400'
+              }`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                id="image-upload"
+              />
+              <div className="text-center">
+                <div className="text-5xl mb-3">📸</div>
+                <label htmlFor="image-upload" className="cursor-pointer">
+                  <span className="text-orange-600 font-medium hover:text-orange-700">
+                    Click to upload
+                  </span>
+                  <span className="text-gray-600"> or drag and drop</span>
+                </label>
+                <p className="text-xs text-gray-500 mt-2">PNG, JPG, JPEG up to 10MB each</p>
+              </div>
+            </div>
+
+            {/* Image Previews */}
+            {imagePreviews.length > 0 && (
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-700 mb-3">
+                  Selected Images ({imagePreviews.length})
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
+                        <span className="text-white opacity-0 group-hover:opacity-100 text-xs">
+                          Image {index + 1}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            onClick={handleClearForm}
+            className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 font-medium transition-all border border-gray-300"
+            disabled={isLoading}
+          >
+            🗑️ Clear Form
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 font-medium transition-all shadow-md hover:shadow-lg"
+          >
+            {isLoading ? '⏳ Creating...' : '✨ Create Tour Package'}
+          </button>
+        </div>
       </form>
     </div>
   );
