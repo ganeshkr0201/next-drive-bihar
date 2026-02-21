@@ -475,6 +475,7 @@ export const carBookings = async (req, res) => {
         pickupDate: pickupDateTime,
         dropoffDate: dropDateTime,
         pickupTime: pickupTime || '09:00',
+        dropoffTime: dropTime || '18:00',
         numberOfPassengers: 0, // Not applicable for marriage bookings
         tripType: 'marriage',
         numberOfCars: numberOfCars,
@@ -619,6 +620,7 @@ export const carBookings = async (req, res) => {
       pickupDate: pickupDateTime,
       dropoffDate: dropDate ? new Date(`${dropDate}T${dropTime || '18:00'}`) : pickupDateTime,
       pickupTime: pickupTime || '09:00',
+      dropoffTime: dropTime || '18:00',
       numberOfPassengers: numberOfPassengers || 4,
       tripType: bookingTypeKey,
       totalAmount: roundedAmount,

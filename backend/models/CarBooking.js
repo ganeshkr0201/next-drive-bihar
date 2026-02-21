@@ -33,6 +33,9 @@ const carBookingSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  dropoffTime: {
+    type: String
+  },
   numberOfPassengers: {
     type: Number,
     required: true,
