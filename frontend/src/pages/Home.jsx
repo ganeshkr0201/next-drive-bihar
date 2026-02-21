@@ -1,271 +1,265 @@
 import { Link } from 'react-router-dom';
 
 const Home = () => {
+  const bookingTypes = [
+    {
+      title: 'One Way Trip',
+      description: 'Travel from point A to B with ease',
+      icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
+      color: 'blue',
+      features: ['No return charges', 'Flexible timing', 'Direct route']
+    },
+    {
+      title: 'Round Trip',
+      description: 'Complete journey with return included',
+      icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
+      color: 'green',
+      features: ['Return included', 'Cost effective', 'Same day service']
+    },
+    {
+      title: 'Outstation',
+      description: 'Long distance travel across Bihar',
+      icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7',
+      color: 'purple',
+      features: ['Multi-city travel', 'Experienced drivers', 'Comfortable rides']
+    },
+    {
+      title: 'Marriage Booking',
+      description: 'Multiple cars for your special day',
+      icon: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z',
+      color: 'pink',
+      features: ['Multiple vehicles', 'Decorated cars', 'Professional service']
+    },
+    {
+      title: 'Monthly Rental',
+      description: 'Long-term car rental solutions',
+      icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
+      color: 'orange',
+      features: ['Best rates', 'Flexible plans', 'Dedicated vehicle']
+    }
+  ];
+
+  const tourDestinations = [
+    {
+      title: 'Bodh Gaya',
+      description: 'Sacred site of Buddha\'s enlightenment',
+      icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z'
+    },
+    {
+      title: 'Nalanda',
+      description: 'Ancient center of learning and wisdom',
+      icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'
+    },
+    {
+      title: 'Rajgir',
+      description: 'Hot springs and ancient capital',
+      icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'
+    }
+  ];
+
   return (
-    <div className="min-h-screen">
-      {/* Hero Section with Car Background */}
-      <section className="relative h-screen min-h-[600px]">
-        {/* Car Background Image */}
+    <div className="min-h-screen bg-white">
+      {/* Hero Section */}
+      <section className="relative h-[70vh] min-h-[500px] max-h-[700px]">
         <div 
-          className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: `url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=2070&auto=format&fit=crop')`,
           }}
         >
-          {/* Fallback gradient if image doesn't load */}
           <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-gray-700"></div>
         </div>
         
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 z-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70"></div>
         
-        {/* Content */}
-        <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-4">
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">
+        <div className="relative h-full flex flex-col items-center justify-center text-center px-4 z-10">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 drop-shadow-2xl">
             Next Drive Bihar
           </h1>
-          <p className="text-xl md:text-2xl text-white/95 mb-12 max-w-3xl drop-shadow-lg">
-            Your trusted partner for car rentals and tour experiences across Bihar
+          <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl drop-shadow-lg">
+            Premium Car Rentals & Tour Packages Across Bihar
           </p>
-          <div className="flex flex-col sm:flex-row gap-6">
-            <Link
-              to="/car-rental"
-              className="group px-10 py-4 bg-white text-gray-900 text-lg font-semibold rounded-md hover:bg-gray-100 transition-all flex items-center justify-center shadow-2xl"
-            >
-              Book a Car
-              <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </Link>
-            <Link
-              to="/tour-packages"
-              className="group px-10 py-4 bg-transparent border-2 border-white text-white text-lg font-semibold rounded-md hover:bg-white hover:text-gray-900 transition-all flex items-center justify-center backdrop-blur-sm"
-            >
-              Explore Tours
-              <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </Link>
-          </div>
-        </div>
-
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce z-20">
-          <svg className="w-6 h-6 text-white drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="py-32 bg-white">
+      {/* Car Booking Types */}
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Car Rental */}
-            <div className="order-2 lg:order-1">
-              <div className="inline-block px-4 py-2 bg-blue-100 text-blue-700 text-sm font-semibold rounded-full mb-6">
-                CAR RENTAL
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                Premium Vehicles for Every Journey
-              </h2>
-              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                From business meetings to family celebrations, our fleet of well-maintained vehicles ensures you travel in comfort and style. Professional drivers, transparent pricing, and 24/7 support.
-              </p>
-              
-              <div className="space-y-4 mb-10">
-                {[
-                  { title: 'One Way & Round Trip', desc: 'Flexible booking for your convenience' },
-                  { title: 'Outstation Travel', desc: 'Long-distance journeys made comfortable' },
-                  { title: 'Wedding & Events', desc: 'Multiple vehicles for special occasions' },
-                  { title: 'Monthly Rentals', desc: 'Cost-effective long-term solutions' }
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-start">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center mt-1">
-                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
-                      <p className="text-gray-600">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <Link
-                to="/car-rental"
-                className="inline-flex items-center px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Book Now
-                <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
-            </div>
-
-            <div className="order-1 lg:order-2">
-              <div className="relative">
-                <div className="aspect-square bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center">
-                  <svg className="w-64 h-64 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                    <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1V8a1 1 0 00-1-1h-3z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Tour Packages Section */}
-      <section className="py-32 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <div className="relative">
-                <div className="aspect-square bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center">
-                  <svg className="w-64 h-64 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div className="inline-block px-4 py-2 bg-green-100 text-green-700 text-sm font-semibold rounded-full mb-6">
-                TOUR PACKAGES
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                Discover Bihar's Rich Heritage
-              </h2>
-              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                Experience the spiritual and cultural treasures of Bihar with our expertly curated tour packages. From ancient Buddhist sites to historical landmarks, explore the land where Buddha attained enlightenment.
-              </p>
-              
-              <div className="space-y-4 mb-10">
-                {[
-                  { title: 'Bodh Gaya Pilgrimage', desc: 'Visit the sacred Mahabodhi Temple' },
-                  { title: 'Nalanda University', desc: 'Explore ancient ruins of learning' },
-                  { title: 'Rajgir Hot Springs', desc: 'Natural beauty and spirituality' },
-                  { title: 'Custom Itineraries', desc: 'Personalized tours for your group' }
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-start">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-600 flex items-center justify-center mt-1">
-                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
-                      <p className="text-gray-600">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <Link
-                to="/tour-packages"
-                className="inline-flex items-center px-8 py-4 bg-green-600 text-white text-lg font-semibold rounded-md hover:bg-green-700 transition-colors"
-              >
-                Explore Tours
-                <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-32 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Why Choose Next Drive Bihar
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Car Rental Services
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We're committed to making your journey safe, comfortable, and memorable
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Choose the perfect service for your journey
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {bookingTypes.map((type, idx) => (
+              <Link
+                key={idx}
+                to="/car-rental"
+                className="group bg-white border-2 border-gray-100 rounded-2xl p-8 hover:border-blue-300 hover:shadow-xl transition-all"
+              >
+                <div className={`w-16 h-16 bg-${type.color}-100 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                  <svg className={`w-8 h-8 text-${type.color}-600`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={type.icon} />
+                  </svg>
+                </div>
+                
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">{type.title}</h3>
+                <p className="text-gray-600 mb-6">{type.description}</p>
+                
+                <ul className="space-y-2 mb-6">
+                  {type.features.map((feature, fidx) => (
+                    <li key={fidx} className="flex items-center text-sm text-gray-700">
+                      <svg className="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="flex items-center text-blue-600 font-semibold group-hover:translate-x-2 transition-transform">
+                  Book Now
+                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Tour Packages */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Explore Bihar's Heritage
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Discover spiritual and cultural treasures
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            {tourDestinations.map((dest, idx) => (
+              <div key={idx} className="bg-white rounded-2xl p-8 text-center hover:shadow-xl transition-shadow">
+                <div className="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={dest.icon} />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{dest.title}</h3>
+                <p className="text-gray-600">{dest.description}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Link
+              to="/tour-packages"
+              className="inline-flex items-center px-8 py-4 bg-green-600 text-white text-lg font-semibold rounded-lg hover:bg-green-700 transition-colors"
+            >
+              View All Tours
+              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Why Choose Us
+            </h2>
+            <p className="text-lg text-gray-600">
+              Your trusted travel partner in Bihar
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-8">
             {[
               {
                 icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
                 title: 'Safe & Secure',
-                desc: 'All drivers are verified and vehicles are GPS-tracked for your safety'
+                desc: 'Verified drivers and GPS tracking'
               },
               {
                 icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
                 title: '24/7 Support',
-                desc: 'Our customer service team is always available to assist you'
+                desc: 'Always here to help you'
               },
               {
                 icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
                 title: 'Best Prices',
-                desc: 'Transparent pricing with no hidden charges or surprise fees'
+                desc: 'Transparent, no hidden fees'
               },
               {
                 icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z',
                 title: 'Premium Quality',
-                desc: 'Well-maintained vehicles with modern amenities and comfort'
+                desc: 'Well-maintained vehicles'
               }
             ].map((feature, idx) => (
               <div key={idx} className="text-center">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-2xl mb-6">
-                  <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={feature.icon} />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{feature.desc}</p>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-sm text-gray-600">{feature.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-24 bg-gradient-to-r from-blue-600 to-blue-800">
+      {/* Stats */}
+      <section className="py-16 bg-gradient-to-r from-blue-600 to-blue-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
               { number: '5000+', label: 'Happy Customers' },
               { number: '500+', label: 'Vehicles' },
               { number: '50+', label: 'Tour Packages' },
-              { number: '24/7', label: 'Support Available' }
+              { number: '24/7', label: 'Support' }
             ].map((stat, idx) => (
               <div key={idx}>
-                <div className="text-5xl md:text-6xl font-bold text-white mb-2">{stat.number}</div>
-                <div className="text-blue-100 text-lg">{stat.label}</div>
+                <div className="text-4xl md:text-5xl font-bold text-white mb-2">{stat.number}</div>
+                <div className="text-blue-100">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-32 bg-gray-900">
+      {/* CTA */}
+      <section className="py-20 bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Ready to Start Your Journey?
           </h2>
-          <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
-            Book your car or tour package today and experience the best of Bihar with Next Drive
+          <p className="text-lg text-gray-300 mb-10 max-w-2xl mx-auto">
+            Book your car or tour package today and experience the best of Bihar
           </p>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/car-rental"
-              className="px-10 py-4 bg-blue-600 text-white text-lg font-semibold rounded-md hover:bg-blue-700 transition-colors"
+              className="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Book a Car Now
+              Book a Car
             </Link>
             <Link
               to="/contact"
-              className="px-10 py-4 bg-white text-gray-900 text-lg font-semibold rounded-md hover:bg-gray-100 transition-colors"
+              className="px-8 py-4 bg-white text-gray-900 text-lg font-semibold rounded-lg hover:bg-gray-100 transition-colors"
             >
               Contact Us
             </Link>
