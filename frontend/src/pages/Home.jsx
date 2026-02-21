@@ -1,18 +1,23 @@
 import { Link } from 'react-router-dom';
-import OffersCarousel from '../components/OffersCarousel/OffersCarousel';
 
 const Home = () => {
   return (
     <div className="min-h-screen">
-      {/* Hero Section with Carousel */}
+      {/* Hero Section with Car Background */}
       <section className="relative h-screen min-h-[600px]">
-        {/* Carousel Background */}
-        <div className="absolute inset-0 z-0">
-          <OffersCarousel />
+        {/* Car Background Image */}
+        <div 
+          className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=2070&auto=format&fit=crop')`,
+          }}
+        >
+          {/* Fallback gradient if image doesn't load */}
+          <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-gray-700"></div>
         </div>
         
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60 z-10"></div>
+        {/* Overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 z-10"></div>
         
         {/* Content */}
         <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-4">
