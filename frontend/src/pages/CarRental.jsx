@@ -1183,14 +1183,15 @@ const CarRental = () => {
                       Number of Cars Required *
                     </label>
                     <input
-                      type="text"
-                      inputMode="numeric"
+                      type="number"
+                      min="1"
+                      max="10"
                       required
                       placeholder="Enter number of cars (1-10)"
                       value={bookingForm.numberOfCars}
                       onChange={(e) => {
-                        const value = e.target.value.replace(/^0+(?=\d)/, '').replace(/\D/g, '');
-                        const numValue = value === '' ? 1 : parseInt(value);
+                        const value = e.target.value;
+                        const numValue = parseInt(value) || 1;
                         if (numValue >= 1 && numValue <= 10) {
                           setBookingForm(prev => ({ 
                             ...prev, 
