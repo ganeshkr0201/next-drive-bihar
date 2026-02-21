@@ -88,7 +88,10 @@ const CarRental = () => {
   // Ola Maps API integration
   const OLA_MAPS_API_KEY = import.meta.env.VITE_OLA_MAPS_API_KEY || '';
 
-  // Fetch city suggestions from Ola Maps
+  // Ola Maps API integration
+  const OLA_MAPS_API_KEY = import.meta.env.VITE_OLA_MAPS_API_KEY || '';
+
+  // Fetch city suggestions from Ola Maps with Bihar filtering
   const fetchCitySuggestions = async (query, type) => {
     if (query.length < 3) {
       if (type === 'source') setSourceSuggestions([]);
@@ -97,59 +100,88 @@ const CarRental = () => {
     }
 
     try {
-      console.log('🔍 Fetching suggestions for:', query);
+      console.log('🔍 Fetching Ola Maps suggestions for:', query);
       
-      // Ola Maps Autocomplete API with Bihar/India restrictions
-      // Using location bias for Patna and restricting to India
-      const url = `https://api.olamaps.io/places/v1/autocomplete?input=${encodeURIComponent(query)}&location=25.5941,85.1376&radius=200000&strictbounds=false&components=country:in&api_key=${OLA_MAPS_API_KEY}`;
+      // Ola Maps Autocomplete API
+      // Using Patna as location bias and adding Bihar to search query
+      const searchQuery = `${query}, Bihar`;
+      const url = `https://api.olamaps.io/places/v1/autocomplete?input=${encodeURIComponent(searchQuery)}&location=25.5941,85.1376&radius=300000&language=en&api_key=${OLA_MAPS_API_KEY}`;
       
-      console.log('🌐 Autocomplete API URL:', url.replace(OLA_MAPS_API_KEY, 'API_KEY_HIDDEN'));
+      console.log('🌐 Autocomplete URL:', url.replace(OLA_MAPS_API_KEY, 'HIDDEN'));
       
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'X-Request-Id': `autocomplete-${Date.now()}`
         }
       });
       
-      console.log('📡 Autocomplete Response Status:', response.status);
+      console.log('📡 Response Status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('📦 Autocomplete Response:', data);
+        console.log('📦 Raw Response:', data);
         
-        const suggestions = data.predictions || [];
+        let suggestions = data.predictions || [];
         
-        // Filter suggestions to prioritize Bihar locations
-        const filteredSuggestions = suggestions.map(suggestion => {
-          // Add Bihar indicator if location is in Bihar
-          const isBihar = suggestion.description?.toLowerCase().includes('bihar') || 
-                         suggestion.structured_formatting?.secondary_text?.toLowerCase().includes('bihar');
+        // Filter to only show Bihar locations
+        suggestions = suggestions.filter(suggestion => {
+          const desc = suggestion.description?.toLowerCase() || '';
+          const secondaryText = suggestion.structured_formatting?.secondary_text?.toLowerCase() || '';
           
-          return {
-            ...suggestion,
-            isBihar: isBihar
-          };
-        }).sort((a, b) => {
-          // Prioritize Bihar locations
-          if (a.isBihar && !b.isBihar) return -1;
-          if (!a.isBihar && b.isBihar) return 1;
+          // Must contain 'bihar' in description or secondary text
+          return desc.includes('bihar') || secondaryText.includes('bihar');
+        });
+        
+        // Sort by relevance - exact matches first
+        suggestions.sort((a, b) => {
+          const aMain = a.structured_formatting?.main_text?.toLowerCase() || '';
+          const bMain = b.structured_formatting?.main_text?.toLowerCase() || '';
+          const queryLower = query.toLowerCase();
+          
+          const aExact = aMain === queryLower;
+          const bExact = bMain === queryLower;
+          
+          if (aExact && !bExact) return -1;
+          if (!aExact && bExact) return 1;
+          
+          const aStarts = aMain.startsWith(queryLower);
+          const bStarts = bMain.startsWith(queryLower);
+          
+          if (aStarts && !bStarts) return -1;
+          if (!aStarts && bStarts) return 1;
+          
           return 0;
         });
         
-        console.log('✅ Filtered suggestions:', filteredSuggestions.length);
+        console.log('✅ Filtered Bihar suggestions:', suggestions.length);
         
         if (type === 'source') {
-          setSourceSuggestions(filteredSuggestions);
+          setSourceSuggestions(suggestions);
         } else {
-          setDestinationSuggestions(filteredSuggestions);
+          setDestinationSuggestions(suggestions);
         }
       } else {
         const errorText = await response.text();
-        console.error('❌ Ola Maps Autocomplete error:', response.status, errorText);
+        console.error('❌ Autocomplete API Error:', response.status, errorText);
+        
+        // Set empty suggestions on error
+        if (type === 'source') {
+          setSourceSuggestions([]);
+        } else {
+          setDestinationSuggestions([]);
+        }
       }
     } catch (error) {
-      console.error('❌ Error fetching city suggestions:', error);
+      console.error('❌ Error fetching suggestions:', error);
+      
+      // Set empty suggestions on error
+      if (type === 'source') {
+        setSourceSuggestions([]);
+      } else {
+        setDestinationSuggestions([]);
+      }
     }
   };
 
@@ -226,27 +258,51 @@ const CarRental = () => {
 
   // Geocode address to coordinates using Ola Maps
   const geocodeAddress = async (address) => {
+    console.log('🔍 Geocoding address:', address);
+    
     try {
-      const response = await fetch(
-        `https://api.olamaps.io/places/v1/geocode?address=${encodeURIComponent(address)}&api_key=${OLA_MAPS_API_KEY}`,
-        {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json'
-          }
+      // Clean the address
+      const cleanAddress = address.trim().replace(/\s+/g, ' ');
+      
+      const url = `https://api.olamaps.io/places/v1/geocode?address=${encodeURIComponent(cleanAddress)}&language=en&api_key=${OLA_MAPS_API_KEY}`;
+      console.log('🌐 Geocoding URL:', url.replace(OLA_MAPS_API_KEY, 'HIDDEN'));
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-Request-Id': `geocode-${Date.now()}`
         }
-      );
+      });
+      
+      console.log('📡 Geocoding Status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
+        console.log('📦 Geocoding Response:', data);
+        
         if (data.geocodingResults && data.geocodingResults.length > 0) {
-          const location = data.geocodingResults[0].geometry.location;
-          return { lat: location.lat, lng: location.lng };
+          const result = data.geocodingResults[0];
+          const location = result.geometry?.location;
+          
+          if (location && location.lat && location.lng) {
+            console.log('✅ Geocoding successful! Coordinates:', location);
+            return {
+              lat: location.lat,
+              lng: location.lng,
+              formatted_address: result.formatted_address
+            };
+          }
         }
+        console.log('⚠️ No geocoding results');
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Geocoding Error:', response.status, errorText);
       }
     } catch (error) {
-      console.error('Geocoding error:', error);
+      console.error('❌ Geocoding exception:', error);
     }
+    
     return null;
   };
 
