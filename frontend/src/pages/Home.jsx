@@ -5,23 +5,27 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section with Carousel */}
-      <section className="relative h-screen">
-        <div className="absolute inset-0">
+      <section className="relative h-screen min-h-[600px]">
+        {/* Carousel Background */}
+        <div className="absolute inset-0 z-0">
           <OffersCarousel />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70"></div>
         
-        <div className="relative h-full flex flex-col items-center justify-center text-center px-4">
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-6 tracking-tight">
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60 z-10"></div>
+        
+        {/* Content */}
+        <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-4">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">
             Next Drive Bihar
           </h1>
-          <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl">
+          <p className="text-xl md:text-2xl text-white/95 mb-12 max-w-3xl drop-shadow-lg">
             Your trusted partner for car rentals and tour experiences across Bihar
           </p>
           <div className="flex flex-col sm:flex-row gap-6">
             <Link
               to="/car-rental"
-              className="group px-10 py-4 bg-white text-gray-900 text-lg font-semibold rounded-md hover:bg-gray-100 transition-all flex items-center justify-center"
+              className="group px-10 py-4 bg-white text-gray-900 text-lg font-semibold rounded-md hover:bg-gray-100 transition-all flex items-center justify-center shadow-2xl"
             >
               Book a Car
               <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,7 +34,7 @@ const Home = () => {
             </Link>
             <Link
               to="/tour-packages"
-              className="group px-10 py-4 bg-transparent border-2 border-white text-white text-lg font-semibold rounded-md hover:bg-white hover:text-gray-900 transition-all flex items-center justify-center"
+              className="group px-10 py-4 bg-transparent border-2 border-white text-white text-lg font-semibold rounded-md hover:bg-white hover:text-gray-900 transition-all flex items-center justify-center backdrop-blur-sm"
             >
               Explore Tours
               <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,8 +45,8 @@ const Home = () => {
         </div>
 
         {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce z-20">
+          <svg className="w-6 h-6 text-white drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </div>
