@@ -274,12 +274,15 @@ export const tourBookings = async (req, res) => {
       });
     }
 
-    // Check if travel date is in the future
+    // Check if travel date is in the future or today
     const travelDateTime = new Date(travelDate);
-    if (travelDateTime <= new Date()) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of today
+    
+    if (travelDateTime < today) {
       return res.status(400).json({
         success: false,
-        message: 'Travel date must be in the future'
+        message: 'Travel date cannot be in the past'
       });
     }
 
@@ -395,15 +398,17 @@ export const carBookings = async (req, res) => {
         });
       }
 
-      // Check if pickup date is in the future
+      // Check if pickup date is in the future or today
       const pickupDateTime = new Date(`${pickupDate}T${pickupTime || '00:00'}`);
       const dropDateTime = new Date(`${dropDate}T${dropTime || '18:00'}`);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Set to start of today
       
-      if (pickupDateTime <= new Date()) {
-        console.log('❌ Validation failed: Pickup date must be in future');
+      if (pickupDateTime < today) {
+        console.log('❌ Validation failed: Pickup date cannot be in the past');
         return res.status(400).json({
           success: false,
-          message: 'Pickup date must be in the future'
+          message: 'Pickup date cannot be in the past'
         });
       }
 
@@ -537,13 +542,16 @@ export const carBookings = async (req, res) => {
       });
     }
 
-    // Check if pickup date is in the future
+    // Check if pickup date is in the future or today
     const pickupDateTime = new Date(`${pickupDate}T${pickupTime || '00:00'}`);
-    if (pickupDateTime <= new Date()) {
-      console.log('❌ Validation failed: Pickup date must be in future');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of today
+    
+    if (pickupDateTime < today) {
+      console.log('❌ Validation failed: Pickup date cannot be in the past');
       return res.status(400).json({
         success: false,
-        message: 'Pickup date must be in the future'
+        message: 'Pickup date cannot be in the past'
       });
     }
 
