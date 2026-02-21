@@ -1498,8 +1498,8 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
                 <p className="text-xs text-gray-500">Drop-off Date</p>
                 <p className="text-sm font-semibold text-gray-900 truncate">
                   {formatTravelDate(booking.dropoffDate)}
-                  {carBookingData?.dropTime && (
-                    <span className="block text-xs text-gray-600">{formatTime(carBookingData.dropTime)}</span>
+                  {booking.dropoffTime && (
+                    <span className="block text-xs text-gray-600 mt-0.5">{formatTime(booking.dropoffTime)}</span>
                   )}
                 </p>
               </div>
@@ -1517,6 +1517,7 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
               <p className="text-xs text-gray-500">Booked On</p>
               <p className="text-sm font-semibold text-gray-900 truncate">
                 {formatTravelDate(booking.createdAt)}
+                <span className="block text-xs text-gray-600 mt-0.5">{formatTime(booking.createdAt)}</span>
               </p>
             </div>
           </div>

@@ -622,6 +622,9 @@ const BookingCard = ({ booking, onCancel }) => {
                 <p className="text-xs text-gray-500">Drop-off Date</p>
                 <p className="text-sm font-semibold text-gray-900 truncate">
                   {formatTravelDate(booking.dropoffDate)}
+                  {booking.dropoffTime && (
+                    <span className="block text-xs text-gray-600 mt-0.5">{formatTime(booking.dropoffTime)}</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -638,6 +641,7 @@ const BookingCard = ({ booking, onCancel }) => {
               <p className="text-xs text-gray-500">Booked On</p>
               <p className="text-sm font-semibold text-gray-900 truncate">
                 {formatTravelDate(booking.createdAt)}
+                <span className="block text-xs text-gray-600 mt-0.5">{formatTime(booking.createdAt)}</span>
               </p>
             </div>
           </div>
