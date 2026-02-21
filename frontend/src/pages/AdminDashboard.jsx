@@ -1391,6 +1391,17 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
   const formatTime = (timeString) => {
     if (!timeString) return '';
     
+    // If it's a Date object or ISO string (from createdAt), extract time
+    if (timeString.includes('T') || timeString.includes('-')) {
+      const date = new Date(timeString);
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      const hour12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const formattedMinute = minutes.toString().padStart(2, '0');
+      return `${hour12}:${formattedMinute} ${ampm}`;
+    }
+    
     // Parse the time string (assuming format like "14:30" or "09:00")
     const [hours, minutes] = timeString.split(':');
     const hour24 = parseInt(hours, 10);
@@ -1498,9 +1509,6 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
                 <p className="text-xs text-gray-500">Drop-off Date</p>
                 <p className="text-sm font-semibold text-gray-900 truncate">
                   {formatTravelDate(booking.dropoffDate)}
-                  {booking.dropoffTime && (
-                    <span className="block text-xs text-gray-600 mt-0.5">{formatTime(booking.dropoffTime)}</span>
-                  )}
                 </p>
               </div>
             </div>
