@@ -97,31 +97,59 @@ const CarRental = () => {
     }
 
     try {
-      // Ola Maps Autocomplete API - Correct endpoint
-      const response = await fetch(
-        `https://api.olamaps.io/places/v1/autocomplete?input=${encodeURIComponent(query)}&location=25.5941,85.1376&api_key=${OLA_MAPS_API_KEY}`,
-        {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json'
-          }
+      console.log('🔍 Fetching suggestions for:', query);
+      
+      // Ola Maps Autocomplete API with Bihar/India restrictions
+      // Using location bias for Patna and restricting to India
+      const url = `https://api.olamaps.io/places/v1/autocomplete?input=${encodeURIComponent(query)}&location=25.5941,85.1376&radius=200000&strictbounds=false&components=country:in&api_key=${OLA_MAPS_API_KEY}`;
+      
+      console.log('🌐 Autocomplete API URL:', url.replace(OLA_MAPS_API_KEY, 'API_KEY_HIDDEN'));
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
         }
-      );
+      });
+      
+      console.log('📡 Autocomplete Response Status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
+        console.log('📦 Autocomplete Response:', data);
+        
         const suggestions = data.predictions || [];
         
+        // Filter suggestions to prioritize Bihar locations
+        const filteredSuggestions = suggestions.map(suggestion => {
+          // Add Bihar indicator if location is in Bihar
+          const isBihar = suggestion.description?.toLowerCase().includes('bihar') || 
+                         suggestion.structured_formatting?.secondary_text?.toLowerCase().includes('bihar');
+          
+          return {
+            ...suggestion,
+            isBihar: isBihar
+          };
+        }).sort((a, b) => {
+          // Prioritize Bihar locations
+          if (a.isBihar && !b.isBihar) return -1;
+          if (!a.isBihar && b.isBihar) return 1;
+          return 0;
+        });
+        
+        console.log('✅ Filtered suggestions:', filteredSuggestions.length);
+        
         if (type === 'source') {
-          setSourceSuggestions(suggestions);
+          setSourceSuggestions(filteredSuggestions);
         } else {
-          setDestinationSuggestions(suggestions);
+          setDestinationSuggestions(filteredSuggestions);
         }
       } else {
-        console.error('Ola Maps Autocomplete error:', response.status);
+        const errorText = await response.text();
+        console.error('❌ Ola Maps Autocomplete error:', response.status, errorText);
       }
     } catch (error) {
-      console.error('Error fetching city suggestions:', error);
+      console.error('❌ Error fetching city suggestions:', error);
     }
   };
 
