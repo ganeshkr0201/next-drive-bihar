@@ -256,6 +256,18 @@ const Navbar = () => {
                 </Link>
 
                 <Link 
+                  to="/gallery" 
+                  className={`relative px-4 py-2 text-sm font-semibold transition-all duration-300 hover:text-blue-600 ${
+                    location.pathname === '/gallery' ? 'text-blue-600' : 'text-gray-700'
+                  }`}
+                >
+                  Gallery
+                  {location.pathname === '/gallery' && (
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-600 to-blue-500"></span>
+                  )}
+                </Link>
+
+                <Link 
                   to="/contact" 
                   className={`relative px-4 py-2 text-sm font-semibold transition-all duration-300 hover:text-blue-600 ${
                     location.pathname === '/contact' ? 'text-blue-600' : 'text-gray-700'
@@ -666,6 +678,23 @@ const Navbar = () => {
                   </svg>
                 </div>
                 <span className="font-semibold text-base">About</span>
+              </Link>
+
+              <Link 
+                to="/gallery" 
+                className="flex items-center px-4 py-3.5 text-gray-700 hover:text-pink-600 hover:bg-pink-50 active:bg-pink-100 rounded-xl transition-all duration-200 touch-manipulation"
+                onClick={closeMobileMenu}
+                style={{ 
+                  minHeight: '48px',
+                  WebkitTapHighlightColor: 'transparent'
+                }}
+              >
+                <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <span className="font-semibold text-base">Gallery</span>
               </Link>
 
               <Link 

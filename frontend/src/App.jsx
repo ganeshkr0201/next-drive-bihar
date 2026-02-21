@@ -27,6 +27,8 @@ import AdminCarManagement from './pages/AdminCarManagement';
 import MyBookings from './pages/MyBookings';
 import NotFound from './pages/NotFound';
 import TourDetail from './pages/TourDetail';
+import Gallery from './pages/Gallery';
+import AdminGallery from './pages/AdminGallery';
 
 function App() {
   return (
@@ -77,6 +79,7 @@ function App() {
               } />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/gallery" element={<Gallery />} />
               <Route 
                 path="/user-dashboard" 
                 element={
@@ -122,6 +125,14 @@ function App() {
                 element={
                   <AdminProtectedRoute>
                     <AdminCarManagement />
+                  </AdminProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/gallery" 
+                element={
+                  <AdminProtectedRoute>
+                    <AdminGallery />
                   </AdminProtectedRoute>
                 } 
               />
