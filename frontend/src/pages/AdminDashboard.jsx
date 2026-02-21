@@ -371,17 +371,19 @@ const AdminDashboard = () => {
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
               <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Welcome back, {user?.name}! Manage your NextDrive Bihar platform.</p>
             </div>
-            <button
-              onClick={() => navigate('/admin/cars')}
-              className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 text-sm sm:text-base"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-              </svg>
-              <span className="hidden sm:inline">Manage Cars</span>
-              <span className="sm:hidden">Cars</span>
-            </button>
-          </div>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <button
+                onClick={() => navigate('/admin/cars')}
+                className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 text-sm sm:text-base"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                <span className="hidden sm:inline">Manage Cars</span>
+                <span className="sm:hidden">Cars</span>
+              </button>
+              <button
+                onC
         </div>
 
         {/* Navigation Tabs */}

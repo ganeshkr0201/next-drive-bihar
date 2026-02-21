@@ -6,102 +6,140 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section with Carousel */}
-      <section className="relative pt-16 pb-8 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+          <div className="absolute top-40 right-10 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
           {/* Hero Content */}
-          <div className="text-center mb-12 pt-8">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mb-6">
-              Premium Car Rentals &<br />
-              <span className="text-blue-600">Tour Packages in Bihar</span>
+          <div className="text-center mb-16">
+            <div className="inline-block mb-6">
+              <span className="px-4 py-2 bg-blue-500/20 text-blue-300 rounded-full text-sm font-semibold backdrop-blur-sm border border-blue-400/30">
+                ✨ Bihar's Most Trusted Travel Partner
+              </span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight">
+              Your Journey,<br />
+              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                Our Commitment
+              </span>
             </h1>
-            <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              Experience hassle-free travel with our well-maintained fleet and expertly curated tour packages. 
-              Your comfort and safety are our top priorities.
+            <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-10 leading-relaxed">
+              Experience premium car rentals and curated tour packages across Bihar. 
+              Professional drivers, well-maintained vehicles, and unforgettable journeys.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
                 to="/car-rental"
-                className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
+                className="group w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-lg font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 flex items-center justify-center gap-2"
               >
-                Book a Car
+                <span>Book a Car</span>
+                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
               </Link>
               <Link
                 to="/tour-packages"
-                className="w-full sm:w-auto px-8 py-4 bg-white text-blue-600 text-lg font-semibold rounded-lg border-2 border-blue-600 hover:bg-blue-50 transition-colors"
+                className="group w-full sm:w-auto px-8 py-4 bg-white/10 backdrop-blur-sm text-white text-lg font-semibold rounded-xl border-2 border-white/30 hover:bg-white/20 transition-all duration-300 flex items-center justify-center gap-2"
               >
-                Explore Tours
+                <span>Explore Tours</span>
+                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
               </Link>
             </div>
           </div>
 
           {/* Offers Carousel */}
-          <div className="mb-12">
+          <div className="mb-8">
             <OffersCarousel />
           </div>
+        </div>
+
+        {/* Wave Divider */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg className="w-full h-16 sm:h-24 fill-white" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
+          </svg>
         </div>
       </section>
 
       {/* Quick Stats */}
-      <section className="py-12 bg-blue-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-bold text-white mb-2">5000+</div>
-              <div className="text-blue-100">Happy Customers</div>
+      <section className="py-16 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '40px 40px'}}></div>
+        </div>
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="text-center transform hover:scale-110 transition-transform duration-300">
+              <div className="text-5xl font-extrabold text-white mb-2 drop-shadow-lg">5000+</div>
+              <div className="text-blue-100 font-medium">Happy Customers</div>
             </div>
-            <div>
-              <div className="text-4xl font-bold text-white mb-2">500+</div>
-              <div className="text-blue-100">Vehicles</div>
+            <div className="text-center transform hover:scale-110 transition-transform duration-300">
+              <div className="text-5xl font-extrabold text-white mb-2 drop-shadow-lg">500+</div>
+              <div className="text-blue-100 font-medium">Vehicles</div>
             </div>
-            <div>
-              <div className="text-4xl font-bold text-white mb-2">50+</div>
-              <div className="text-blue-100">Tour Packages</div>
+            <div className="text-center transform hover:scale-110 transition-transform duration-300">
+              <div className="text-5xl font-extrabold text-white mb-2 drop-shadow-lg">50+</div>
+              <div className="text-blue-100 font-medium">Tour Packages</div>
             </div>
-            <div>
-              <div className="text-4xl font-bold text-white mb-2">24/7</div>
-              <div className="text-blue-100">Support</div>
+            <div className="text-center transform hover:scale-110 transition-transform duration-300">
+              <div className="text-5xl font-extrabold text-white mb-2 drop-shadow-lg">24/7</div>
+              <div className="text-blue-100 font-medium">Support</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Services Section */}
-      <section className="py-20 bg-white">
+      <section className="py-24 bg-gradient-to-b from-white to-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Our Services
+          <div className="text-center mb-20">
+            <span className="inline-block px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold mb-4">
+              OUR SERVICES
+            </span>
+            <h2 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-6">
+              Travel Solutions for Every Need
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Choose from our wide range of services tailored to meet your travel needs
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              From quick city rides to extended tours, we've got you covered with flexible options
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* One Way */}
             <Link to="/car-rental" className="group">
-              <div className="bg-white border-2 border-gray-200 rounded-xl p-8 hover:border-blue-500 hover:shadow-xl transition-all duration-300">
-                <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">
-                  <svg className="w-8 h-8 text-blue-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
+              <div className="relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 border-2 border-transparent hover:border-blue-500 transform hover:-translate-y-2 overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-bl-full"></div>
+                <div className="relative">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">One Way Trip</h3>
+                  <p className="text-gray-600 mb-6 leading-relaxed">Travel from point A to B with no return charges. Perfect for one-time journeys.</p>
+                  <ul className="space-y-3">
+                    <li className="flex items-center text-gray-700">
+                      <svg className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>Flexible timing</span>
+                    </li>
+                    <li className="flex items-center text-gray-700">
+                      <svg className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>No return charges</span>
+                    </li>
+                  </ul>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">One Way Trip</h3>
-                <p className="text-gray-600 mb-4">Travel from point A to B with no return charges. Perfect for one-time journeys.</p>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li className="flex items-center">
-                    <svg className="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Flexible timing
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    No return charges
-                  </li>
-                </ul>
               </div>
             </Link>
 
