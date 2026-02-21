@@ -6,7 +6,7 @@ import {
   updateGalleryImage,
   deleteGalleryImage
 } from '../controllers/galleryControllers.js';
-import { protect, adminOnly } from '../middlewares/auth.js';
+import { authenticateJWT, requireAdmin } from '../middlewares/auth.js';
 
 const router = express.Router();
 
@@ -14,9 +14,9 @@ const router = express.Router();
 router.get('/public', getAllGalleryImages);
 
 // Admin routes
-router.get('/admin', protect, adminOnly, getAdminGalleryImages);
-router.post('/', protect, adminOnly, uploadGalleryImage);
-router.put('/:id', protect, adminOnly, updateGalleryImage);
-router.delete('/:id', protect, adminOnly, deleteGalleryImage);
+router.get('/admin', authenticateJWT, requireAdmin, getAdminGalleryImages);
+router.post('/', authenticateJWT, requireAdmin, uploadGalleryImage);
+router.put('/:id', authenticateJWT, requireAdmin, updateGalleryImage);
+router.delete('/:id', authenticateJWT, requireAdmin, deleteGalleryImage);
 
 export default router;
