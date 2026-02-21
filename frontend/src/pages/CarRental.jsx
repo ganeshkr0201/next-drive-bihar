@@ -88,9 +88,6 @@ const CarRental = () => {
   // Ola Maps API integration
   const OLA_MAPS_API_KEY = import.meta.env.VITE_OLA_MAPS_API_KEY || '';
 
-  // Ola Maps API integration
-  const OLA_MAPS_API_KEY = import.meta.env.VITE_OLA_MAPS_API_KEY || '';
-
   // Fetch city suggestions from Ola Maps with Bihar filtering
   const fetchCitySuggestions = async (query, type) => {
     if (query.length < 3) {
