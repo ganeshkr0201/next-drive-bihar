@@ -585,29 +585,27 @@ const CarRental = () => {
       return;
     }
 
-    if (!selectedCarData) {
+    // For non-marriage bookings, validate selectedCarData
+    if (activeBookingType !== 'marriage' && !selectedCarData) {
       console.log('❌ No car selected');
       showError('Please select a valid car');
       return;
     }
 
-    // For monthly bookings, distance is not required
+    // For monthly bookings and marriage bookings, distance is not required
     // For other bookings, if distance is 0, calculate a default estimate
-    if (activeBookingType !== 'monthly' && (!bookingForm.distance || bookingForm.distance === 0)) {
+    if (activeBookingType !== 'monthly' && activeBookingType !== 'marriage' && (!bookingForm.distance || bookingForm.distance === 0)) {
       console.log('⚠️ Distance not calculated, using default estimate');
       // Set a default estimated cost based on car type
       const defaultCost = selectedCarData.pricing[
         activeBookingType === 'one-way' ? 'oneWay' : 
         activeBookingType === 'round-trip' ? 'roundTrip' : 
-        activeBookingType === 'outstation' ? 'outstation' : 
-        activeBookingType === 'marriage' ? 'marriage' : 'monthly'
+        activeBookingType === 'outstation' ? 'outstation' : 'monthly'
       ];
       
       // Estimate 50km for one-way, 100km for round-trip, etc.
       const estimatedDistance = activeBookingType === 'round-trip' ? 100 : 50;
-      const estimatedCost = activeBookingType === 'marriage' 
-        ? defaultCost.perDay * 1 + defaultCost.extraAmount
-        : defaultCost.perKm * estimatedDistance + defaultCost.extraAmount;
+      const estimatedCost = defaultCost.perKm * estimatedDistance + defaultCost.extraAmount;
       
       setBookingForm(prev => ({
         ...prev,
