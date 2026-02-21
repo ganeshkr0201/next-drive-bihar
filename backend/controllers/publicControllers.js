@@ -376,6 +376,8 @@ export const carBookings = async (req, res) => {
 
     // Check if this is a marriage booking
     if (bookingTypeKey === 'marriage') {
+      console.log('💒 Processing marriage booking');
+      
       // Marriage booking validation
       if (!numberOfCars || !selectedCars || selectedCars.length === 0) {
         console.log('❌ Validation failed: Missing marriage booking details');
@@ -676,10 +678,18 @@ export const carBookings = async (req, res) => {
   } catch (error) {
     console.error('❌ Create car booking error:', error);
     console.error('❌ Error stack:', error.stack);
+    console.error('❌ Error name:', error.name);
+    if (error.name === 'ValidationError') {
+      console.error('❌ Validation errors:', error.errors);
+    }
     res.status(500).json({
       success: false,
       message: 'Failed to create car booking',
-      error: error.message
+      error: error.message,
+      details: error.name === 'ValidationError' ? Object.keys(error.errors).map(key => ({
+        field: key,
+        message: error.errors[key].message
+      })) : undefined
     });
   }
 }

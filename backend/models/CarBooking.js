@@ -9,7 +9,7 @@ const carBookingSchema = new mongoose.Schema({
   carType: {
     type: String,
     required: true,
-    enum: ['Sedan', 'SUV', 'Hatchback', 'Luxury', 'Tempo Traveller', 'Bus']
+    enum: ['Sedan', 'SUV', 'Hatchback', 'Luxury', 'Tempo Traveller', 'Bus', 'Multiple']
   },
   pickupLocation: {
     type: String,
