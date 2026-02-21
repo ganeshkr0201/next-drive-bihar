@@ -1139,11 +1139,10 @@ const CarRental = () => {
 
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-3">
-                    Pickup Time *
+                    Pickup Time
                   </label>
                   <input
                     type="time"
-                    required
                     value={bookingForm.pickupTime}
                     onChange={(e) => setBookingForm(prev => ({ ...prev, pickupTime: e.target.value }))}
                     className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-base font-medium"
@@ -1324,11 +1323,10 @@ const CarRental = () => {
 
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-3">
-                        Return Time *
+                        Return Time
                       </label>
                       <input
                         type="time"
-                        required
                         value={bookingForm.dropTime}
                         onChange={(e) => setBookingForm(prev => ({ ...prev, dropTime: e.target.value }))}
                         className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:bg-white transition-all text-base font-medium"
@@ -1371,11 +1369,10 @@ const CarRental = () => {
 
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-3">
-                      Return Time *
+                      Return Time
                     </label>
                     <input
                       type="time"
-                      required
                       value={bookingForm.dropTime}
                       onChange={(e) => setBookingForm(prev => ({ ...prev, dropTime: e.target.value }))}
                       className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-base font-medium"
