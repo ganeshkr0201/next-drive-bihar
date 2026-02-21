@@ -1189,12 +1189,30 @@ const CarRental = () => {
                       value={bookingForm.numberOfCars}
                       onChange={(e) => {
                         const value = e.target.value;
-                        const numValue = parseInt(value) || 1;
-                        if (numValue >= 1 && numValue <= 10) {
+                        if (value === '') {
+                          // Allow empty field temporarily while user is typing
                           setBookingForm(prev => ({ 
                             ...prev, 
-                            numberOfCars: numValue,
-                            selectedCars: Array(numValue).fill('').map((_, idx) => prev.selectedCars[idx] || '')
+                            numberOfCars: ''
+                          }));
+                        } else {
+                          const numValue = parseInt(value);
+                          if (!isNaN(numValue) && numValue >= 1 && numValue <= 10) {
+                            setBookingForm(prev => ({ 
+                              ...prev, 
+                              numberOfCars: numValue,
+                              selectedCars: Array(numValue).fill('').map((_, idx) => prev.selectedCars[idx] || '')
+                            }));
+                          }
+                        }
+                      }}
+                      onBlur={(e) => {
+                        // On blur, if empty, set to 1
+                        if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                          setBookingForm(prev => ({ 
+                            ...prev, 
+                            numberOfCars: 1,
+                            selectedCars: ['']
                           }));
                         }
                       }}
