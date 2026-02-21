@@ -633,6 +633,10 @@ const CarRental = () => {
           .filter(carId => carId !== '')
           .map(carId => {
             const car = availableCars.find(c => c._id === carId);
+            if (!car) {
+              console.error('❌ Car not found in availableCars:', carId);
+              throw new Error(`Car with ID ${carId} not found`);
+            }
             return {
               carId: car._id,
               carName: car.name,
@@ -640,6 +644,13 @@ const CarRental = () => {
               pricePerDay: car.pricing.marriage.perDay
             };
           });
+
+        console.log('💒 Marriage booking data:', {
+          numberOfCars: bookingForm.numberOfCars,
+          selectedCarsData,
+          pickupDate: bookingForm.pickupDate,
+          dropDate: bookingForm.dropDate
+        });
 
         bookingData = {
           bookingType: 'marriage',

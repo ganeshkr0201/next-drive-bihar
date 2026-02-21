@@ -36,7 +36,7 @@ const carBookingSchema = new mongoose.Schema({
   numberOfPassengers: {
     type: Number,
     required: true,
-    min: 1
+    min: 0
   },
   tripType: {
     type: String,
