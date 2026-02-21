@@ -97,7 +97,7 @@ export const createCar = async (req, res) => {
 
     // Validate pricing structure
     if (!pricing.oneWay?.perKm || !pricing.roundTrip?.perKm || 
-        !pricing.outstation?.perKm || !pricing.marriage?.perHour || 
+        !pricing.outstation?.perKm || !pricing.marriage?.perDay || 
         !pricing.monthly?.price) {
       console.log('❌ Validation failed: Incomplete pricing structure');
       return res.status(400).json({
@@ -125,7 +125,7 @@ export const createCar = async (req, res) => {
           extraAmount: pricing.outstation.extraAmount || 0
         },
         marriage: {
-          perHour: pricing.marriage.perHour,
+          perDay: pricing.marriage.perDay,
           extraAmount: pricing.marriage.extraAmount || 0
         },
         monthly: {
@@ -210,7 +210,7 @@ export const updateCar = async (req, res) => {
           : car.pricing.outstation.extraAmount;
       }
       if (pricing.marriage) {
-        car.pricing.marriage.perHour = pricing.marriage.perHour || car.pricing.marriage.perHour;
+        car.pricing.marriage.perDay = pricing.marriage.perDay || car.pricing.marriage.perDay;
         car.pricing.marriage.extraAmount = pricing.marriage.extraAmount !== undefined 
           ? pricing.marriage.extraAmount 
           : car.pricing.marriage.extraAmount;

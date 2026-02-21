@@ -398,8 +398,8 @@ const CarRental = () => {
         cost = (distanceKm * pricing.outstation.perKm) + pricing.outstation.extraAmount;
         break;
       case 'marriage':
-        const marriageHours = Math.max(hours, 8); // Minimum 8 hours for marriage
-        cost = (marriageHours * pricing.marriage.perHour) + pricing.marriage.extraAmount;
+        const marriageDays = Math.max(hours / 24, 1); // Convert hours to days, minimum 1 day
+        cost = (marriageDays * pricing.marriage.perDay) + pricing.marriage.extraAmount;
         break;
       case 'monthly':
         cost = pricing.monthly.price + pricing.monthly.extraAmount;
@@ -533,7 +533,7 @@ const CarRental = () => {
       // Estimate 50km for one-way, 100km for round-trip, etc.
       const estimatedDistance = activeBookingType === 'round-trip' ? 100 : 50;
       const estimatedCost = activeBookingType === 'marriage' 
-        ? defaultCost.perHour * 8 + defaultCost.extraAmount
+        ? defaultCost.perDay * 1 + defaultCost.extraAmount
         : defaultCost.perKm * estimatedDistance + defaultCost.extraAmount;
       
       setBookingForm(prev => ({
@@ -871,9 +871,9 @@ const CarRental = () => {
                              activeBookingType === 'round-trip' ? 'roundTrip' : 
                              activeBookingType === 'outstation' ? 'outstation' : 
                              activeBookingType === 'marriage' ? 'marriage' : 'monthly']
-                             [activeBookingType === 'marriage' ? 'perHour' : 
+                             [activeBookingType === 'marriage' ? 'perDay' : 
                               activeBookingType === 'monthly' ? 'price' : 'perKm']}
-                          {activeBookingType === 'marriage' ? '/hr' : 
+                          {activeBookingType === 'marriage' ? '/day' : 
                            activeBookingType === 'monthly' ? '/month' : '/km'}
                           {car.isAvailable ? ' ✓' : ' ✗'}
                         </option>
@@ -946,10 +946,10 @@ const CarRental = () => {
                                    activeBookingType === 'round-trip' ? 'roundTrip' : 
                                    activeBookingType === 'outstation' ? 'outstation' : 
                                    activeBookingType === 'marriage' ? 'marriage' : 'monthly']
-                                   [activeBookingType === 'marriage' ? 'perHour' : 
+                                   [activeBookingType === 'marriage' ? 'perDay' : 
                                     activeBookingType === 'monthly' ? 'price' : 'perKm']}
                                 <span className="text-sm md:text-base text-blue-200 font-normal ml-1">
-                                  {activeBookingType === 'marriage' ? '/ hour' : 
+                                  {activeBookingType === 'marriage' ? '/ day' : 
                                    activeBookingType === 'monthly' ? '/ month' : '/ km'}
                                 </span>
                               </p>

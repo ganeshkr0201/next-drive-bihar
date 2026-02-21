@@ -29,7 +29,7 @@ const AdminCarManagement = () => {
       oneWay: { perKm: 0, extraAmount: 0 },
       roundTrip: { perKm: 0, extraAmount: 0 },
       outstation: { perKm: 0, extraAmount: 0 },
-      marriage: { perHour: 0, extraAmount: 0 },
+      marriage: { perDay: 0, extraAmount: 0 },
       monthly: { price: 0, extraAmount: 0 }
     }
   });
@@ -80,7 +80,7 @@ const AdminCarManagement = () => {
           oneWay: { perKm: 0, extraAmount: 0 },
           roundTrip: { perKm: 0, extraAmount: 0 },
           outstation: { perKm: 0, extraAmount: 0 },
-          marriage: { perHour: 0, extraAmount: 0 },
+          marriage: { perDay: 0, extraAmount: 0 },
           monthly: { price: 0, extraAmount: 0 }
         }
       });
@@ -334,7 +334,7 @@ const AdminCarManagement = () => {
                     </div>
                     <div className="bg-pink-50 p-2 sm:p-3 rounded-lg">
                       <div className="text-xs text-gray-600 mb-1">Marriage</div>
-                      <div className="font-bold text-pink-600 text-sm sm:text-base">₹{car.pricing.marriage.perHour}/hr</div>
+                      <div className="font-bold text-pink-600 text-sm sm:text-base">₹{car.pricing.marriage.perDay}/day</div>
                       {car.pricing.marriage.extraAmount > 0 && (
                         <div className="text-xs text-gray-500">+₹{car.pricing.marriage.extraAmount}</div>
                       )}
@@ -819,13 +819,13 @@ const AdminCarManagement = () => {
                   <div className="grid grid-cols-2 gap-2 sm:gap-3">
                     <div>
                       <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                        Per Hour Rate (₹) *
+                        Per Day Rate (₹) *
                       </label>
                       <input
                         type="text"
                         inputMode="decimal"
                         required
-                        value={carForm.pricing.marriage.perHour}
+                        value={carForm.pricing.marriage.perDay}
                         onChange={(e) => {
                           let value = e.target.value;
                           value = value.replace(/[^\d.]/g, '');
@@ -836,7 +836,7 @@ const AdminCarManagement = () => {
                             ...prev,
                             pricing: {
                               ...prev.pricing,
-                              marriage: { ...prev.pricing.marriage, perHour: value === '' ? 0 : value }
+                              marriage: { ...prev.pricing.marriage, perDay: value === '' ? 0 : value }
                             }
                           }));
                         }}
@@ -846,12 +846,12 @@ const AdminCarManagement = () => {
                             ...prev,
                             pricing: {
                               ...prev.pricing,
-                              marriage: { ...prev.pricing.marriage, perHour: numValue }
+                              marriage: { ...prev.pricing.marriage, perDay: numValue }
                             }
                           }));
                         }}
                         className="w-full px-3 py-2.5 bg-white border-2 border-pink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all text-base"
-                        placeholder="e.g., 500"
+                        placeholder="e.g., 5000"
                       />
                     </div>
                     <div>

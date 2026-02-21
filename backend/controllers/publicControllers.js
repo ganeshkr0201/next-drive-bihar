@@ -8,6 +8,135 @@ import User from '../models/User.js';
 import notificationService from '../utils/notificationService.js';
 import { formatPhoneNumber } from '../utils/phoneFormatter.js';
 
+// Distance validation function - Predefined Bihar routes
+const validateAndCalculateDistance = (source, destination, frontendDistance) => {
+  // Predefined accurate distances for common Bihar routes (in km)
+  const biharRoutes = {
+    'patna-gaya': 100,
+    'patna-bihar sharif': 70,
+    'patna-muzaffarpur': 70,
+    'patna-darbhanga': 140,
+    'patna-bhagalpur': 220,
+    'gaya-bodhgaya': 15,
+    'gaya-bodh gaya': 15,
+    'patna-nalanda': 90,
+    'patna-rajgir': 100,
+    'patna-vaishali': 55,
+    'patna-hajipur': 10,
+    'patna-arrah': 55,
+    'patna-begusarai': 125,
+    'patna-katihar': 280,
+    'patna-munger': 180,
+    'patna-chhapra': 70,
+    'patna-purnia': 290,
+    'patna-saharsa': 200,
+    'patna-sasaram': 110,
+    'patna-motihari': 145,
+    'patna-siwan': 110,
+    'patna-buxar': 120,
+    'patna-aurangabad': 110,
+    'patna-jehanabad': 50,
+    'patna-nawada': 110,
+    'patna-bettiah': 160,
+    'patna-madhubani': 160,
+    'patna-samastipur': 100,
+    'patna-khagaria': 150,
+    'patna-kishanganj': 320,
+    'patna-araria': 280,
+    'patna-madhepura': 200,
+    'patna-supaul': 220,
+    'patna-gopalganj': 90,
+    'patna-bhabua': 150,
+    'patna-sheikhpura': 80,
+    'patna-lakhisarai': 140,
+    'patna-jamui': 160,
+    'patna-sitamarhi': 130,
+    'patna-jamalpur': 190,
+    'patna-dehri': 120,
+    'patna-bagaha': 170
+  };
+
+  // Clean and normalize city names
+  const cleanCity = (city) => {
+    return city.toLowerCase()
+      .trim()
+      .replace(/,.*$/, '') // Remove everything after comma
+      .replace(/\s+/g, ' ') // Normalize spaces
+      .trim();
+  };
+
+  const sourceClean = cleanCity(source);
+  const destClean = cleanCity(destination);
+
+  // Try to find exact route match
+  const routeKey1 = `${sourceClean}-${destClean}`;
+  const routeKey2 = `${destClean}-${sourceClean}`;
+
+  console.log('🔍 Checking route:', routeKey1);
+
+  // If exact route found, use predefined distance
+  if (biharRoutes[routeKey1]) {
+    const predefinedDistance = biharRoutes[routeKey1];
+    console.log('✅ Found predefined route:', routeKey1, '=', predefinedDistance, 'km');
+    
+    // Allow 20% tolerance for frontend distance
+    const tolerance = 0.20;
+    const minDistance = predefinedDistance * (1 - tolerance);
+    const maxDistance = predefinedDistance * (1 + tolerance);
+    
+    if (frontendDistance >= minDistance && frontendDistance <= maxDistance) {
+      console.log('✅ Frontend distance within tolerance, using:', frontendDistance, 'km');
+      return frontendDistance;
+    } else {
+      console.log('⚠️ Frontend distance outside tolerance, using predefined:', predefinedDistance, 'km');
+      return predefinedDistance;
+    }
+  }
+
+  if (biharRoutes[routeKey2]) {
+    const predefinedDistance = biharRoutes[routeKey2];
+    console.log('✅ Found predefined route (reverse):', routeKey2, '=', predefinedDistance, 'km');
+    
+    const tolerance = 0.20;
+    const minDistance = predefinedDistance * (1 - tolerance);
+    const maxDistance = predefinedDistance * (1 + tolerance);
+    
+    if (frontendDistance >= minDistance && frontendDistance <= maxDistance) {
+      console.log('✅ Frontend distance within tolerance, using:', frontendDistance, 'km');
+      return frontendDistance;
+    } else {
+      console.log('⚠️ Frontend distance outside tolerance, using predefined:', predefinedDistance, 'km');
+      return predefinedDistance;
+    }
+  }
+
+  // If one city is Patna (hub), use average distance
+  if (sourceClean.includes('patna') || destClean.includes('patna')) {
+    console.log('ℹ️ One city is Patna (hub), validating against average');
+    const avgDistance = 80;
+    
+    // Allow wider tolerance for unknown routes
+    if (frontendDistance > 0 && frontendDistance <= 400) {
+      console.log('✅ Frontend distance seems reasonable, using:', frontendDistance, 'km');
+      return frontendDistance;
+    } else {
+      console.log('⚠️ Frontend distance unreasonable, using average:', avgDistance, 'km');
+      return avgDistance;
+    }
+  }
+
+  // For unknown routes, validate frontend distance is reasonable
+  if (frontendDistance > 0 && frontendDistance <= 500) {
+    console.log('ℹ️ Unknown route, frontend distance seems reasonable:', frontendDistance, 'km');
+    return frontendDistance;
+  }
+
+  // If frontend distance is unreasonable or 0, use default
+  console.log('⚠️ Unknown route with unreasonable distance, using default: 100 km');
+  return 100; // Default distance for unknown routes
+};
+
+
 
 
 // Get all published tour packages
@@ -277,11 +406,21 @@ export const carBookings = async (req, res) => {
       });
     }
 
+    // Validate and recalculate distance on backend for security
+    console.log('🔍 Validating distance between:', sourceCity, 'and', destinationCity);
+    const frontendDistance = parseFloat(distance) || 0;
+    const validatedDistance = validateAndCalculateDistance(sourceCity, destinationCity, frontendDistance);
+    
+    console.log('📏 Frontend distance:', frontendDistance, 'km');
+    console.log('📏 Validated distance:', validatedDistance, 'km');
+    
+    // Use validated distance for price calculation
+    const distanceKm = validatedDistance;
+    const hours = parseFloat(estimatedHours) || 0;
+
     // Calculate price on backend for security
     const bookingTypeKey = (tripType || bookingType || 'one-way').toLowerCase();
     let calculatedCost = 0;
-    const distanceKm = parseFloat(distance) || 0;
-    const hours = parseFloat(estimatedHours) || 0;
 
     console.log('💰 Calculating price for booking type:', bookingTypeKey);
     console.log('📏 Distance:', distanceKm, 'km, Hours:', hours);
@@ -297,8 +436,8 @@ export const carBookings = async (req, res) => {
         calculatedCost = (distanceKm * car.pricing.outstation.perKm) + car.pricing.outstation.extraAmount;
         break;
       case 'marriage':
-        const marriageHours = Math.max(hours, 8); // Minimum 8 hours for marriage
-        calculatedCost = (marriageHours * car.pricing.marriage.perHour) + car.pricing.marriage.extraAmount;
+        const marriageDays = Math.max(hours / 24, 1); // Convert hours to days, minimum 1 day
+        calculatedCost = (marriageDays * car.pricing.marriage.perDay) + car.pricing.marriage.extraAmount;
         break;
       case 'monthly':
         calculatedCost = car.pricing.monthly.price + car.pricing.monthly.extraAmount;

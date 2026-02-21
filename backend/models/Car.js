@@ -61,7 +61,7 @@ const carSchema = new mongoose.Schema({
       }
     },
     marriage: {
-      perHour: {
+      perDay: {
         type: Number,
         required: true,
         min: 0
