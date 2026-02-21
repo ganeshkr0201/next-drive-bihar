@@ -78,3 +78,9 @@ router.delete('/users/:id', adminControllers.deleteUser);
 
 
 export default router;
+
+// Banner Management Routes
+router.get('/banners', adminControllers.getAllBanners);
+router.post('/banners', adminControllers.createBanner);
+router.put('/banners/:id', adminControllers.updateBanner);
+router.delete('/banners/:id', adminControllers.deleteBanner);

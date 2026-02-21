@@ -5,6 +5,7 @@ import Car from '../models/Car.js';
 import Query from '../models/Query.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
+import Banner from '../models/Banner.js';
 import notificationService from '../utils/notificationService.js';
 import { formatPhoneNumber } from '../utils/phoneFormatter.js';
 
@@ -1036,3 +1037,34 @@ export const rateQueryResponse = async (req, res) => {
 }
 
 
+
+
+// Get active banners for home page
+export const getActiveBanners = async (req, res) => {
+  try {
+    const now = new Date();
+    
+    const banners = await Banner.find({
+      isActive: true,
+      $or: [
+        { startDate: { $exists: false } },
+        { startDate: { $lte: now } }
+      ],
+      $or: [
+        { endDate: { $exists: false } },
+        { endDate: { $gte: now } }
+      ]
+    }).sort({ order: 1, createdAt: -1 });
+
+    res.json({
+      success: true,
+      banners
+    });
+  } catch (error) {
+    console.error('Get active banners error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch banners'
+    });
+  }
+};
