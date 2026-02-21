@@ -1568,6 +1568,23 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
         {isCarBooking && (
           <div className="mt-3 pt-3 border-t border-gray-100">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Marriage Booking - Number of Cars */}
+              {booking.tripType === 'marriage' && booking.numberOfCars && (
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-pink-50 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-gray-500">Number of Cars</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {booking.numberOfCars} {booking.numberOfCars === 1 ? 'Car' : 'Cars'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Drop-off Date */}
               {booking.dropoffDate && (
                 <div className="flex items-center gap-2">
@@ -1794,6 +1811,36 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
               <p className="text-sm font-medium text-gray-900 bg-white p-3 rounded border border-gray-200">
                 {booking.specialRequests}
               </p>
+            </div>
+          )}
+
+          {/* Marriage Booking - Selected Cars List */}
+          {booking.tripType === 'marriage' && booking.selectedCars && booking.selectedCars.length > 0 && (
+            <div className="sm:col-span-2 lg:col-span-3">
+              <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                Selected Cars for Marriage
+              </p>
+              <div className="bg-white p-3 rounded border border-gray-200 space-y-2">
+                {booking.selectedCars.map((car, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-pink-50 rounded border border-pink-100">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 bg-pink-200 text-pink-700 rounded-full flex items-center justify-center text-xs font-bold">
+                        {index + 1}
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{car.carName}</p>
+                        <p className="text-xs text-gray-600">{car.carType}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-pink-600">₹{car.pricePerDay?.toLocaleString()}/day</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
