@@ -174,27 +174,27 @@ const Home = () => {
       </section>
 
       {/* Tour Packages */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-12 sm:py-16 md:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-10 sm:mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
               Explore Bihar's Heritage
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-4">
               Discover spiritual and cultural treasures
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-10 md:mb-12">
             {tourDestinations.map((dest, idx) => (
-              <div key={idx} className="bg-white rounded-2xl p-8 text-center hover:shadow-xl transition-shadow">
-                <div className="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div key={idx} className="bg-white rounded-2xl p-6 sm:p-8 text-center hover:shadow-xl transition-shadow">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                  <svg className="w-7 h-7 sm:w-8 sm:h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={dest.icon} />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{dest.title}</h3>
-                <p className="text-gray-600">{dest.description}</p>
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">{dest.title}</h3>
+                <p className="text-sm sm:text-base text-gray-600">{dest.description}</p>
               </div>
             ))}
           </div>
@@ -202,10 +202,10 @@ const Home = () => {
           <div className="text-center">
             <Link
               to="/tour-packages"
-              className="inline-flex items-center px-8 py-4 bg-green-600 text-white text-lg font-semibold rounded-lg hover:bg-green-700 transition-colors"
+              className="inline-flex items-center px-6 sm:px-8 py-3 sm:py-4 bg-green-600 text-white text-base sm:text-lg font-semibold rounded-lg hover:bg-green-700 transition-colors"
             >
               View All Tours
-              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </Link>
@@ -263,9 +263,9 @@ const Home = () => {
       </section>
 
       {/* Stats */}
-      <section className="py-16 bg-gradient-to-r from-blue-600 to-blue-800">
+      <section className="py-12 sm:py-14 md:py-16 bg-gradient-to-r from-blue-600 to-blue-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center">
             {[
               { number: '5000+', label: 'Happy Customers' },
               { number: '500+', label: 'Vehicles' },
@@ -273,8 +273,8 @@ const Home = () => {
               { number: '24/7', label: 'Support' }
             ].map((stat, idx) => (
               <div key={idx}>
-                <div className="text-4xl md:text-5xl font-bold text-white mb-2">{stat.number}</div>
-                <div className="text-blue-100">{stat.label}</div>
+                <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-1 sm:mb-2">{stat.number}</div>
+                <div className="text-sm sm:text-base text-blue-100">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -282,24 +282,24 @@ const Home = () => {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-gray-900">
+      <section className="py-12 sm:py-16 md:py-20 bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 sm:mb-6">
             Ready to Start Your Journey?
           </h2>
-          <p className="text-lg text-gray-300 mb-10 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-gray-300 mb-8 sm:mb-10 max-w-2xl mx-auto px-4">
             Book your car or tour package today and experience the best of Bihar
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center px-4 sm:px-0">
             <Link
               to="/car-rental"
-              className="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-blue-600 text-white text-base sm:text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors"
             >
               Book a Car
             </Link>
             <Link
               to="/contact"
-              className="px-8 py-4 bg-white text-gray-900 text-lg font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-white text-gray-900 text-base sm:text-lg font-semibold rounded-lg hover:bg-gray-100 transition-colors"
             >
               Contact Us
             </Link>
