@@ -1,5 +1,5 @@
 import Gallery from '../models/Gallery.js';
-import cloudinary from '../config/cloudinary.js';
+import { cloudinary } from '../config/cloudinary.js';
 
 // Get all gallery images (public)
 export const getAllGalleryImages = async (req, res) => {
