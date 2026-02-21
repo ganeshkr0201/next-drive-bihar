@@ -30,8 +30,7 @@ const carBookingSchema = new mongoose.Schema({
     required: true
   },
   pickupTime: {
-    type: String,
-    required: true
+    type: String
   },
   dropoffTime: {
     type: String

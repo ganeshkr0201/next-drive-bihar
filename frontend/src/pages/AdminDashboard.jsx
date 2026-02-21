@@ -1389,7 +1389,7 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
   };
 
   const formatTime = (timeString) => {
-    if (!timeString) return '';
+    if (!timeString) return 'N/A';
     
     // If it's a Date object or ISO string (from createdAt), extract time
     if (timeString.includes('T') || timeString.includes('-')) {
@@ -1490,8 +1490,8 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
               <p className="text-xs text-gray-500">{isCarBooking ? 'Pickup Date' : 'Travel Date'}</p>
               <p className="text-sm font-semibold text-gray-900 truncate">
                 {formatTravelDate(isCarBooking ? booking.pickupDate : booking.travelDate)}
-                {isCarBooking && booking.pickupTime && (
-                  <span className="block text-xs text-gray-600">{formatTime(booking.pickupTime)}</span>
+                {isCarBooking && (
+                  <span className="block text-xs text-gray-600 mt-0.5">{formatTime(booking.pickupTime)}</span>
                 )}
               </p>
             </div>
@@ -1509,9 +1509,7 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
                 <p className="text-xs text-gray-500">Drop-off Date</p>
                 <p className="text-sm font-semibold text-gray-900 truncate">
                   {formatTravelDate(booking.dropoffDate)}
-                  {booking.dropoffTime && (
-                    <span className="block text-xs text-gray-600 mt-0.5">{formatTime(booking.dropoffTime)}</span>
-                  )}
+                  <span className="block text-xs text-gray-600 mt-0.5">{formatTime(booking.dropoffTime)}</span>
                 </p>
               </div>
             </div>
