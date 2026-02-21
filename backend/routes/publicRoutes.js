@@ -9,7 +9,6 @@ const router = express.Router();
 router.get('/tour-packages', tourPackagesCache, publicControllers.tourPackage);
 router.get('/tour-packages/:identifier', publicDataCache, publicControllers.tourPackageById);
 router.get('/tour-categories', publicDataCache, publicControllers.tourPackageCategory);
-router.get('/banners', publicDataCache, publicControllers.getActiveBanners);
 
 // Protected routes (require JWT authentication)
 router.post('/bookings/tour', 

@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import OffersCarousel from '../components/OffersCarousel/OffersCarousel';
 
 const Home = () => {
   const bookingTypes = [
@@ -60,13 +59,6 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Offers Carousel Section */}
-      <section className="py-8 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <OffersCarousel />
-        </div>
-      </section>
-
       {/* Hero Section */}
       <section className="relative h-[70vh] min-h-[500px] max-h-[700px]">
         <div 

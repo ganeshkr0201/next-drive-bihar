@@ -24,7 +24,6 @@ import UserDashboard from './pages/UserDashboard';
 import UserProfile from './pages/UserProfile';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminCarManagement from './pages/AdminCarManagement';
-import AdminBannerManagement from './pages/AdminBannerManagement';
 import MyBookings from './pages/MyBookings';
 import NotFound from './pages/NotFound';
 import TourDetail from './pages/TourDetail';
@@ -123,14 +122,6 @@ function App() {
                 element={
                   <AdminProtectedRoute>
                     <AdminCarManagement />
-                  </AdminProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/banners" 
-                element={
-                  <AdminProtectedRoute>
-                    <AdminBannerManagement />
                   </AdminProtectedRoute>
                 } 
               />
