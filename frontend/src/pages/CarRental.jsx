@@ -58,6 +58,10 @@ const CarRental = () => {
     dropDate: '',
     dropTime: '18:00',
     
+    // Marriage booking specific
+    numberOfCars: 1,
+    selectedCars: [],
+    
     // Contact info
     contactNumber: '',
     emergencyContact: '',
@@ -412,6 +416,49 @@ const CarRental = () => {
     return Math.round(cost);
   };
 
+  // Calculate marriage booking price with multiple cars
+  const calculateMarriagePrice = (pickupDate, dropDate, selectedCarIds) => {
+    if (!pickupDate || !dropDate || !selectedCarIds || selectedCarIds.length === 0) {
+      return 0;
+    }
+
+    // Calculate number of days
+    const pickup = new Date(pickupDate);
+    const drop = new Date(dropDate);
+    const diffTime = Math.abs(drop - pickup);
+    const diffDays = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 1); // Minimum 1 day
+
+    console.log('📅 Marriage booking days:', diffDays);
+
+    // Calculate total cost for all selected cars
+    let totalCost = 0;
+    selectedCarIds.forEach((carId, index) => {
+      if (carId) {
+        const car = availableCars.find(c => c._id === carId);
+        if (car && car.pricing && car.pricing.marriage) {
+          const carCost = (diffDays * car.pricing.marriage.perDay) + car.pricing.marriage.extraAmount;
+          console.log(`🚗 Car ${index + 1} (${car.name}): ₹${carCost} (${diffDays} days × ₹${car.pricing.marriage.perDay})`);
+          totalCost += carCost;
+        }
+      }
+    });
+
+    console.log('💰 Total marriage booking cost:', totalCost);
+    return Math.round(totalCost);
+  };
+
+  // Recalculate marriage booking price when details change
+  useEffect(() => {
+    if (activeBookingType === 'marriage' && bookingForm.pickupDate && bookingForm.dropDate && bookingForm.selectedCars.length > 0) {
+      const validCars = bookingForm.selectedCars.filter(carId => carId !== '');
+      if (validCars.length > 0) {
+        const newCost = calculateMarriagePrice(bookingForm.pickupDate, bookingForm.dropDate, validCars);
+        setBookingForm(prev => ({ ...prev, estimatedCost: newCost }));
+      }
+    }
+  }, [activeBookingType, bookingForm.pickupDate, bookingForm.dropDate, bookingForm.selectedCars, availableCars]);
+
+
   // Handle car selection
   const handleCarSelection = (carId) => {
     const car = availableCars.find(c => c._id === carId);
@@ -484,11 +531,37 @@ const CarRental = () => {
     }
 
     // Validation
-    if (!bookingForm.sourceCity || !bookingForm.destinationCity || !bookingForm.selectedCar || 
-        !bookingForm.pickupDate || !bookingForm.contactNumber) {
+    if (!bookingForm.sourceCity || !bookingForm.destinationCity || !bookingForm.pickupDate || !bookingForm.contactNumber) {
       console.log('❌ Missing required fields');
       showError('Please fill in all required fields');
       return;
+    }
+
+    // Marriage booking specific validation
+    if (activeBookingType === 'marriage') {
+      if (!bookingForm.dropDate) {
+        console.log('❌ Missing drop date for marriage booking');
+        showError('Please select return date for marriage booking');
+        return;
+      }
+      if (!bookingForm.numberOfCars || bookingForm.numberOfCars < 1) {
+        console.log('❌ Invalid number of cars');
+        showError('Please enter number of cars required');
+        return;
+      }
+      const validCars = bookingForm.selectedCars.filter(carId => carId !== '');
+      if (validCars.length !== bookingForm.numberOfCars) {
+        console.log('❌ Not all cars selected');
+        showError(`Please select all ${bookingForm.numberOfCars} cars`);
+        return;
+      }
+    } else {
+      // For non-marriage bookings, validate car selection
+      if (!bookingForm.selectedCar) {
+        console.log('❌ No car selected');
+        showError('Please select a car');
+        return;
+      }
     }
 
     // Validate number of passengers for applicable booking types
@@ -554,37 +627,74 @@ const CarRental = () => {
   const confirmBooking = async () => {
     setIsLoading(true);
     try {
-      const bookingData = {
-        bookingType: activeBookingType,
-        carId: bookingForm.selectedCar,
-        carName: selectedCarData.name,
-        carType: selectedCarData.carType,
-        sourceCity: bookingForm.sourceCity,
-        destinationCity: bookingForm.destinationCity,
-        pickupDate: bookingForm.pickupDate,
-        pickupTime: bookingForm.pickupTime,
-        dropDate: bookingForm.dropDate || bookingForm.pickupDate,
-        dropTime: bookingForm.dropTime || '18:00',
-        pickupLocation: bookingForm.sourceCity,
-        dropLocation: bookingForm.destinationCity,
-        contactNumber: bookingForm.contactNumber,
-        emergencyContact: bookingForm.emergencyContact,
-        specialRequests: bookingForm.specialRequests,
-        distance: bookingForm.distance,
-        estimatedTime: bookingForm.estimatedTime,
-        estimatedCost: bookingForm.estimatedCost,
-        estimatedHours: bookingForm.estimatedHours,
-        tripType: activeBookingType,
-        numberOfPassengers: (activeBookingType === 'one-way' || activeBookingType === 'round-trip' || activeBookingType === 'outstation') 
-          ? bookingForm.numberOfPassengers 
-          : selectedCarData.numberOfSeats || 4,
-        pricingDetails: {
-          perKm: selectedCarData.pricing[activeBookingType === 'one-way' ? 'oneWay' : 
-                 activeBookingType === 'round-trip' ? 'roundTrip' : 
-                 activeBookingType === 'outstation' ? 'outstation' : 
-                 activeBookingType === 'marriage' ? 'marriage' : 'monthly']
-        }
-      };
+      let bookingData;
+
+      if (activeBookingType === 'marriage') {
+        // Marriage booking with multiple cars
+        const selectedCarsData = bookingForm.selectedCars
+          .filter(carId => carId !== '')
+          .map(carId => {
+            const car = availableCars.find(c => c._id === carId);
+            return {
+              carId: car._id,
+              carName: car.name,
+              carType: car.carType,
+              pricePerDay: car.pricing.marriage.perDay
+            };
+          });
+
+        bookingData = {
+          bookingType: 'marriage',
+          numberOfCars: bookingForm.numberOfCars,
+          selectedCars: selectedCarsData,
+          sourceCity: bookingForm.sourceCity,
+          destinationCity: bookingForm.destinationCity,
+          pickupDate: bookingForm.pickupDate,
+          pickupTime: bookingForm.pickupTime,
+          dropDate: bookingForm.dropDate,
+          dropTime: bookingForm.dropTime,
+          pickupLocation: bookingForm.sourceCity,
+          dropLocation: bookingForm.destinationCity,
+          contactNumber: bookingForm.contactNumber,
+          emergencyContact: bookingForm.emergencyContact,
+          specialRequests: bookingForm.specialRequests,
+          estimatedCost: bookingForm.estimatedCost,
+          tripType: 'marriage'
+        };
+      } else {
+        // Regular booking (one-way, round-trip, outstation, monthly)
+        bookingData = {
+          bookingType: activeBookingType,
+          carId: bookingForm.selectedCar,
+          carName: selectedCarData.name,
+          carType: selectedCarData.carType,
+          sourceCity: bookingForm.sourceCity,
+          destinationCity: bookingForm.destinationCity,
+          pickupDate: bookingForm.pickupDate,
+          pickupTime: bookingForm.pickupTime,
+          dropDate: bookingForm.dropDate || bookingForm.pickupDate,
+          dropTime: bookingForm.dropTime || '18:00',
+          pickupLocation: bookingForm.sourceCity,
+          dropLocation: bookingForm.destinationCity,
+          contactNumber: bookingForm.contactNumber,
+          emergencyContact: bookingForm.emergencyContact,
+          specialRequests: bookingForm.specialRequests,
+          distance: bookingForm.distance,
+          estimatedTime: bookingForm.estimatedTime,
+          estimatedCost: bookingForm.estimatedCost,
+          estimatedHours: bookingForm.estimatedHours,
+          tripType: activeBookingType,
+          numberOfPassengers: (activeBookingType === 'one-way' || activeBookingType === 'round-trip' || activeBookingType === 'outstation') 
+            ? bookingForm.numberOfPassengers 
+            : selectedCarData.numberOfSeats || 4,
+          pricingDetails: {
+            perKm: selectedCarData.pricing[activeBookingType === 'one-way' ? 'oneWay' : 
+                   activeBookingType === 'round-trip' ? 'roundTrip' : 
+                   activeBookingType === 'outstation' ? 'outstation' : 
+                   activeBookingType === 'marriage' ? 'marriage' : 'monthly']
+          }
+        };
+      }
 
       console.log('📤 Submitting car booking:', bookingData);
       const response = await bookingService.createCarBooking(bookingData);
@@ -601,6 +711,10 @@ const CarRental = () => {
         pickupDate: '',
         pickupTime: '09:00',
         numberOfPassengers: 1,
+        dropDate: '',
+        dropTime: '18:00',
+        numberOfCars: 1,
+        selectedCars: [],
         dropDate: '',
         dropTime: '18:00',
         contactNumber: '',
@@ -817,7 +931,8 @@ const CarRental = () => {
               ) : null}
             </div>
 
-            {/* Car Selection */}
+            {/* Car Selection - Hidden for marriage bookings */}
+            {activeBookingType !== 'marriage' && (
             <div className="space-y-4 md:space-y-5">
               <div className="flex items-center gap-2 md:gap-3 pb-2 md:pb-3 border-b border-gray-200">
                 <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30">
@@ -967,6 +1082,7 @@ const CarRental = () => {
                 </div>
               )}
             </div>
+            )}
 
             {/* Date and Time Section */}
             <div className="space-y-5">
@@ -1044,6 +1160,141 @@ const CarRental = () => {
                 </div>
               )}
             </div>
+
+            {/* Marriage Booking - Number of Cars and Drop Date/Time */}
+            {activeBookingType === 'marriage' && (
+              <>
+                {/* Number of Cars */}
+                <div className="space-y-5">
+                  <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+                    <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg shadow-pink-500/30">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">Marriage Booking Details</h3>
+                      <p className="text-sm text-gray-500">Select number of cars and duration</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-3">
+                      Number of Cars Required *
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      required
+                      placeholder="Enter number of cars (1-10)"
+                      value={bookingForm.numberOfCars}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/^0+(?=\d)/, '').replace(/\D/g, '');
+                        const numValue = value === '' ? 1 : parseInt(value);
+                        if (numValue >= 1 && numValue <= 10) {
+                          setBookingForm(prev => ({ 
+                            ...prev, 
+                            numberOfCars: numValue,
+                            selectedCars: Array(numValue).fill('').map((_, idx) => prev.selectedCars[idx] || '')
+                          }));
+                        }
+                      }}
+                      className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 focus:bg-white transition-all text-base font-medium placeholder:text-gray-400"
+                    />
+                    <p className="mt-2 text-xs text-gray-500">You can select up to 10 cars for your marriage booking</p>
+                  </div>
+                </div>
+
+                {/* Car Selection Dropdowns */}
+                {bookingForm.numberOfCars > 0 && (
+                  <div className="space-y-5">
+                    <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">Select Cars</h3>
+                        <p className="text-sm text-gray-500">Choose {bookingForm.numberOfCars} car{bookingForm.numberOfCars > 1 ? 's' : ''} for your booking</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {Array.from({ length: bookingForm.numberOfCars }).map((_, index) => (
+                        <div key={index}>
+                          <label className="block text-sm font-bold text-gray-700 mb-3">
+                            Car {index + 1} *
+                          </label>
+                          <select
+                            required
+                            value={bookingForm.selectedCars[index] || ''}
+                            onChange={(e) => {
+                              const newSelectedCars = [...bookingForm.selectedCars];
+                              newSelectedCars[index] = e.target.value;
+                              setBookingForm(prev => ({ ...prev, selectedCars: newSelectedCars }));
+                            }}
+                            className="w-full px-4 md:px-5 py-3 md:py-4 pr-10 md:pr-12 bg-gray-50 border-2 border-gray-200 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 focus:bg-white transition-all appearance-none text-base font-medium cursor-pointer hover:border-gray-300"
+                          >
+                            <option value="">Select car {index + 1}</option>
+                            {availableCars.map((car) => (
+                              <option key={car._id} value={car._id}>
+                                {car.name} • {car.carType} • {car.numberOfSeats} Seats • ₹{car.pricing.marriage.perDay}/day
+                                {car.isAvailable ? ' ✓' : ' ✗'}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Drop Date and Time for Marriage */}
+                <div className="space-y-5">
+                  <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
+                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">Return Schedule</h3>
+                      <p className="text-sm text-gray-500">Select your return date and time</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6 md:space-y-0 md:grid md:grid-cols-2 md:gap-6">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-3">
+                        Return Date *
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        min={bookingForm.pickupDate || today}
+                        value={bookingForm.dropDate}
+                        onChange={(e) => setBookingForm(prev => ({ ...prev, dropDate: e.target.value }))}
+                        className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:bg-white transition-all text-base font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-3">
+                        Return Time *
+                      </label>
+                      <input
+                        type="time"
+                        required
+                        value={bookingForm.dropTime}
+                        onChange={(e) => setBookingForm(prev => ({ ...prev, dropTime: e.target.value }))}
+                        className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:bg-white transition-all text-base font-medium"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Round Trip - Drop Date */}
             {activeBookingType === 'round-trip' && (

@@ -40,9 +40,24 @@ const carBookingSchema = new mongoose.Schema({
   },
   tripType: {
     type: String,
-    enum: ['one-way', 'round-trip', 'multi-city'],
+    enum: ['one-way', 'round-trip', 'multi-city', 'outstation', 'marriage', 'monthly'],
     default: 'one-way'
   },
+  // Marriage booking specific fields
+  numberOfCars: {
+    type: Number,
+    min: 1,
+    default: 1
+  },
+  selectedCars: [{
+    carId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Car'
+    },
+    carName: String,
+    carType: String,
+    pricePerDay: Number
+  }],
   totalAmount: {
     type: Number,
     required: true,

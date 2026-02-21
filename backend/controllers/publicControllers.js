@@ -366,9 +366,165 @@ export const carBookings = async (req, res) => {
       estimatedTime,
       estimatedHours,
       tripType,
-      numberOfPassengers
+      numberOfPassengers,
+      // Marriage booking specific
+      numberOfCars,
+      selectedCars
     } = req.body;
 
+    const bookingTypeKey = (tripType || bookingType || 'one-way').toLowerCase();
+
+    // Check if this is a marriage booking
+    if (bookingTypeKey === 'marriage') {
+      // Marriage booking validation
+      if (!numberOfCars || !selectedCars || selectedCars.length === 0) {
+        console.log('❌ Validation failed: Missing marriage booking details');
+        return res.status(400).json({
+          success: false,
+          message: 'Number of cars and selected cars are required for marriage booking'
+        });
+      }
+
+      if (!sourceCity || !destinationCity || !pickupDate || !dropDate || !contactNumber) {
+        console.log('❌ Validation failed: Missing required fields');
+        return res.status(400).json({
+          success: false,
+          message: 'Source city, destination city, pickup date, drop date, and contact number are required'
+        });
+      }
+
+      // Check if pickup date is in the future
+      const pickupDateTime = new Date(`${pickupDate}T${pickupTime || '00:00'}`);
+      const dropDateTime = new Date(`${dropDate}T${dropTime || '18:00'}`);
+      
+      if (pickupDateTime <= new Date()) {
+        console.log('❌ Validation failed: Pickup date must be in future');
+        return res.status(400).json({
+          success: false,
+          message: 'Pickup date must be in the future'
+        });
+      }
+
+      if (dropDateTime <= pickupDateTime) {
+        console.log('❌ Validation failed: Drop date must be after pickup date');
+        return res.status(400).json({
+          success: false,
+          message: 'Return date must be after pickup date'
+        });
+      }
+
+      // Calculate number of days
+      const diffTime = Math.abs(dropDateTime - pickupDateTime);
+      const numberOfDays = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 1);
+      console.log('📅 Marriage booking days:', numberOfDays);
+
+      // Validate and calculate price for each car
+      let totalCalculatedCost = 0;
+      const validatedCars = [];
+
+      for (const carData of selectedCars) {
+        const car = await Car.findById(carData.carId);
+        if (!car) {
+          console.log('❌ Car not found:', carData.carId);
+          return res.status(404).json({
+            success: false,
+            message: `Car ${carData.carName} not found`
+          });
+        }
+
+        if (!car.isAvailable || car.status !== 'Active') {
+          console.log('❌ Car not available:', car.name);
+          return res.status(400).json({
+            success: false,
+            message: `Car ${car.name} is not available for booking`
+          });
+        }
+
+        // Calculate cost for this car
+        const carCost = (numberOfDays * car.pricing.marriage.perDay) + car.pricing.marriage.extraAmount;
+        totalCalculatedCost += carCost;
+
+        validatedCars.push({
+          carId: car._id,
+          carName: car.name,
+          carType: car.carType,
+          pricePerDay: car.pricing.marriage.perDay,
+          calculatedCost: Math.round(carCost)
+        });
+
+        console.log(`🚗 Car: ${car.name}, Days: ${numberOfDays}, Cost: ₹${carCost}`);
+      }
+
+      console.log('💵 Total calculated cost:', totalCalculatedCost);
+
+      // Format phone numbers
+      const formattedContactNumber = formatPhoneNumber(contactNumber);
+      const formattedEmergencyContact = emergencyContact ? formatPhoneNumber(emergencyContact) : null;
+
+      // Round off the total cost
+      const roundedAmount = Math.round(totalCalculatedCost);
+
+      // Create marriage booking
+      const carBooking = new CarBooking({
+        user: req.user._id,
+        carType: 'Multiple', // For marriage bookings with multiple cars
+        pickupLocation: pickupLocation || sourceCity,
+        dropoffLocation: dropLocation || destinationCity,
+        pickupDate: pickupDateTime,
+        dropoffDate: dropDateTime,
+        pickupTime: pickupTime || '09:00',
+        numberOfPassengers: 0, // Not applicable for marriage bookings
+        tripType: 'marriage',
+        numberOfCars: numberOfCars,
+        selectedCars: validatedCars,
+        totalAmount: roundedAmount,
+        paidAmount: 0,
+        discount: 0,
+        status: 'pending',
+        paymentStatus: 'pending',
+        specialRequests: specialRequests || '',
+        notes: [{
+          content: JSON.stringify({
+            bookingType: 'marriage',
+            numberOfCars: numberOfCars,
+            numberOfDays: numberOfDays,
+            sourceCity,
+            destinationCity,
+            contactNumber: formattedContactNumber,
+            emergencyContact: formattedEmergencyContact,
+            carsDetails: validatedCars,
+            totalCalculatedCost: totalCalculatedCost,
+            roundedAmount: roundedAmount
+          }),
+          addedBy: req.user._id,
+          addedAt: new Date()
+        }]
+      });
+
+      await carBooking.save();
+      console.log('✅ Marriage booking saved to database:', carBooking._id);
+
+      // Populate the booking for response
+      await carBooking.populate('user', 'name email');
+      console.log('✅ Marriage booking populated');
+
+      // Send notification to admins
+      try {
+        await notificationService.notifyAdminsAboutNewCarBooking(carBooking);
+        console.log('✅ Admin notifications sent');
+      } catch (notificationError) {
+        console.error('❌ Failed to send admin notifications:', notificationError);
+      }
+
+      console.log('✅ Sending success response');
+      return res.status(201).json({
+        success: true,
+        message: 'Marriage booking created successfully',
+        booking: carBooking
+      });
+    }
+
+    // Regular booking (non-marriage) - existing logic
     // Validate required fields
     if (!carId || !carType || !sourceCity || !destinationCity || !pickupDate || !contactNumber) {
       console.log('❌ Validation failed: Missing required fields');
@@ -419,7 +575,6 @@ export const carBookings = async (req, res) => {
     const hours = parseFloat(estimatedHours) || 0;
 
     // Calculate price on backend for security
-    const bookingTypeKey = (tripType || bookingType || 'one-way').toLowerCase();
     let calculatedCost = 0;
 
     console.log('💰 Calculating price for booking type:', bookingTypeKey);
@@ -434,10 +589,6 @@ export const carBookings = async (req, res) => {
         break;
       case 'outstation':
         calculatedCost = (distanceKm * car.pricing.outstation.perKm) + car.pricing.outstation.extraAmount;
-        break;
-      case 'marriage':
-        const marriageDays = Math.max(hours / 24, 1); // Convert hours to days, minimum 1 day
-        calculatedCost = (marriageDays * car.pricing.marriage.perDay) + car.pricing.marriage.extraAmount;
         break;
       case 'monthly':
         calculatedCost = car.pricing.monthly.price + car.pricing.monthly.extraAmount;
