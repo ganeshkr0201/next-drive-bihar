@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import AuthRequiredMessage from '../components/AuthRequiredMessage/AuthRequiredMessage';
@@ -10,12 +10,29 @@ const CarRental = () => {
   const { isAuthenticated, user } = useAuth();
   const { showSuccess, showError } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   // Get today's date in YYYY-MM-DD format
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
   
+  // Get booking type from URL parameter
+  const urlBookingType = searchParams.get('type');
+  
+  // Map URL types to internal booking types
+  const bookingTypeMap = {
+    'oneway': 'one-way',
+    'roundtrip': 'round-trip',
+    'outstation': 'outstation',
+    'marriage': 'marriage',
+    'monthly': 'monthly'
+  };
+  
   // Booking type tabs
-  const [activeBookingType, setActiveBookingType] = useState('one-way');
+  const [activeBookingType, setActiveBookingType] = useState(
+    urlBookingType && bookingTypeMap[urlBookingType] 
+      ? bookingTypeMap[urlBookingType] 
+      : 'one-way'
+  );
   const [selectedCarCategory, setSelectedCarCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingCars, setLoadingCars] = useState(true);

@@ -7,35 +7,40 @@ const Home = () => {
       description: 'Travel from point A to B with ease',
       icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
       color: 'blue',
-      features: ['No return charges', 'Flexible timing', 'Direct route']
+      features: ['No return charges', 'Flexible timing', 'Direct route'],
+      type: 'oneway'
     },
     {
       title: 'Round Trip',
       description: 'Complete journey with return included',
       icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
       color: 'green',
-      features: ['Return included', 'Cost effective', 'Same day service']
+      features: ['Return included', 'Cost effective', 'Same day service'],
+      type: 'roundtrip'
     },
     {
       title: 'Outstation',
       description: 'Long distance travel across Bihar',
       icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7',
       color: 'purple',
-      features: ['Multi-city travel', 'Experienced drivers', 'Comfortable rides']
+      features: ['Multi-city travel', 'Experienced drivers', 'Comfortable rides'],
+      type: 'outstation'
     },
     {
       title: 'Marriage Booking',
       description: 'Multiple cars for your special day',
       icon: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z',
       color: 'pink',
-      features: ['Multiple vehicles', 'Decorated cars', 'Professional service']
+      features: ['Multiple vehicles', 'Decorated cars', 'Professional service'],
+      type: 'marriage'
     },
     {
       title: 'Monthly Rental',
       description: 'Long-term car rental solutions',
       icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
       color: 'orange',
-      features: ['Best rates', 'Flexible plans', 'Dedicated vehicle']
+      features: ['Best rates', 'Flexible plans', 'Dedicated vehicle'],
+      type: 'monthly'
     }
   ];
 
@@ -86,6 +91,36 @@ const Home = () => {
           <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl drop-shadow-lg">
             Premium Car Rentals & Tour Packages Across Bihar
           </p>
+          
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link
+              to="/car-rental"
+              className="group px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-all shadow-xl hover:shadow-2xl flex items-center justify-center"
+            >
+              <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1V8a1 1 0 00-1-1h-3z" />
+              </svg>
+              Book a Car
+              <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+            
+            <Link
+              to="/tour-packages"
+              className="group px-8 py-4 bg-green-600 text-white text-lg font-semibold rounded-lg hover:bg-green-700 transition-all shadow-xl hover:shadow-2xl flex items-center justify-center"
+            >
+              <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Explore Tours
+              <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -105,7 +140,7 @@ const Home = () => {
             {bookingTypes.map((type, idx) => (
               <Link
                 key={idx}
-                to="/car-rental"
+                to={`/car-rental?type=${type.type}`}
                 className="group bg-white border-2 border-gray-100 rounded-2xl p-8 hover:border-blue-300 hover:shadow-xl transition-all"
               >
                 <div className={`w-16 h-16 bg-${type.color}-100 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
