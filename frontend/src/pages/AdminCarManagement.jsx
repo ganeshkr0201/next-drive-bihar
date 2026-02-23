@@ -486,6 +486,7 @@ const AdminCarManagement = () => {
                       value={carForm.numberOfSeats}
                       onChange={(e) => {
                         let value = e.target.value;
+                        
                         // Allow only numbers
                         value = value.replace(/[^\d]/g, '');
                         
@@ -495,14 +496,11 @@ const AdminCarManagement = () => {
                           return;
                         }
                         
-                        // Remove leading zeros
-                        value = value.replace(/^0+(?=\d)/, '');
-                        const numValue = parseInt(value);
+                        // Remove leading zeros but keep the string format
+                        value = value.replace(/^0+/, '') || '0';
                         
-                        // Allow any number during typing (will validate on blur)
-                        if (!isNaN(numValue) && numValue <= 99) {
-                          setCarForm(prev => ({ ...prev, numberOfSeats: numValue }));
-                        }
+                        // Store as string to allow typing multi-digit numbers
+                        setCarForm(prev => ({ ...prev, numberOfSeats: value }));
                       }}
                       onBlur={(e) => {
                         // Validate and clamp to range on blur
