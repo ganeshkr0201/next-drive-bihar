@@ -24,7 +24,8 @@ const RegisterPage = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/user-dashboard', { replace: true });
+      // User manually navigated to register page, send them to home
+      navigate('/', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 

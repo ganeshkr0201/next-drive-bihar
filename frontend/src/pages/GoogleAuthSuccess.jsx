@@ -55,11 +55,16 @@ const GoogleAuthSuccess = () => {
         window.history.replaceState({}, document.title, '/auth/google/success');
         
         setTimeout(() => {
-          // Redirect based on user role
-          if (userData.role === 'admin') {
-            navigate('/admin/dashboard', { replace: true });
+          // Check if there's a stored redirect path from OAuth initiation
+          const redirectPath = sessionStorage.getItem('oauth_redirect');
+          sessionStorage.removeItem('oauth_redirect'); // Clean up
+          
+          if (redirectPath && redirectPath !== '/') {
+            // User was redirected from a protected page, send them back there
+            navigate(redirectPath, { replace: true });
           } else {
-            navigate('/user-dashboard', { replace: true });
+            // User manually logged in, send them to home
+            navigate('/', { replace: true });
           }
         }, 1500);
         

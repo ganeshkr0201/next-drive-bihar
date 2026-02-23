@@ -22,9 +22,16 @@ const LoginPage = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      // Check if there's a redirect location from ContactProtectedRoute
-      const from = location.state?.from?.pathname || '/user-dashboard';
-      navigate(from, { replace: true });
+      // Check if there's a redirect location from protected routes
+      const from = location.state?.from?.pathname;
+      
+      if (from) {
+        // User was redirected from a protected page, send them back there
+        navigate(from, { replace: true });
+      } else {
+        // User manually navigated to login page, send them to home
+        navigate('/', { replace: true });
+      }
     }
   }, [isAuthenticated, navigate, location]);
 
@@ -56,19 +63,15 @@ const LoginPage = () => {
       const result = await login(formData.email, formData.password);
       showSuccess(`Welcome back, ${result.user.name}!`);
       
-      // Check if there's a redirect location from ContactProtectedRoute
+      // Check if there's a redirect location from protected routes
       const from = location.state?.from?.pathname;
       
       if (from) {
-        // Redirect to the original intended page (like /contact)
+        // User was redirected from a protected page, send them back there
         navigate(from, { replace: true });
       } else {
-        // Default redirect based on user role
-        if (result.user.role === 'admin') {
-          navigate('/admin/dashboard', { replace: true });
-        } else {
-          navigate('/user-dashboard', { replace: true });
-        }
+        // User manually navigated to login page, send them to home
+        navigate('/', { replace: true });
       }
     } catch (err) {
       // Check if user needs email verification
@@ -97,8 +100,11 @@ const LoginPage = () => {
     try {
       setIsGoogleLoading(true);
       
-      // Redirect to backend Google OAuth
-      authService.initiateGoogleLogin();
+      // Get the redirect path if user was redirected from a protected route
+      const redirectPath = location.state?.from?.pathname;
+      
+      // Redirect to backend Google OAuth with redirect path
+      authService.initiateGoogleLogin(redirectPath);
     } catch (error) {
       showError('Failed to initiate Google login. Please try again.');
       setIsGoogleLoading(false);

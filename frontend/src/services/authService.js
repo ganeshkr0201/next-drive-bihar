@@ -90,8 +90,16 @@ class AuthService {
     }
   }
 
-  // Google OAuth login - temporarily disabled
-  initiateGoogleLogin() {
+  // Google OAuth login
+  initiateGoogleLogin(redirectPath = null) {
+    // Store the intended redirect path in sessionStorage before OAuth redirect
+    if (redirectPath) {
+      sessionStorage.setItem('oauth_redirect', redirectPath);
+    } else {
+      // If no redirect path, user manually logged in, so redirect to home
+      sessionStorage.setItem('oauth_redirect', '/');
+    }
+    
     // Redirect to backend Google OAuth endpoint
     window.location.href = `${api.defaults.baseURL}/auth/google`;
   }
