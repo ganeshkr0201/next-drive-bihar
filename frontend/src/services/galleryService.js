@@ -14,13 +14,28 @@ export const getAdminGalleryImages = async (category = 'all') => {
 
 // Upload new gallery image
 export const uploadGalleryImage = async (imageData) => {
-  const response = await api.post('/api/gallery', imageData);
+  const response = await api.post('/api/gallery', imageData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    transformRequest: [(data) => data], // Prevent axios from stringifying FormData
+  });
   return response.data;
 };
 
 // Update gallery image
 export const updateGalleryImage = async (id, updateData) => {
-  const response = await api.put(`/api/gallery/${id}`, updateData);
+  // Check if updateData is FormData (has file upload)
+  const isFormData = updateData instanceof FormData;
+  
+  const config = isFormData ? {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    transformRequest: [(data) => data], // Prevent axios from stringifying FormData
+  } : {};
+  
+  const response = await api.put(`/api/gallery/${id}`, updateData, config);
   return response.data;
 };
 

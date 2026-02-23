@@ -55,86 +55,71 @@ const TourPackages = () => {
     });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <div className="mb-6">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Discover Bihar's
-              <span className="block text-blue-600">
-                Amazing Tours
-              </span>
-            </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Explore Bihar's rich heritage, spiritual destinations, and natural beauty with our expertly curated tour packages
-            </p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      {/* Hero Section */}
+      <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 text-white py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 animate-fade-in-up">
+            Explore Bihar's Wonders
+          </h1>
+          <p className="text-lg md:text-xl text-blue-100 max-w-2xl mx-auto">
+            Discover curated tour packages showcasing Bihar's rich heritage and natural beauty
+          </p>
         </div>
+      </div>
 
-        {/* Search and Filter Section */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 items-center">
-            {/* Search Bar */}
-            <div className="w-full lg:flex-1 relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <input
-                type="text"
-                placeholder="Search tour packages..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-base"
-              />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Search and Filter */}
+        <div className="mb-12 flex flex-col md:flex-row gap-4">
+          {/* Search Bar */}
+          <div className="flex-1 relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
-
-            {/* Sort Dropdown */}
-            <div className="w-full lg:w-auto relative">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-base"
-              >
-                <option value="featured">Featured</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
-                <option value="duration">Duration</option>
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
+            <input
+              type="text"
+              placeholder="Search tours..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-4 bg-white border-2 border-transparent rounded-2xl focus:outline-none focus:border-blue-500 shadow-lg transition-all text-base"
+            />
           </div>
+
+          {/* Sort Dropdown */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-6 py-4 bg-white border-2 border-transparent rounded-2xl focus:outline-none focus:border-blue-500 shadow-lg transition-all text-base font-medium"
+          >
+            <option value="featured">✨ Featured</option>
+            <option value="price-low">💰 Price: Low to High</option>
+            <option value="price-high">💎 Price: High to Low</option>
+            <option value="duration">⏱️ Duration</option>
+          </select>
         </div>
 
         {/* Loading State */}
         {isLoading ? (
-          <div className="flex justify-center items-center py-16">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading amazing tours...</p>
-            </div>
+          <div className="flex justify-center items-center py-20">
+            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : (
           <>
-            {/* Results Header */}
+            {/* Results Count */}
             {searchTerm && (
-              <div className="mb-6">
-                <p className="text-gray-600">
-                  Found <span className="font-semibold text-gray-900">{filteredPackages.length}</span> results for "{searchTerm}"
+              <div className="mb-8">
+                <p className="text-lg text-gray-700 font-medium">
+                  {filteredPackages.length} {filteredPackages.length === 1 ? 'result' : 'results'} found
                 </p>
               </div>
             )}
 
             {/* Tour Packages Grid */}
             {filteredPackages.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredPackages.map((pkg) => (
                   <TourPackageCard 
                     key={pkg.id} 
@@ -147,9 +132,7 @@ const TourPackages = () => {
             ) : (
               <EmptyState 
                 searchTerm={searchTerm}
-                onClearFilters={() => {
-                  setSearchTerm('');
-                }}
+                onClearFilters={() => setSearchTerm('')}
               />
             )}
           </>
@@ -170,92 +153,56 @@ const TourPackageCard = ({ pkg, isAuthenticated, navigate }) => {
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
+    <div className="group bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
       {/* Package Image */}
-      <div className="relative h-56 overflow-hidden">
-        <div className={`absolute inset-0 bg-gray-200 animate-pulse ${imageLoaded ? 'hidden' : 'block'}`} />
+      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100">
         <img
           src={pkg.image}
           alt={pkg.title}
-          className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           onLoad={() => setImageLoaded(true)}
         />
         
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-        
         {/* Discount Badge */}
         {calculateDiscount() > 0 && (
-          <div className="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+          <div className="absolute top-4 right-4 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
             {calculateDiscount()}% OFF
           </div>
         )}
-        
-        {/* Rating Badge */}
-        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center shadow-lg">
-          <svg className="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
-          <span className="text-sm font-semibold text-gray-700">{pkg.rating}</span>
-        </div>
 
-        {/* Duration Badge */}
-        <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center shadow-lg">
-          <svg className="w-4 h-4 text-blue-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span className="text-sm font-semibold text-gray-700">{pkg.duration}</span>
-        </div>
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       </div>
 
       {/* Package Content */}
-      <div className="p-6">
+      <div className="p-6 space-y-4">
         {/* Title */}
-        <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200">
+        <h3 className="text-2xl font-bold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors">
           {pkg.title}
         </h3>
 
+        {/* Meta Info */}
+        <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-full">
+            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="font-semibold text-gray-700">{pkg.duration}</span>
+          </div>
+        </div>
+
         {/* Description */}
-        <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">
+        <p className="text-gray-600 line-clamp-2 leading-relaxed">
           {pkg.description}
         </p>
 
-        {/* Highlights */}
-        {(Array.isArray(pkg.highlights) ? pkg.highlights : []).length > 0 && (
-          <div className="mb-4">
-            <div className="flex flex-wrap gap-2">
-              {(Array.isArray(pkg.highlights) ? pkg.highlights : []).slice(0, 3).map((highlight, index) => (
-                <span
-                  key={index}
-                  className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium border border-blue-100"
-                >
-                  {highlight}
-                </span>
-              ))}
-              {(Array.isArray(pkg.highlights) ? pkg.highlights : []).length > 3 && (
-                <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium">
-                  +{(Array.isArray(pkg.highlights) ? pkg.highlights : []).length - 3} more
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Reviews */}
-        <div className="flex items-center mb-4 text-sm text-gray-500">
-          <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2v-6a2 2 0 012-2h8z" />
-          </svg>
-          <span className="font-medium">{pkg.reviews}</span> reviews
-        </div>
-
         {/* Price and CTA */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        <div className="flex items-center justify-between pt-4 border-t-2 border-gray-100">
           <div>
-            <div className="flex items-baseline space-x-2">
-              <span className="text-2xl font-bold text-gray-900">{pkg.price}</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-bold text-blue-600">{pkg.price}</span>
               {pkg.originalPrice !== pkg.price && (
-                <span className="text-sm text-gray-500 line-through">{pkg.originalPrice}</span>
+                <span className="text-sm text-gray-400 line-through">{pkg.originalPrice}</span>
               )}
             </div>
             <span className="text-xs text-gray-500">per person</span>
@@ -265,14 +212,14 @@ const TourPackageCard = ({ pkg, isAuthenticated, navigate }) => {
           {!isAuthenticated ? (
             <button
               onClick={() => navigate('/login')}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-bold rounded-xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-lg"
             >
-              Login to Book
+              Login
             </button>
           ) : (
             <Link
               to={`/tour-packages/${pkg.id}`}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-bold rounded-xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-lg"
             >
               Book Now
             </Link>
@@ -285,25 +232,20 @@ const TourPackageCard = ({ pkg, isAuthenticated, navigate }) => {
 
 // Empty State Component
 const EmptyState = ({ searchTerm, onClearFilters }) => (
-  <div className="text-center py-16">
-    <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-      <img src="/tour_logo.svg" alt="Tour Package" className="w-12 h-12 opacity-40" />
-    </div>
-    <h3 className="text-2xl font-semibold text-gray-900 mb-2">No Tours Found</h3>
-    <p className="text-gray-600 mb-6 max-w-md mx-auto">
+  <div className="text-center py-20 bg-white rounded-3xl shadow-xl">
+    <div className="text-6xl mb-6">🔍</div>
+    <h3 className="text-3xl font-bold text-gray-900 mb-4">No tours found</h3>
+    <p className="text-gray-600 text-lg mb-8">
       {searchTerm 
-        ? `No tour packages match "${searchTerm}". Try different keywords or clear filters.`
-        : 'No tour packages are currently available.'}
+        ? `No results for "${searchTerm}"`
+        : 'No tour packages available at the moment'}
     </p>
     {searchTerm && (
       <button
         onClick={onClearFilters}
-        className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+        className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-base font-bold rounded-xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-lg"
       >
-        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-        Clear All Filters
+        Clear Search
       </button>
     )}
   </div>

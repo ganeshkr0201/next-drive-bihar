@@ -89,46 +89,49 @@ const Counter = ({ end, suffix = "", duration = 2000 }) => {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section with Parallax Effect */}
-      <section className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 pt-16 sm:pt-20 pb-20 sm:pb-32 overflow-hidden">
-        {/* Animated Background Elements */}
+      <section className="relative pt-8 md:pt-20 pb-8 md:pb-32 overflow-hidden">
+        {/* Background Image with Overlay */}
         <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500 rounded-full opacity-10 animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500 rounded-full opacity-10 animate-pulse" style={{ animationDelay: '1s' }}></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-500 rounded-full opacity-5 animate-spin" style={{ animationDuration: '20s' }}></div>
+          <img 
+            src="https://images.unsplash.com/photo-1516610540415-d1b25463c7f3?q=80&w=1064&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
+            alt="Bihar Heritage" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/50"></div>
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="mb-6 sm:mb-8 animate-fade-in-up">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-2xl transform hover:scale-110 transition-transform duration-300">
+            <div className="mb-3 md:mb-8 animate-fade-in-up">
+              <div className="mx-auto mb-2 md:mb-8">
                 <img 
                   src="/favicon.png" 
                   alt="NextDrive Bihar" 
-                  className="w-20 h-20 sm:w-28 sm:h-28 object-contain"
+                  className="w-16 h-16 md:w-32 md:h-32 object-contain mx-auto transform hover:scale-110 transition-transform duration-300"
                 />
               </div>
-              <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
+              <h1 className="text-xl sm:text-4xl md:text-7xl font-bold text-white mb-2 md:mb-6 leading-tight px-2">
                 About NextDrive Bihar
               </h1>
-              <p className="text-base sm:text-xl md:text-2xl text-blue-100 max-w-4xl mx-auto leading-relaxed px-4">
+              <p className="text-xs sm:text-lg md:text-2xl text-blue-100 max-w-4xl mx-auto leading-snug px-4">
                     Your trusted travel partner for exploring Bihar’s rich heritage through premium car rentals and thoughtfully curated tour experiences. Travel in comfort and safety — arrive with confidence
               </p>
             </div>
             
             {/* Floating Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mt-10 sm:mt-16">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 md:gap-6 mt-4 md:mt-16">
               {achievements.slice(0, 4).map((stat, index) => (
                 <div
                   key={index}
-                  className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-white/20 transition-all duration-300"
+                  className="bg-white/10 backdrop-blur-sm rounded-lg md:rounded-2xl p-2 md:p-6 hover:bg-white/20 transition-all duration-300"
                 >
-                  <div className="text-2xl sm:text-3xl mb-1 sm:mb-2">{stat.icon}</div>
+                  <div className="text-lg md:text-3xl mb-0.5 md:mb-2">{stat.icon}</div>
 
-                  <div className="text-2xl sm:text-3xl font-bold text-white mb-1">
+                  <div className="text-lg md:text-3xl font-bold text-white mb-0.5">
                     <Counter end={stat.number} suffix={stat.suffix} />
                   </div>
 
-                  <div className="text-blue-200 text-xs sm:text-sm">{stat.label}</div>
+                  <div className="text-blue-200 text-[10px] md:text-sm">{stat.label}</div>
                 </div>
               ))}
             </div>

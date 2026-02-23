@@ -488,18 +488,29 @@ const AdminCarManagement = () => {
                         let value = e.target.value;
                         // Allow only numbers
                         value = value.replace(/[^\d]/g, '');
+                        
+                        // Allow empty string for clearing
+                        if (value === '') {
+                          setCarForm(prev => ({ ...prev, numberOfSeats: '' }));
+                          return;
+                        }
+                        
                         // Remove leading zeros
                         value = value.replace(/^0+(?=\d)/, '');
-                        const numValue = parseInt(value) || 0;
+                        const numValue = parseInt(value);
+                        
                         if (numValue >= 2 && numValue <= 20) {
                           setCarForm(prev => ({ ...prev, numberOfSeats: numValue }));
-                        } else if (value === '') {
-                          setCarForm(prev => ({ ...prev, numberOfSeats: '' }));
                         }
                       }}
                       onBlur={(e) => {
-                        const numValue = parseInt(e.target.value) || 2;
-                        setCarForm(prev => ({ ...prev, numberOfSeats: Math.max(2, Math.min(20, numValue)) }));
+                        // Set to 4 if empty on blur
+                        if (e.target.value === '') {
+                          setCarForm(prev => ({ ...prev, numberOfSeats: 4 }));
+                        } else {
+                          const numValue = parseInt(e.target.value) || 4;
+                          setCarForm(prev => ({ ...prev, numberOfSeats: Math.max(2, Math.min(20, numValue)) }));
+                        }
                       }}
                       className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base"
                       placeholder="e.g., 4"

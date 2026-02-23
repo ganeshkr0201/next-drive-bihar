@@ -41,69 +41,69 @@ export const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Generate and store OTP in Redis
-        const otpResult = await redisOTPManager.generateAndStoreOTP(email);
+        // const otpResult = await redisOTPManager.generateAndStoreOTP(email);
         
-        if (!otpResult.success) {
-            return res.status(500).json({
-                success: false,
-                message: "Failed to generate verification code. Please try again."
-            });
-        }
+        // if (!otpResult.success) {
+        //     return res.status(500).json({
+        //         success: false,
+        //         message: "Failed to generate verification code. Please try again."
+        //     });
+        // }
 
         const user = await User.create({
             name,
             email,
             password: hashedPassword,
-            isVerified: false
+            isVerified: true // make this false for the otp verification
         });
 
-        try {
-            await sendEmail(
-                email,
-                "Verify Your Email – NextDrive Bihar",
-                `Hello ${user.name},
+        // try {
+        //     await sendEmail(
+        //         email,
+        //         "Verify Your Email – NextDrive Bihar",
+        //         `Hello ${user.name},
 
-                Thank you for registering with NextDrive Bihar.
-                Your OTP for email verification is: ${otpResult.otp}
-                This OTP is valid for 10 minutes.
+        //         Thank you for registering with NextDrive Bihar.
+        //         Your OTP for email verification is: ${otpResult.otp}
+        //         This OTP is valid for 10 minutes.
 
-                Best regards,
-                NextDrive Bihar Team`,
-                `<div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:30px">
-                    <div style="max-width:600px; margin:auto; background:#ffffff; padding:25px; border-radius:8px">
-                        <h2 style="color:#1e293b; text-align:center;">Email Verification</h2>
-                        <p>Hello <strong>${user.name}</strong>,</p>
-                        <p>Thank you for registering with <strong>NextDrive Bihar</strong>. Please use the OTP below to verify your email address.</p>
-                        <div style="text-align:center; margin:30px 0;">
-                            <span style="font-size:32px; font-weight:bold; letter-spacing:6px; color:#2563eb;">${otpResult.otp}</span>
-                        </div>
-                        <p style="color:#475569;">This OTP is valid for <strong>10 minutes</strong>. Do not share this code with anyone.</p>
-                        <p style="font-size:14px; color:#64748b;">If you did not request this verification, you can safely ignore this email.</p>
-                        <hr />
-                        <p style="font-size:12px; color:#94a3b8; text-align:center;">© ${new Date().getFullYear()} NextDrive Bihar. All rights reserved.</p>
-                    </div>
-                </div>`
-            );
+        //         Best regards,
+        //         NextDrive Bihar Team`,
+        //         `<div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:30px">
+        //             <div style="max-width:600px; margin:auto; background:#ffffff; padding:25px; border-radius:8px">
+        //                 <h2 style="color:#1e293b; text-align:center;">Email Verification</h2>
+        //                 <p>Hello <strong>${user.name}</strong>,</p>
+        //                 <p>Thank you for registering with <strong>NextDrive Bihar</strong>. Please use the OTP below to verify your email address.</p>
+        //                 <div style="text-align:center; margin:30px 0;">
+        //                     <span style="font-size:32px; font-weight:bold; letter-spacing:6px; color:#2563eb;">${otpResult.otp}</span>
+        //                 </div>
+        //                 <p style="color:#475569;">This OTP is valid for <strong>10 minutes</strong>. Do not share this code with anyone.</p>
+        //                 <p style="font-size:14px; color:#64748b;">If you did not request this verification, you can safely ignore this email.</p>
+        //                 <hr />
+        //                 <p style="font-size:12px; color:#94a3b8; text-align:center;">© ${new Date().getFullYear()} NextDrive Bihar. All rights reserved.</p>
+        //             </div>
+        //         </div>`
+        //     );
             
-        } catch (emailError) {
-            const userResponse = {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                authProvider: user.authProvider,
-                isVerified: user.isVerified,
-                createdAt: user.createdAt
-            };
+        // } catch (emailError) {
+        //     const userResponse = {
+        //         _id: user._id,
+        //         name: user.name,
+        //         email: user.email,
+        //         role: user.role,
+        //         authProvider: user.authProvider,
+        //         isVerified: user.isVerified,
+        //         createdAt: user.createdAt
+        //     };
 
-            return res.status(201).json({ 
-                success: true,
-                message: "Registration successful! However, there was an issue sending the verification email. Please use 'Resend OTP' to get your verification code.", 
-                user: userResponse,
-                requiresVerification: true,
-                emailIssue: true
-            });
-        }
+            // return res.status(201).json({ 
+            //     success: true,
+            //     message: "Registration successful! However, there was an issue sending the verification email. Please use 'Resend OTP' to get your verification code.", 
+            //     user: userResponse,
+            //     requiresVerification: false, // make this true for the otp verification
+            //     emailIssue: true
+            // });
+        // }
 
         const userResponse = {
             _id: user._id,
@@ -117,9 +117,9 @@ export const register = async (req, res) => {
 
         res.status(201).json({ 
             success: true,
-            message: "Registration successful! Please check your email for verification code.", 
+            message: "Registration successful", 
             user: userResponse,
-            requiresVerification: true
+            requiresVerification: false // make this true for the otp verification
         });
     } catch (error) {
         console.error('Registration error:', error);

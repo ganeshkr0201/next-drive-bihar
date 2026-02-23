@@ -366,7 +366,7 @@ const Contact = () => {
 
                   <div>
                     <label htmlFor="whatsapp" className="block text-sm font-semibold text-gray-900 mb-2 md:mb-3">
-                      WhatsApp Number
+                      WhatsApp Number *
                     </label>
                     <input
                       type="tel"

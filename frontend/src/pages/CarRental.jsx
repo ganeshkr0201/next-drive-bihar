@@ -1163,9 +1163,28 @@ const CarRental = () => {
                     placeholder="Enter number of passengers"
                     value={bookingForm.numberOfPassengers}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/^0+(?=\d)/, '').replace(/\D/g, '');
-                      if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 50)) {
-                        setBookingForm(prev => ({ ...prev, numberOfPassengers: value === '' ? '' : parseInt(value) }));
+                      let value = e.target.value;
+                      // Allow only numbers
+                      value = value.replace(/[^\d]/g, '');
+                      
+                      // Allow empty string for clearing
+                      if (value === '') {
+                        setBookingForm(prev => ({ ...prev, numberOfPassengers: '' }));
+                        return;
+                      }
+                      
+                      // Remove leading zeros
+                      value = value.replace(/^0+(?=\d)/, '');
+                      const numValue = parseInt(value);
+                      
+                      if (numValue >= 1 && numValue <= 50) {
+                        setBookingForm(prev => ({ ...prev, numberOfPassengers: numValue }));
+                      }
+                    }}
+                    onBlur={(e) => {
+                      // Set to 1 if empty on blur
+                      if (e.target.value === '') {
+                        setBookingForm(prev => ({ ...prev, numberOfPassengers: 1 }));
                       }
                     }}
                     className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all text-base font-medium placeholder:text-gray-400"
@@ -1442,11 +1461,11 @@ const CarRental = () => {
 
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-3">
-                    WhatsApp Number
+                    WhatsApp Number *
                   </label>
                   <input
                     type="tel"
-                    placeholder="Enter WhatsApp number (optional)"
+                    placeholder="Enter WhatsApp number"
                     value={bookingForm.emergencyContact}
                     onChange={(e) => {
                       const value = e.target.value.replace(/\D/g, '');

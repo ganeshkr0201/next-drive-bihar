@@ -62,15 +62,62 @@ export const getAdminGalleryImages = async (req, res) => {
 // Upload new gallery image
 export const uploadGalleryImage = async (req, res) => {
   try {
-    const { title, description, category, imageUrl } = req.body;
+    console.log('📤 Upload request received');
+    console.log('Body:', req.body);
+    console.log('File:', req.file);
+    
+    const { title, description, category } = req.body;
+    let imageUrl = req.body.imageUrl;
 
-    if (!title || !imageUrl) {
+    if (!title) {
+      console.log('❌ Title is missing');
       return res.status(400).json({
         success: false,
-        message: 'Title and image URL are required'
+        message: 'Title is required'
       });
     }
 
+    // Handle file upload if present
+    if (req.file) {
+      console.log('📁 File detected, uploading to Cloudinary...');
+      try {
+        // Upload buffer to Cloudinary
+        const uploadPromise = new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            {
+              folder: 'gallery',
+              resource_type: 'image'
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          uploadStream.end(req.file.buffer);
+        });
+
+        const result = await uploadPromise;
+        imageUrl = result.secure_url;
+        console.log('✅ Cloudinary upload successful:', imageUrl);
+      } catch (uploadError) {
+        console.error('❌ Cloudinary upload error:', uploadError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to upload image to Cloudinary',
+          error: uploadError.message
+        });
+      }
+    }
+
+    if (!imageUrl) {
+      console.log('❌ No image provided');
+      return res.status(400).json({
+        success: false,
+        message: 'Image is required'
+      });
+    }
+
+    console.log('💾 Creating gallery entry...');
     const newImage = new Gallery({
       title,
       description,
@@ -82,13 +129,14 @@ export const uploadGalleryImage = async (req, res) => {
     await newImage.save();
     await newImage.populate('uploadedBy', 'name email');
 
+    console.log('✅ Gallery image created successfully');
     res.status(201).json({
       success: true,
       message: 'Image uploaded successfully',
       data: newImage
     });
   } catch (error) {
-    console.error('Error uploading gallery image:', error);
+    console.error('❌ Error uploading gallery image:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to upload image',
@@ -102,6 +150,7 @@ export const updateGalleryImage = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, category, isActive } = req.body;
+    let imageUrl = req.body.imageUrl;
 
     const image = await Gallery.findById(id);
     if (!image) {
@@ -111,10 +160,51 @@ export const updateGalleryImage = async (req, res) => {
       });
     }
 
+    // Handle file upload if present
+    if (req.file) {
+      try {
+        // Delete old image from Cloudinary if it exists
+        if (image.imageUrl && image.imageUrl.includes('cloudinary.com')) {
+          try {
+            const publicId = image.imageUrl.split('/').pop().split('.')[0];
+            await cloudinary.uploader.destroy(`gallery/${publicId}`);
+          } catch (deleteError) {
+            console.error('Error deleting old image from Cloudinary:', deleteError);
+          }
+        }
+
+        // Upload new image buffer to Cloudinary
+        const uploadPromise = new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            {
+              folder: 'gallery',
+              resource_type: 'image'
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          uploadStream.end(req.file.buffer);
+        });
+
+        const result = await uploadPromise;
+        imageUrl = result.secure_url;
+      } catch (uploadError) {
+        console.error('Cloudinary upload error:', uploadError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to upload image to Cloudinary',
+          error: uploadError.message
+        });
+      }
+    }
+
     if (title) image.title = title;
     if (description !== undefined) image.description = description;
     if (category) image.category = category;
     if (isActive !== undefined) image.isActive = isActive;
+    if (imageUrl) image.imageUrl = imageUrl;
 
     await image.save();
     await image.populate('uploadedBy', 'name email');
