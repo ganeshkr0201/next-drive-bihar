@@ -499,17 +499,20 @@ const AdminCarManagement = () => {
                         value = value.replace(/^0+(?=\d)/, '');
                         const numValue = parseInt(value);
                         
-                        if (numValue >= 2 && numValue <= 32) {
+                        // Allow any number during typing (will validate on blur)
+                        if (!isNaN(numValue) && numValue <= 99) {
                           setCarForm(prev => ({ ...prev, numberOfSeats: numValue }));
                         }
                       }}
                       onBlur={(e) => {
-                        // Set to 4 if empty on blur
+                        // Validate and clamp to range on blur
                         if (e.target.value === '') {
                           setCarForm(prev => ({ ...prev, numberOfSeats: 4 }));
                         } else {
                           const numValue = parseInt(e.target.value) || 4;
-                          setCarForm(prev => ({ ...prev, numberOfSeats: Math.max(2, Math.min(32, numValue)) }));
+                          // Clamp between 2 and 32
+                          const clampedValue = Math.max(2, Math.min(32, numValue));
+                          setCarForm(prev => ({ ...prev, numberOfSeats: clampedValue }));
                         }
                       }}
                       className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base"
