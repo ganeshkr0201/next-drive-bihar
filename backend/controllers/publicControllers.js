@@ -596,6 +596,7 @@ export const carBookings = async (req, res) => {
         calculatedCost = (distanceKm * car.pricing.oneWay.perKm) + car.pricing.oneWay.extraAmount;
         break;
       case 'round-trip':
+        // For round trip, distance is doubled (x * 2 = 2x) as the car travels both ways
         calculatedCost = (distanceKm * 2 * car.pricing.roundTrip.perKm) + car.pricing.roundTrip.extraAmount;
         break;
       case 'outstation':

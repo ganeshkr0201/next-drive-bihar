@@ -413,6 +413,7 @@ const CarRental = () => {
         cost = (distanceKm * pricing.oneWay.perKm) + pricing.oneWay.extraAmount;
         break;
       case 'round-trip':
+        // For round trip, distance is doubled (x * 2 = 2x) as the car travels both ways
         cost = (distanceKm * 2 * pricing.roundTrip.perKm) + pricing.roundTrip.extraAmount;
         break;
       case 'outstation':
