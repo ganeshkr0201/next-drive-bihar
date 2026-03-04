@@ -1649,10 +1649,16 @@ const CarRental = () => {
                 <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
                   <div className="text-center bg-white rounded-lg p-2 sm:p-3 md:p-4 shadow-sm">
                     <div className="text-lg sm:text-2xl md:text-3xl font-bold text-blue-600">
-                      {bookingForm.distance > 0 ? `${bookingForm.distance}` : 'TBD'}
+                      {bookingForm.distance > 0 
+                        ? (activeBookingType === 'round-trip' 
+                            ? `${bookingForm.distance} × 2 = ${(bookingForm.distance * 2).toFixed(2)}`
+                            : `${bookingForm.distance}`)
+                        : 'TBD'}
                     </div>
                     <div className="text-[10px] sm:text-xs md:text-sm text-gray-600 mt-0.5 sm:mt-1">
-                      {bookingForm.distance > 0 ? 'km' : 'Distance'}
+                      {bookingForm.distance > 0 
+                        ? (activeBookingType === 'round-trip' ? 'Total km' : 'km')
+                        : 'Distance'}
                     </div>
                   </div>
                   <div className="text-center bg-white rounded-lg p-2 sm:p-3 md:p-4 shadow-sm">
