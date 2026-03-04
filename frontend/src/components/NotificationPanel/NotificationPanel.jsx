@@ -198,9 +198,9 @@ const NotificationPanel = () => {
 
       {/* Notification Panel */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-md bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[70vh] sm:max-h-96 flex flex-col">
+        <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto top-16 sm:top-auto sm:mt-2 w-auto sm:w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[calc(100vh-5rem)] sm:max-h-80 flex flex-col">
           {/* Header */}
-          <div className="px-3 py-2.5 border-b border-gray-200 flex-shrink-0">
+          <div className="px-3 py-2 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-900">
                 Notifications {unreadCount > 0 && <span className="text-blue-600">({unreadCount})</span>}
@@ -219,13 +219,13 @@ const NotificationPanel = () => {
           {/* Notifications List */}
           <div className="overflow-y-auto flex-1">
             {isLoading ? (
-              <div className="p-6 text-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent mx-auto"></div>
+              <div className="p-4 text-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent mx-auto"></div>
                 <p className="text-xs text-gray-500 mt-2">Loading...</p>
               </div>
             ) : notifications.length === 0 ? (
-              <div className="p-6 text-center">
-                <svg className="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="p-4 text-center">
+                <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
                 <p className="text-xs text-gray-500">No notifications</p>
@@ -235,7 +235,7 @@ const NotificationPanel = () => {
                 {notifications.map((notification) => (
                   <div
                     key={notification._id}
-                    className={`px-3 py-2.5 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                    className={`px-3 py-2 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
                       !notification.isRead ? 'bg-blue-50/50' : ''
                     }`}
                   >
@@ -247,8 +247,8 @@ const NotificationPanel = () => {
                       
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-1.5 mb-0.5">
-                          <p className={`text-xs leading-snug ${!notification.isRead ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                        <div className="flex items-start justify-between gap-1 mb-0.5">
+                          <p className={`text-xs leading-tight ${!notification.isRead ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
                             {notification.title}
                           </p>
                           
@@ -258,13 +258,13 @@ const NotificationPanel = () => {
                             className="flex-shrink-0 text-gray-400 hover:text-red-500 transition-colors"
                             title="Delete"
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
                           </button>
                         </div>
                         
-                        <p className="text-xs text-gray-600 leading-relaxed mb-1.5 line-clamp-2">
+                        <p className="text-xs text-gray-600 leading-snug mb-1 line-clamp-2">
                           {notification.message}
                         </p>
                         
@@ -273,7 +273,7 @@ const NotificationPanel = () => {
                             {notification.timeAgo || new Date(notification.createdAt).toLocaleDateString()}
                           </span>
                           
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1">
                             {!notification.isRead && (
                               <button
                                 onClick={() => markAsRead(notification._id)}
@@ -292,7 +292,7 @@ const NotificationPanel = () => {
                                   setIsOpen(false);
                                   navigate(notification.actionUrl);
                                 }}
-                                className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded hover:bg-blue-700 transition-colors"
+                                className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded hover:bg-blue-700 transition-colors"
                               >
                                 View
                               </button>
@@ -309,7 +309,7 @@ const NotificationPanel = () => {
 
           {/* Footer with Clear All Button */}
           {notifications.length > 0 && (
-            <div className="px-3 py-2 border-t border-gray-200 bg-gray-50 flex-shrink-0 flex items-center justify-between">
+            <div className="px-3 py-1.5 border-t border-gray-200 bg-gray-50 flex-shrink-0 flex items-center justify-between">
               <p className="text-[10px] text-gray-500">
                 {notifications.length} notification{notifications.length !== 1 ? 's' : ''}
               </p>
