@@ -87,6 +87,40 @@ userSchema.pre('findOneAndDelete', async function() {
                 const { default: TourPackage } = await import('./TourPackage.js');
                 const { default: Feedback } = await import('./Feedback.js');
 
+                // Get all tour packages created by this user to delete their images
+                const userTourPackages = await TourPackage.find({ createdBy: userId });
+                
+                // Delete images from Cloudinary for all tour packages created by this user
+                if (userTourPackages.length > 0) {
+                    const { cloudinaryUtils } = await import('../config/cloudinary.js');
+                    let totalImagesDeleted = 0;
+                    
+                    for (const tourPackage of userTourPackages) {
+                        const imagesToDelete = [];
+                        
+                        if (tourPackage.images?.featuredPublicId) {
+                            imagesToDelete.push(tourPackage.images.featuredPublicId);
+                        }
+                        
+                        if (tourPackage.images?.gallery && tourPackage.images.gallery.length > 0) {
+                            tourPackage.images.gallery.forEach(image => {
+                                if (image.publicId) {
+                                    imagesToDelete.push(image.publicId);
+                                }
+                            });
+                        }
+                        
+                        if (imagesToDelete.length > 0) {
+                            await cloudinaryUtils.deleteImages(imagesToDelete);
+                            totalImagesDeleted += imagesToDelete.length;
+                        }
+                    }
+                    
+                    if (totalImagesDeleted > 0) {
+                        console.log(`🗑️ Deleted ${totalImagesDeleted} tour package images from Cloudinary`);
+                    }
+                }
+
                 // Delete all user's bookings
                 const deletedBookings = await Booking.deleteMany({ user: userId });
 
@@ -105,11 +139,8 @@ userSchema.pre('findOneAndDelete', async function() {
                 // Delete all notifications sent by this user (if admin)
                 const deletedSentNotifications = await Notification.deleteMany({ sender: userId });
 
-                // Update tour packages created by this user (set createdBy to null instead of deleting)
-                const updatedTourPackages = await TourPackage.updateMany(
-                    { createdBy: userId },
-                    { $unset: { createdBy: 1 } }
-                );
+                // Delete tour packages created by this user (images already deleted above)
+                const deletedTourPackages = await TourPackage.deleteMany({ createdBy: userId });
 
                 // Clean up any orphaned queries that reference this user by email
                 const deletedEmailQueries = await Query.deleteMany({ email: user.email, user: { $exists: false } });
@@ -121,7 +152,7 @@ userSchema.pre('findOneAndDelete', async function() {
                     feedback: deletedFeedback.deletedCount,
                     receivedNotifications: deletedReceivedNotifications.deletedCount,
                     sentNotifications: deletedSentNotifications.deletedCount,
-                    tourPackagesUpdated: updatedTourPackages.modifiedCount,
+                    tourPackages: deletedTourPackages.deletedCount,
                     emailQueries: deletedEmailQueries.deletedCount
                 });
 
@@ -164,6 +195,40 @@ userSchema.pre('deleteOne', { document: true }, async function() {
             const { default: TourPackage } = await import('./TourPackage.js');
             const { default: Feedback } = await import('./Feedback.js');
 
+            // Get all tour packages created by this user to delete their images
+            const userTourPackages = await TourPackage.find({ createdBy: userId });
+            
+            // Delete images from Cloudinary for all tour packages created by this user
+            if (userTourPackages.length > 0) {
+                const { cloudinaryUtils } = await import('../config/cloudinary.js');
+                let totalImagesDeleted = 0;
+                
+                for (const tourPackage of userTourPackages) {
+                    const imagesToDelete = [];
+                    
+                    if (tourPackage.images?.featuredPublicId) {
+                        imagesToDelete.push(tourPackage.images.featuredPublicId);
+                    }
+                    
+                    if (tourPackage.images?.gallery && tourPackage.images.gallery.length > 0) {
+                        tourPackage.images.gallery.forEach(image => {
+                            if (image.publicId) {
+                                imagesToDelete.push(image.publicId);
+                            }
+                        });
+                    }
+                    
+                    if (imagesToDelete.length > 0) {
+                        await cloudinaryUtils.deleteImages(imagesToDelete);
+                        totalImagesDeleted += imagesToDelete.length;
+                    }
+                }
+                
+                if (totalImagesDeleted > 0) {
+                    console.log(`🗑️ Deleted ${totalImagesDeleted} tour package images from Cloudinary`);
+                }
+            }
+
             // Delete all user's bookings
             const deletedBookings = await Booking.deleteMany({ user: userId });
 
@@ -182,11 +247,8 @@ userSchema.pre('deleteOne', { document: true }, async function() {
             // Delete all notifications sent by this user (if admin)
             const deletedSentNotifications = await Notification.deleteMany({ sender: userId });
 
-            // Update tour packages created by this user (set createdBy to null instead of deleting)
-            const updatedTourPackages = await TourPackage.updateMany(
-                { createdBy: userId },
-                { $unset: { createdBy: 1 } }
-            );
+            // Delete tour packages created by this user (images already deleted above)
+            const deletedTourPackages = await TourPackage.deleteMany({ createdBy: userId });
 
             // Clean up any orphaned queries that reference this user by email
             const deletedEmailQueries = await Query.deleteMany({ email: this.email, user: { $exists: false } });
@@ -198,7 +260,7 @@ userSchema.pre('deleteOne', { document: true }, async function() {
                 feedback: deletedFeedback.deletedCount,
                 receivedNotifications: deletedReceivedNotifications.deletedCount,
                 sentNotifications: deletedSentNotifications.deletedCount,
-                tourPackagesUpdated: updatedTourPackages.modifiedCount,
+                tourPackages: deletedTourPackages.deletedCount,
                 emailQueries: deletedEmailQueries.deletedCount
             });
 

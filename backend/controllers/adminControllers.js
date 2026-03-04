@@ -1150,10 +1150,10 @@ export const deleteUser = async (req, res) => {
     }
 
     // Get user statistics before deletion for response
-    let tourBookings = 0, carBookings = 0, queries = 0, notifications = 0, feedback = 0;
+    let tourBookings = 0, carBookings = 0, queries = 0, notifications = 0, feedback = 0, tourPackages = 0;
     
     try {
-      [tourBookings, carBookings, queries, notifications, feedback] = await Promise.all([
+      [tourBookings, carBookings, queries, notifications, feedback, tourPackages] = await Promise.all([
         Booking.countDocuments({ user: id }),
         CarBooking.countDocuments({ user: id }),
         Query.countDocuments({ user: id }),
@@ -1170,7 +1170,8 @@ export const deleteUser = async (req, res) => {
           } catch (err) {
             return 0;
           }
-        })()
+        })(),
+        TourPackage.countDocuments({ createdBy: id })
       ]);
     } catch (statsError) {
       console.error('Error getting user statistics:', statsError);
@@ -1190,6 +1191,7 @@ export const deleteUser = async (req, res) => {
         queries,
         feedback,
         notifications,
+        tourPackages,
         avatar: user.avatar ? 'Yes' : 'No'
       }
     });

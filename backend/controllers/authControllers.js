@@ -792,7 +792,7 @@ export const deleteAccount = async (req, res) => {
         }
 
         // Get user statistics before deletion for response
-        const [tourBookings, carBookings, queries, notifications] = await Promise.all([
+        const [tourBookings, carBookings, queries, notifications, tourPackages] = await Promise.all([
             mongoose.model('Booking').countDocuments({ user: userId }),
             mongoose.model('CarBooking').countDocuments({ user: userId }),
             mongoose.model('Query').countDocuments({ user: userId }),
@@ -801,7 +801,8 @@ export const deleteAccount = async (req, res) => {
                     { recipient: userId },
                     { sender: userId }
                 ]
-            })
+            }),
+            mongoose.model('TourPackage').countDocuments({ createdBy: userId })
         ]);
 
         // Delete user account (cascade delete will handle all related data)
@@ -815,6 +816,7 @@ export const deleteAccount = async (req, res) => {
                 carBookings,
                 queries,
                 notifications,
+                tourPackages,
                 avatar: user.avatar ? 'Yes' : 'No'
             }
         });
