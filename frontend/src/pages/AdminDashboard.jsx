@@ -1643,7 +1643,10 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-gray-500">Est. Distance</p>
                 <p className="text-sm font-semibold text-gray-900 truncate">
-                  {distance} km
+                  {booking.tripType === 'round-trip'
+                    ? `${distance} × 2 = ${(parseFloat(distance) * 2).toFixed(2)} km`
+                    : `${distance} km`
+                  }
                 </p>
               </div>
             </div>
