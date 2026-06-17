@@ -1211,50 +1211,71 @@ export const deleteUser = async (req, res) => {
 const buildWhatsAppMessage = (booking) => {
   const customerName = booking.offlineCustomer?.name || 'Customer';
   const ref = booking.bookingReference;
-  const tripType = booking.tripType?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const tripType = booking.tripType?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   const pickup = booking.pickupLocation;
   const dropoff = booking.dropoffLocation;
+
   const pickupDate = new Date(booking.pickupDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   const pickupTime = booking.pickupTime || '';
-  const dropoffDate = new Date(booking.dropoffDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-  const carType = booking.carType;
-  const passengers = booking.numberOfPassengers;
-  const total = booking.totalAmount;
-  const paid = booking.paidAmount || 0;
-  const due = total - paid;
 
-  let carDetails = `🚗 Vehicle Type: ${carType}`;
+  const total = Number(booking.totalAmount) || 0;
+  const paid = Number(booking.paidAmount) || 0;
+  const discount = Number(booking.discount) || 0;
+  const due = Math.max(0, total - paid - discount);
+
+  // One-way: no drop date shown
+  const isOneWay = booking.tripType === 'one-way';
+  const dropoffDate = !isOneWay
+    ? new Date(booking.dropoffDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+    : null;
+  const dropoffTime = booking.dropoffTime || '';
+
+  // Car details line
+  let carLine = '';
   if (booking.selectedCars && booking.selectedCars.length > 0) {
-    carDetails = booking.selectedCars.map(c => `🚗 ${c.carName} (${c.carType})`).join('\n');
+    carLine = booking.selectedCars.map(c => `  - ${c.carName} (${c.carType})`).join('\n');
+    carLine = `Vehicles:\n${carLine}`;
+  } else {
+    carLine = `Vehicle Type: ${booking.carType}`;
   }
 
-  return `✅ *Booking Confirmed - NextDrive Bihar*
+  // Toll note for one-way and round-trip
+  const tollNote = (booking.tripType === 'one-way' || booking.tripType === 'round-trip')
+    ? '\n*Note: Toll, parking & other charges to be paid by the customer.'
+    : '';
 
-Hello ${customerName}! 🙏
+  const lines = [
+    `*Booking Confirmed - NextDrive Bihar*`,
+    ``,
+    `Hello ${customerName}!`,
+    `Your booking has been confirmed. Details below:`,
+    ``,
+    `*Booking Ref:* ${ref}`,
+    `*Trip Type:* ${tripType}`,
+    ``,
+    `*Pickup:* ${pickup}`,
+    `*Drop:* ${dropoff}`,
+    ``,
+    `*Pickup Date:* ${pickupDate}${pickupTime ? ' at ' + pickupTime : ''}`,
+    ...(!isOneWay && dropoffDate ? [`*Drop Date:* ${dropoffDate}${dropoffTime ? ' at ' + dropoffTime : ''}`] : []),
+    ``,
+    `*${carLine}*`,
+    `*Passengers:* ${booking.numberOfPassengers}`,
+    ``,
+    `*Total Amount:* Rs. ${total.toLocaleString('en-IN')}`,
+    ...(discount > 0 ? [`*Discount:* Rs. ${discount.toLocaleString('en-IN')}`] : []),
+    `*Paid:* Rs. ${paid.toLocaleString('en-IN')}`,
+    `*Balance Due:* Rs. ${due.toLocaleString('en-IN')}`,
+    tollNote,
+    ``,
+    `For queries, contact us:`,
+    `Phone: +91 87090 83341`,
+    `Website: nextdrivebihar.com`,
+    ``,
+    `Thank you for choosing NextDrive Bihar!`
+  ].filter(l => l !== null);
 
-Your booking has been confirmed. Here are your details:
-
-📋 *Booking Reference:* ${ref}
-🗺️ *Trip Type:* ${tripType}
-
-📍 *Pickup:* ${pickup}
-📍 *Drop:* ${dropoff}
-
-📅 *Pickup Date:* ${pickupDate}${pickupTime ? ` at ${pickupTime}` : ''}
-📅 *Drop Date:* ${dropoffDate}
-
-${carDetails}
-👥 *Passengers:* ${passengers}
-
-💰 *Total Amount:* ₹${total.toLocaleString('en-IN')}
-💵 *Paid:* ₹${paid.toLocaleString('en-IN')}
-🔖 *Balance Due:* ₹${due.toLocaleString('en-IN')}
-
-For any queries, contact us:
-📞 +91 87090 83341
-🌐 nextdrivebihar.com
-
-Thank you for choosing NextDrive Bihar! 🙏`;
+  return lines.join('\n');
 };
 
 // Create offline/walk-in car booking (admin only)
@@ -1305,8 +1326,8 @@ export const createOfflineCarBooking = async (req, res) => {
     if (!pickupLocation || !dropoffLocation) {
       return res.status(400).json({ success: false, message: 'Pickup and drop locations are required' });
     }
-    if (!pickupDate || !dropoffDate) {
-      return res.status(400).json({ success: false, message: 'Pickup and drop dates are required' });
+    if (!pickupDate || (!dropoffDate && tripType !== 'one-way')) {
+      return res.status(400).json({ success: false, message: 'Pickup date is required. Drop date is required for non one-way trips' });
     }
     if (!totalAmount || isNaN(totalAmount) || Number(totalAmount) < 0) {
       return res.status(400).json({ success: false, message: 'Valid total amount is required' });
@@ -1330,7 +1351,7 @@ export const createOfflineCarBooking = async (req, res) => {
       dropoffLocation: dropoffLocation.trim(),
       pickupDate: new Date(pickupDate),
       pickupTime: pickupTime || '',
-      dropoffDate: new Date(dropoffDate),
+      dropoffDate: dropoffDate ? new Date(dropoffDate) : new Date(pickupDate), // fallback to pickup date for one-way
       dropoffTime: dropoffTime || '',
       numberOfPassengers: Number(numberOfPassengers) || 1,
       numberOfCars: Number(numberOfCars) || 1,
