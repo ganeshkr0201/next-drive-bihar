@@ -69,6 +69,7 @@ const carBookingSchema = new mongoose.Schema({
     },
     carName: String,
     carType: String,
+    quantity: { type: Number, default: 1, min: 1 },
     pricePerDay: Number
   }],
   totalAmount: {

@@ -1233,7 +1233,10 @@ const buildWhatsAppMessage = (booking) => {
   // Car details line
   let carLine = '';
   if (booking.selectedCars && booking.selectedCars.length > 0) {
-    carLine = booking.selectedCars.map(c => `  - ${c.carName} (${c.carType})`).join('\n');
+    carLine = booking.selectedCars.map(c => {
+      const qty = c.quantity || 1;
+      return `  - ${qty}x ${c.carName} (${c.carType})`;
+    }).join('\n');
     carLine = `Vehicles:\n${carLine}`;
   } else {
     carLine = `Vehicle Type: ${booking.carType}`;

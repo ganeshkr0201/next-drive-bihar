@@ -110,7 +110,20 @@ const AdminOfflineBooking = () => {
     setForm(prev => {
       const exists = prev.selectedCars.find(c => c.carId === car._id);
       if (exists) return { ...prev, selectedCars: prev.selectedCars.filter(c => c.carId !== car._id) };
-      return { ...prev, selectedCars: [...prev.selectedCars, { carId: car._id, carName: car.name, carType: car.carType, pricePerDay: car.pricing?.marriage?.perDay || 0 }] };
+      return { ...prev, selectedCars: [...prev.selectedCars, { carId: car._id, carName: car.name, carType: car.carType, quantity: 1, pricePerDay: car.pricing?.marriage?.perDay || 0 }] };
+    });
+  };
+
+  const updateCarQuantity = (carId, delta) => {
+    setForm(prev => {
+      const updated = prev.selectedCars.map(c => {
+        if (c.carId !== carId) return c;
+        const newQty = Math.max(1, (c.quantity || 1) + delta);
+        return { ...c, quantity: newQty };
+      });
+      // Recalculate total numberOfCars
+      const totalCars = updated.reduce((sum, c) => sum + (c.quantity || 1), 0);
+      return { ...prev, selectedCars: updated, numberOfCars: totalCars };
     });
   };
 
@@ -130,7 +143,19 @@ const AdminOfflineBooking = () => {
 
     setSubmitting(true);
     try {
-      const payload = { ...form, numberOfPassengers: Number(form.numberOfPassengers) || 1, numberOfCars: Number(form.numberOfCars) || 1, totalAmount: total, paidAmount: paid, discount: disc };
+      const totalCars = form.selectedCars.length > 0
+        ? form.selectedCars.reduce((sum, c) => sum + (c.quantity || 1), 0)
+        : Number(form.numberOfCars) || 1;
+
+      const payload = {
+        ...form,
+        numberOfPassengers: Number(form.numberOfPassengers) || 1,
+        numberOfCars: totalCars,
+        totalAmount: total,
+        paidAmount: paid,
+        discount: disc,
+        selectedCars: form.selectedCars.map(c => ({ ...c, quantity: c.quantity || 1 }))
+      };
       const result = await adminService.createOfflineCarBooking(payload);
       setCreatedBooking(result);
       showSuccess('Booking created successfully!');
@@ -339,47 +364,128 @@ const AdminOfflineBooking = () => {
                   </InputField>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-5">
+                  {/* Passengers field */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <InputField label="Number of Cars">
-                      <input type="text" inputMode="numeric" value={form.numberOfCars}
-                        onChange={e => set('numberOfCars', e.target.value.replace(/[^\d]/g, ''))}
-                        onBlur={e => set('numberOfCars', Math.max(1, parseInt(e.target.value) || 1))}
-                        className={inputCls} />
-                    </InputField>
                     <InputField label="Number of Passengers">
                       <input type="text" inputMode="numeric" value={form.numberOfPassengers}
                         onChange={e => set('numberOfPassengers', e.target.value.replace(/[^\d]/g, ''))}
                         onBlur={e => set('numberOfPassengers', Math.max(1, parseInt(e.target.value) || 1))}
-                        className={inputCls} />
+                        className={inputCls} placeholder="Total passengers" />
                     </InputField>
+                    {/* Total cars badge — auto-computed from selected */}
+                    <div className="flex flex-col justify-end">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Total Cars Selected</p>
+                      <div className="flex items-center gap-2 px-3.5 py-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                        <span className="text-sm font-bold text-blue-700">
+                          {form.selectedCars.reduce((sum, c) => sum + (c.quantity || 1), 0)} car(s)
+                        </span>
+                        {form.selectedCars.length === 0 && (
+                          <span className="text-xs text-gray-400 ml-1">— select cars below</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  {availableCars.length > 0 && (
+
+                  {/* Car selection with quantity */}
+                  {availableCars.length > 0 ? (
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Select Vehicles <span className="font-normal text-gray-400">(optional)</span></p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                        Select Vehicles & Quantity
+                        <span className="font-normal text-gray-400 normal-case ml-1">(click to add, use +/- for quantity)</span>
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {availableCars.map(car => {
                           const selected = form.selectedCars.find(c => c.carId === car._id);
                           return (
-                            <div key={car._id} onClick={() => toggleMarriageCar(car)}
-                              className={`p-3.5 rounded-lg border-2 cursor-pointer transition-all ${selected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="text-sm font-bold text-gray-800">{car.name}</p>
-                                  <p className="text-xs text-gray-500">{car.carType} &middot; {car.numberOfSeats} seats</p>
-                                  <p className="text-xs text-blue-600 font-semibold mt-0.5">Rs. {(car.pricing?.marriage?.perDay || 0).toLocaleString('en-IN')}/day</p>
-                                </div>
-                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ml-2 ${selected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
+                            <div key={car._id}
+                              className={`rounded-xl border-2 transition-all overflow-hidden ${
+                                selected ? 'border-blue-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                              }`}>
+                              {/* Car info row — click to toggle */}
+                              <div
+                                onClick={() => toggleMarriageCar(car)}
+                                className={`flex items-center gap-3 p-3.5 cursor-pointer ${selected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                              >
+                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${selected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
                                   {selected && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                                 </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-bold text-gray-900 truncate">{car.name}</p>
+                                  <p className="text-xs text-gray-500">{car.carType} &middot; {car.numberOfSeats} seats</p>
+                                  <p className="text-xs font-semibold text-blue-600 mt-0.5">
+                                    Rs. {(car.pricing?.marriage?.perDay || 0).toLocaleString('en-IN')}/day
+                                  </p>
+                                </div>
                               </div>
+
+                              {/* Quantity controls — only shown when selected */}
+                              {selected && (
+                                <div className="flex items-center justify-between px-3.5 py-2.5 bg-white border-t border-blue-100">
+                                  <span className="text-xs text-gray-500 font-medium">Quantity</span>
+                                  <div className="flex items-center gap-3">
+                                    <button
+                                      type="button"
+                                      onClick={() => updateCarQuantity(car._id, -1)}
+                                      className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors"
+                                    >−</button>
+                                    <span className="text-sm font-bold text-gray-900 w-5 text-center">
+                                      {selected.quantity || 1}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => updateCarQuantity(car._id, 1)}
+                                      className="w-7 h-7 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center text-white font-bold transition-colors"
+                                    >+</button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
                       </div>
+
+                      {/* Selected cars summary */}
                       {form.selectedCars.length > 0 && (
-                        <p className="text-xs text-blue-600 font-semibold mt-2">{form.selectedCars.length} vehicle(s) selected</p>
+                        <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">Selected Fleet Summary</p>
+                          <div className="space-y-2">
+                            {form.selectedCars.map(c => (
+                              <div key={c.carId} className="flex items-center justify-between text-sm">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-5 h-5 bg-blue-100 text-blue-700 rounded-full text-xs flex items-center justify-center font-bold">
+                                    {c.quantity || 1}
+                                  </span>
+                                  <span className="font-medium text-gray-800">{c.carName}</span>
+                                  <span className="text-xs text-gray-500">({c.carType})</span>
+                                </div>
+                                <span className="text-blue-600 font-semibold">
+                                  Rs. {((c.pricePerDay || 0) * (c.quantity || 1)).toLocaleString('en-IN')}/day
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="pt-2 mt-2 border-t border-gray-200 flex justify-between text-sm font-bold">
+                            <span className="text-gray-700">Total: {form.selectedCars.reduce((s, c) => s + (c.quantity || 1), 0)} car(s)</span>
+                            <span className="text-blue-700">
+                              Rs. {form.selectedCars.reduce((s, c) => s + ((c.pricePerDay || 0) * (c.quantity || 1)), 0).toLocaleString('en-IN')}/day
+                            </span>
+                          </div>
+                        </div>
                       )}
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center text-sm text-gray-500">
+                      No cars available in the system. You can still specify the total manually.
+                      <div className="mt-3">
+                        <InputField label="Number of Cars">
+                          <input type="text" inputMode="numeric" value={form.numberOfCars}
+                            onChange={e => set('numberOfCars', e.target.value.replace(/[^\d]/g, ''))}
+                            onBlur={e => set('numberOfCars', Math.max(1, parseInt(e.target.value) || 1))}
+                            className={inputCls} />
+                        </InputField>
+                      </div>
                     </div>
                   )}
                 </div>
