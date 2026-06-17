@@ -29,6 +29,7 @@ import NotFound from './pages/NotFound';
 import TourDetail from './pages/TourDetail';
 import Gallery from './pages/Gallery';
 import AdminGallery from './pages/AdminGallery';
+import AdminOfflineBooking from './pages/AdminOfflineBooking';
 
 function App() {
   return (
@@ -133,6 +134,14 @@ function App() {
                 element={
                   <AdminProtectedRoute>
                     <AdminGallery />
+                  </AdminProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/offline-booking" 
+                element={
+                  <AdminProtectedRoute>
+                    <AdminOfflineBooking />
                   </AdminProtectedRoute>
                 } 
               />

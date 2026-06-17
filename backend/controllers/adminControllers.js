@@ -1205,3 +1205,196 @@ export const deleteUser = async (req, res) => {
     });
   }
 }
+
+
+// Helper: Build WhatsApp confirmation message
+const buildWhatsAppMessage = (booking) => {
+  const customerName = booking.offlineCustomer?.name || 'Customer';
+  const ref = booking.bookingReference;
+  const tripType = booking.tripType?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const pickup = booking.pickupLocation;
+  const dropoff = booking.dropoffLocation;
+  const pickupDate = new Date(booking.pickupDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const pickupTime = booking.pickupTime || '';
+  const dropoffDate = new Date(booking.dropoffDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const carType = booking.carType;
+  const passengers = booking.numberOfPassengers;
+  const total = booking.totalAmount;
+  const paid = booking.paidAmount || 0;
+  const due = total - paid;
+
+  let carDetails = `🚗 Vehicle Type: ${carType}`;
+  if (booking.selectedCars && booking.selectedCars.length > 0) {
+    carDetails = booking.selectedCars.map(c => `🚗 ${c.carName} (${c.carType})`).join('\n');
+  }
+
+  return `✅ *Booking Confirmed - NextDrive Bihar*
+
+Hello ${customerName}! 🙏
+
+Your booking has been confirmed. Here are your details:
+
+📋 *Booking Reference:* ${ref}
+🗺️ *Trip Type:* ${tripType}
+
+📍 *Pickup:* ${pickup}
+📍 *Drop:* ${dropoff}
+
+📅 *Pickup Date:* ${pickupDate}${pickupTime ? ` at ${pickupTime}` : ''}
+📅 *Drop Date:* ${dropoffDate}
+
+${carDetails}
+👥 *Passengers:* ${passengers}
+
+💰 *Total Amount:* ₹${total.toLocaleString('en-IN')}
+💵 *Paid:* ₹${paid.toLocaleString('en-IN')}
+🔖 *Balance Due:* ₹${due.toLocaleString('en-IN')}
+
+For any queries, contact us:
+📞 +91 87090 83341
+🌐 nextdrivebihar.com
+
+Thank you for choosing NextDrive Bihar! 🙏`;
+};
+
+// Create offline/walk-in car booking (admin only)
+export const createOfflineCarBooking = async (req, res) => {
+  try {
+    const {
+      // Customer details (no account required)
+      customerName,
+      customerPhone,
+      customerEmail,
+      customerWhatsapp,
+
+      // Trip details
+      tripType,
+      carType,
+      pickupLocation,
+      dropoffLocation,
+      pickupDate,
+      pickupTime,
+      dropoffDate,
+      dropoffTime,
+      numberOfPassengers,
+      numberOfCars,
+      selectedCars,
+
+      // Pricing (set by admin)
+      totalAmount,
+      paidAmount,
+      discount,
+
+      // Vehicle/driver details
+      driverName,
+      driverPhone,
+      vehicleMake,
+      vehicleModel,
+      vehiclePlate,
+      vehicleColor,
+
+      // Extras
+      specialRequests,
+      notes
+    } = req.body;
+
+    // Validation
+    if (!customerName || !customerPhone) {
+      return res.status(400).json({ success: false, message: 'Customer name and phone are required' });
+    }
+    if (!pickupLocation || !dropoffLocation) {
+      return res.status(400).json({ success: false, message: 'Pickup and drop locations are required' });
+    }
+    if (!pickupDate || !dropoffDate) {
+      return res.status(400).json({ success: false, message: 'Pickup and drop dates are required' });
+    }
+    if (!totalAmount || isNaN(totalAmount) || Number(totalAmount) < 0) {
+      return res.status(400).json({ success: false, message: 'Valid total amount is required' });
+    }
+    if (!tripType) {
+      return res.status(400).json({ success: false, message: 'Trip type is required' });
+    }
+
+    // Build booking data
+    const bookingData = {
+      isOfflineBooking: true,
+      offlineCustomer: {
+        name: customerName.trim(),
+        phone: customerPhone.trim(),
+        email: customerEmail?.trim() || '',
+        whatsappNumber: customerWhatsapp?.trim() || customerPhone.trim()
+      },
+      carType: carType || 'Sedan',
+      tripType: tripType || 'one-way',
+      pickupLocation: pickupLocation.trim(),
+      dropoffLocation: dropoffLocation.trim(),
+      pickupDate: new Date(pickupDate),
+      pickupTime: pickupTime || '',
+      dropoffDate: new Date(dropoffDate),
+      dropoffTime: dropoffTime || '',
+      numberOfPassengers: Number(numberOfPassengers) || 1,
+      numberOfCars: Number(numberOfCars) || 1,
+      totalAmount: Number(totalAmount),
+      paidAmount: Number(paidAmount) || 0,
+      discount: Number(discount) || 0,
+      status: 'confirmed', // Offline bookings start as confirmed
+      specialRequests: specialRequests?.trim() || ''
+    };
+
+    // Selected cars for marriage bookings
+    if (selectedCars && selectedCars.length > 0) {
+      bookingData.selectedCars = selectedCars;
+    }
+
+    // Driver details
+    if (driverName || driverPhone) {
+      bookingData.driverDetails = {
+        name: driverName || '',
+        phone: driverPhone || ''
+      };
+    }
+
+    // Vehicle details
+    if (vehicleMake || vehicleModel || vehiclePlate) {
+      bookingData.vehicleDetails = {
+        make: vehicleMake || '',
+        model: vehicleModel || '',
+        plateNumber: vehiclePlate || '',
+        color: vehicleColor || ''
+      };
+    }
+
+    // Notes
+    if (notes) {
+      bookingData.notes = [{
+        content: notes.trim(),
+        addedBy: req.user._id,
+        addedAt: new Date()
+      }];
+    }
+
+    const booking = new CarBooking(bookingData);
+    await booking.save();
+
+    // Build WhatsApp message
+    const whatsappMsg = buildWhatsAppMessage(booking);
+    const whatsappPhone = (customerWhatsapp || customerPhone).replace(/\D/g, '');
+    const whatsappLink = `https://wa.me/91${whatsappPhone}?text=${encodeURIComponent(whatsappMsg)}`;
+
+    res.status(201).json({
+      success: true,
+      message: 'Offline booking created successfully',
+      booking,
+      whatsappLink,
+      whatsappMessage: whatsappMsg
+    });
+
+  } catch (error) {
+    console.error('Create offline booking error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create offline booking',
+      error: error.message
+    });
+  }
+};

@@ -4,7 +4,18 @@ const carBookingSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false // Optional for offline/walk-in bookings
+  },
+  // Offline booking customer details (used when no user account)
+  offlineCustomer: {
+    name: { type: String, trim: true },
+    phone: { type: String, trim: true },
+    email: { type: String, trim: true },
+    whatsappNumber: { type: String, trim: true }
+  },
+  isOfflineBooking: {
+    type: Boolean,
+    default: false
   },
   carType: {
     type: String,

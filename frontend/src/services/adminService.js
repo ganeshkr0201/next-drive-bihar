@@ -275,6 +275,16 @@ class AdminService {
     }
   }
 
+  // Create offline/walk-in car booking (admin)
+  async createOfflineCarBooking(bookingData) {
+    try {
+      const response = await api.post('/admin/car-bookings/offline', bookingData);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   // Get all users
   async getUsers() {
     return withRateLimit('admin-users', async () => {

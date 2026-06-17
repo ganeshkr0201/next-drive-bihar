@@ -358,6 +358,12 @@ const AdminDashboard = () => {
       name: 'Gallery', 
       icon: '🖼️',
       badge: null
+    },
+    { 
+      id: 'offline-booking', 
+      name: 'Offline Booking', 
+      icon: '📋',
+      badge: null
     }
   ];
 
@@ -575,24 +581,54 @@ const AdminDashboard = () => {
                 <div className="text-6xl mb-4">🖼️</div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Gallery Management</h3>
                 <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                  Upload and manage images for your car rentals, marriage bookings, tour packages, and more. Click the button above to access the full gallery management interface.
+                  Upload and manage images for your car rentals, marriage bookings, tour packages, and more.
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mt-8">
-                  <div className="bg-white rounded-xl p-4 shadow-sm">
-                    <div className="text-3xl mb-2">🚗</div>
-                    <p className="text-sm font-medium text-gray-700">Car Images</p>
+                  <div className="bg-white rounded-xl p-4 shadow-sm"><div className="text-3xl mb-2">🚗</div><p className="text-sm font-medium text-gray-700">Car Images</p></div>
+                  <div className="bg-white rounded-xl p-4 shadow-sm"><div className="text-3xl mb-2">💒</div><p className="text-sm font-medium text-gray-700">Marriage Cars</p></div>
+                  <div className="bg-white rounded-xl p-4 shadow-sm"><div className="text-3xl mb-2">🏛️</div><p className="text-sm font-medium text-gray-700">Tour Places</p></div>
+                  <div className="bg-white rounded-xl p-4 shadow-sm"><div className="text-3xl mb-2">📸</div><p className="text-sm font-medium text-gray-700">Other</p></div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Offline Booking Tab */}
+          {activeTab === 'offline-booking' && (
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold">Offline / Walk-in Bookings</h2>
+                  <p className="text-gray-500 text-sm mt-1">Create bookings for WhatsApp or walk-in customers</p>
+                </div>
+                <button
+                  onClick={() => navigate('/admin/offline-booking')}
+                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                >
+                  <span>📋</span> Create Offline Booking
+                </button>
+              </div>
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 text-center border-2 border-dashed border-green-200">
+                <div className="text-6xl mb-4">📋</div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Offline Booking Manager</h3>
+                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                  Create bookings for customers who book via WhatsApp or walk-in. No customer account required. After creating a booking, a WhatsApp confirmation message will be ready to send automatically.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
+                  <div className="bg-white rounded-xl p-5 shadow-sm text-left">
+                    <div className="text-3xl mb-2">📱</div>
+                    <h4 className="font-bold text-gray-800 mb-1">WhatsApp Booking</h4>
+                    <p className="text-xs text-gray-500">Customer books via WhatsApp. Admin enters details and sends confirmation.</p>
                   </div>
-                  <div className="bg-white rounded-xl p-4 shadow-sm">
-                    <div className="text-3xl mb-2">💒</div>
-                    <p className="text-sm font-medium text-gray-700">Marriage Cars</p>
+                  <div className="bg-white rounded-xl p-5 shadow-sm text-left">
+                    <div className="text-3xl mb-2">🚶</div>
+                    <h4 className="font-bold text-gray-800 mb-1">Walk-in Booking</h4>
+                    <p className="text-xs text-gray-500">Customer walks in. Admin creates booking instantly with all trip details.</p>
                   </div>
-                  <div className="bg-white rounded-xl p-4 shadow-sm">
-                    <div className="text-3xl mb-2">🏛️</div>
-                    <p className="text-sm font-medium text-gray-700">Tour Places</p>
-                  </div>
-                  <div className="bg-white rounded-xl p-4 shadow-sm">
-                    <div className="text-3xl mb-2">📸</div>
-                    <p className="text-sm font-medium text-gray-700">Other</p>
+                  <div className="bg-white rounded-xl p-5 shadow-sm text-left">
+                    <div className="text-3xl mb-2">💬</div>
+                    <h4 className="font-bold text-gray-800 mb-1">Auto WhatsApp Message</h4>
+                    <p className="text-xs text-gray-500">Booking confirmation message with all details is auto-generated for WhatsApp.</p>
                   </div>
                 </div>
               </div>
