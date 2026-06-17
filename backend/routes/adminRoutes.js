@@ -67,6 +67,9 @@ router.patch('/car-bookings/:id/cancel', adminControllers.cancelCarBooking);
 // Complete car booking (admin)
 router.patch('/car-bookings/:id/complete', adminControllers.completeCarBooking);
 
+// Get WhatsApp confirmation link for a car booking
+router.get('/car-bookings/:id/whatsapp', adminControllers.getCarBookingWhatsAppLink);
+
 // Update booking payment details (works for both tour and car bookings)
 router.put('/bookings/:id/payment', adminControllers.updateBookingPayment);
 

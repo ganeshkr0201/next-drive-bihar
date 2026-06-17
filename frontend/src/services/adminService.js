@@ -285,6 +285,16 @@ class AdminService {
     }
   }
 
+  // Get WhatsApp confirmation link for a car booking
+  async getCarBookingWhatsAppLink(bookingId) {
+    try {
+      const response = await api.get(`/admin/car-bookings/${bookingId}/whatsapp`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   // Get all users
   async getUsers() {
     return withRateLimit('admin-users', async () => {

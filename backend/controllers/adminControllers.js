@@ -1278,7 +1278,51 @@ const buildWhatsAppMessage = (booking) => {
   return lines.join('\n');
 };
 
-// Create offline/walk-in car booking (admin only)
+// Get WhatsApp confirmation link for any car booking (admin)
+export const getCarBookingWhatsAppLink = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const booking = await CarBooking.findById(id).populate('user', 'name email');
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+
+    // Get phone number — prefer offlineCustomer, then user's stored contact
+    let phone = booking.offlineCustomer?.whatsappNumber || booking.offlineCustomer?.phone || '';
+
+    // For online bookings, try to get phone from notes JSON
+    if (!phone && booking.notes && booking.notes.length > 0) {
+      try {
+        const noteData = JSON.parse(booking.notes[0].content);
+        phone = noteData.emergencyContact || noteData.contactNumber || '';
+      } catch { /* silent */ }
+    }
+
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'No WhatsApp number found for this booking. This feature works for offline bookings or bookings with a WhatsApp number.'
+      });
+    }
+
+    const whatsappMsg = buildWhatsAppMessage(booking);
+    const cleanPhone = phone.replace(/\D/g, '');
+    // Add 91 country code if not present
+    const fullPhone = cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`;
+    const whatsappLink = `https://wa.me/${fullPhone}?text=${encodeURIComponent(whatsappMsg)}`;
+
+    res.json({
+      success: true,
+      whatsappLink,
+      whatsappMessage: whatsappMsg,
+      phone
+    });
+  } catch (error) {
+    console.error('Get WhatsApp link error:', error);
+    res.status(500).json({ success: false, message: 'Failed to generate WhatsApp link', error: error.message });
+  }
+};
 export const createOfflineCarBooking = async (req, res) => {
   try {
     const {
