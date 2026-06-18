@@ -631,12 +631,6 @@ const CarRental = () => {
             };
           });
 
-          numberOfCars: bookingForm.numberOfCars,
-          selectedCarsData,
-          pickupDate: bookingForm.pickupDate,
-          dropDate: bookingForm.dropDate
-        });
-
         bookingData = {
           bookingType: 'marriage',
           numberOfCars: bookingForm.numberOfCars,
