@@ -171,44 +171,31 @@ const AdminDashboard = () => {
 
   // Handle booking status update
   const handleBookingStatusUpdate = async (bookingId, newStatus, reason = '', bookingType = 'tour') => {
-    console.log('🔄 Status update called:', { bookingId, newStatus, reason, bookingType });
     setIsLoading(true);
     try {
       if (bookingType === 'car') {
-        console.log('🚗 Processing car booking status update');
-        // Handle car bookings
         if (newStatus === 'confirmed') {
-          console.log('✅ Confirming car booking...');
           await adminService.confirmCarBooking(bookingId);
         } else if (newStatus === 'cancelled') {
-          console.log('❌ Cancelling car booking...');
           await adminService.cancelCarBooking(bookingId, reason);
         } else if (newStatus === 'completed') {
-          console.log('✔️ Completing car booking...');
           await adminService.completeCarBooking(bookingId);
         }
         showSuccess(`Car booking ${newStatus} successfully!`);
         refetchCarBookings();
       } else {
-        console.log('🎯 Processing tour booking status update');
-        // Handle tour bookings
         if (newStatus === 'confirmed') {
-          console.log('✅ Confirming tour booking...');
           await adminService.confirmBooking(bookingId);
         } else if (newStatus === 'cancelled') {
-          console.log('❌ Cancelling tour booking...');
           await adminService.cancelBooking(bookingId, reason);
         } else if (newStatus === 'completed') {
-          console.log('✔️ Completing tour booking...');
           await adminService.completeBooking(bookingId);
         }
         showSuccess(`Booking ${newStatus} successfully!`);
         refetchTourBookings();
       }
       refetchStats();
-      console.log('✅ Status update completed successfully');
     } catch (error) {
-      console.error('❌ Status update error:', error);
       showError(error.message || `Failed to ${newStatus} booking`);
     } finally {
       setIsLoading(false);
@@ -1478,7 +1465,6 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
     if (newStatus === 'cancelled') {
       reason = prompt('Please provide a reason for cancellation:');
       if (!reason) {
-        console.log('❌ Cancellation aborted - no reason provided');
         return;
       }
     }
@@ -1489,10 +1475,7 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
                        newStatus === 'completed' ? 'mark as completed' : newStatus;
     
     if (window.confirm(`Are you sure you want to ${actionText} this booking?`)) {
-      console.log('✅ User confirmed, calling onStatusUpdate with type:', type);
       onStatusUpdate(booking._id, newStatus, reason, type);
-    } else {
-      console.log('❌ User cancelled the confirmation dialog');
     }
   };
 

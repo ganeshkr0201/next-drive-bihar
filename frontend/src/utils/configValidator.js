@@ -158,10 +158,8 @@ class ConfigValidator {
       }
       
       if (results.isValid && results.warnings.length === 0) {
-        console.log('✅ Configuration is valid');
       }
       
-      console.log('📋 Configuration Summary:', this.getConfigSummary());
       console.groupEnd();
     }
     

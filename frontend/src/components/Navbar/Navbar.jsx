@@ -26,9 +26,6 @@ const Navbar = () => {
     setMobileImageLoadError(false);
     // Debug: Log user avatar info
     if (user?.avatar && envConfig.enableDebugLogs) {
-      console.log('User avatar URL:', user.avatar);
-      console.log('Avatar starts with http:', user.avatar.startsWith('http'));
-      console.log('Avatar starts with data:', user.avatar.startsWith('data:'));
     }
   }, [user?.avatar]);
 
@@ -165,7 +162,6 @@ const Navbar = () => {
                 <div className="relative" ref={servicesRef}>
                   <button
                     onClick={() => {
-                      console.log('Services button clicked, current state:', isServicesOpen);
                       toggleServices();
                     }}
                     className={`relative px-4 py-2 text-sm font-semibold flex items-center transition-all duration-300 hover:text-blue-600 ${
@@ -185,7 +181,6 @@ const Navbar = () => {
                     <div 
                       className="absolute left-0 mt-3 w-64 bg-white rounded-xl shadow-2xl ring-1 ring-black ring-opacity-5 border border-gray-100 z-50 overflow-hidden"
                       onMouseDown={(e) => {
-                        console.log('Dropdown mousedown');
                         e.stopPropagation();
                       }}
                     >
@@ -194,7 +189,6 @@ const Navbar = () => {
                           href="/car-rental"
                           className="w-full flex items-center px-5 py-3.5 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:text-blue-700 transition-all duration-200 group cursor-pointer block border-b border-gray-100 last:border-0"
                           onClick={(e) => {
-                            console.log('Car Rental link clicked');
                             e.preventDefault();
                             e.stopPropagation();
                             setIsServicesOpen(false);
@@ -218,7 +212,6 @@ const Navbar = () => {
                           href="/tour-packages"
                           className="w-full flex items-center px-5 py-3.5 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-green-100 hover:text-green-700 transition-all duration-200 group cursor-pointer block"
                           onClick={(e) => {
-                            console.log('Tour Packages link clicked');
                             e.preventDefault();
                             e.stopPropagation();
                             setIsServicesOpen(false);

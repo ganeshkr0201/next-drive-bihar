@@ -118,14 +118,12 @@ const CarRental = () => {
     }
 
     try {
-      console.log('🔍 Fetching Ola Maps suggestions for:', query);
       
       // Ola Maps Autocomplete API
       // Using Patna as location bias and adding Bihar to search query
       const searchQuery = `${query}, Bihar`;
       const url = `https://api.olamaps.io/places/v1/autocomplete?input=${encodeURIComponent(searchQuery)}&location=25.5941,85.1376&radius=300000&language=en&api_key=${OLA_MAPS_API_KEY}`;
       
-      console.log('🌐 Autocomplete URL:', url.replace(OLA_MAPS_API_KEY, 'HIDDEN'));
       
       const response = await fetch(url, {
         method: 'GET',
@@ -135,11 +133,9 @@ const CarRental = () => {
         }
       });
       
-      console.log('📡 Response Status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('📦 Raw Response:', data);
         
         let suggestions = data.predictions || [];
         
@@ -173,7 +169,6 @@ const CarRental = () => {
           return 0;
         });
         
-        console.log('✅ Filtered Bihar suggestions:', suggestions.length);
         
         if (type === 'source') {
           setSourceSuggestions(suggestions);
@@ -213,7 +208,6 @@ const CarRental = () => {
       const destCoords = await geocodeAddress(destination);
       
       if (!sourceCoords || !destCoords) {
-        console.log('Could not geocode addresses, using estimation');
         useSimpleEstimation(source, destination);
         return;
       }
@@ -265,7 +259,6 @@ const CarRental = () => {
       }
       
       // If API call fails, use simple estimation
-      console.log('Ola Maps API failed, using estimation');
       useSimpleEstimation(source, destination);
       
     } catch (error) {
@@ -276,14 +269,12 @@ const CarRental = () => {
 
   // Geocode address to coordinates using Ola Maps
   const geocodeAddress = async (address) => {
-    console.log('🔍 Geocoding address:', address);
     
     try {
       // Clean the address
       const cleanAddress = address.trim().replace(/\s+/g, ' ');
       
       const url = `https://api.olamaps.io/places/v1/geocode?address=${encodeURIComponent(cleanAddress)}&language=en&api_key=${OLA_MAPS_API_KEY}`;
-      console.log('🌐 Geocoding URL:', url.replace(OLA_MAPS_API_KEY, 'HIDDEN'));
       
       const response = await fetch(url, {
         method: 'GET',
@@ -293,18 +284,15 @@ const CarRental = () => {
         }
       });
       
-      console.log('📡 Geocoding Status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('📦 Geocoding Response:', data);
         
         if (data.geocodingResults && data.geocodingResults.length > 0) {
           const result = data.geocodingResults[0];
           const location = result.geometry?.location;
           
           if (location && location.lat && location.lng) {
-            console.log('✅ Geocoding successful! Coordinates:', location);
             return {
               lat: location.lat,
               lng: location.lng,
@@ -312,7 +300,6 @@ const CarRental = () => {
             };
           }
         }
-        console.log('⚠️ No geocoding results');
       } else {
         const errorText = await response.text();
         console.error('❌ Geocoding Error:', response.status, errorText);
@@ -446,7 +433,6 @@ const CarRental = () => {
     const diffTime = Math.abs(drop - pickup);
     const diffDays = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 1); // Minimum 1 day
 
-    console.log('📅 Marriage booking days:', diffDays);
 
     // Calculate total cost for all selected cars
     let totalCost = 0;
@@ -455,13 +441,11 @@ const CarRental = () => {
         const car = availableCars.find(c => c._id === carId);
         if (car && car.pricing && car.pricing.marriage) {
           const carCost = (diffDays * car.pricing.marriage.perDay) + car.pricing.marriage.extraAmount;
-          console.log(`🚗 Car ${index + 1} (${car.name}): ₹${carCost} (${diffDays} days × ₹${car.pricing.marriage.perDay})`);
           totalCost += carCost;
         }
       }
     });
 
-    console.log('💰 Total marriage booking cost:', totalCost);
     return Math.round(totalCost);
   };
 
@@ -537,20 +521,14 @@ const CarRental = () => {
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
 
-    console.log('🚗 Form submission started');
-    console.log('📊 Booking form data:', bookingForm);
-    console.log('🚙 Selected car:', selectedCarData);
-    console.log('📍 Booking type:', activeBookingType);
 
     if (!isAuthenticated) {
-      console.log('❌ User not authenticated');
       navigate('/login');
       return;
     }
 
     // Validation
     if (!bookingForm.sourceCity || !bookingForm.destinationCity || !bookingForm.pickupDate || !bookingForm.contactNumber) {
-      console.log('❌ Missing required fields');
       showError('Please fill in all required fields');
       return;
     }
@@ -558,25 +536,21 @@ const CarRental = () => {
     // Marriage booking specific validation
     if (activeBookingType === 'marriage') {
       if (!bookingForm.dropDate) {
-        console.log('❌ Missing drop date for marriage booking');
         showError('Please select return date for marriage booking');
         return;
       }
       if (!bookingForm.numberOfCars || bookingForm.numberOfCars < 1) {
-        console.log('❌ Invalid number of cars');
         showError('Please enter number of cars required');
         return;
       }
       const validCars = bookingForm.selectedCars.filter(carId => carId !== '');
       if (validCars.length !== bookingForm.numberOfCars) {
-        console.log('❌ Not all cars selected');
         showError(`Please select all ${bookingForm.numberOfCars} cars`);
         return;
       }
     } else {
       // For non-marriage bookings, validate car selection
       if (!bookingForm.selectedCar) {
-        console.log('❌ No car selected');
         showError('Please select a car');
         return;
       }
@@ -585,12 +559,10 @@ const CarRental = () => {
     // Validate number of passengers for applicable booking types
     if ((activeBookingType === 'one-way' || activeBookingType === 'round-trip' || activeBookingType === 'outstation')) {
       if (!bookingForm.numberOfPassengers || bookingForm.numberOfPassengers < 1) {
-        console.log('❌ Invalid number of passengers');
         showError('Please enter a valid number of passengers (minimum 1)');
         return;
       }
       if (selectedCarData && bookingForm.numberOfPassengers > selectedCarData.numberOfSeats) {
-        console.log('❌ Too many passengers for selected vehicle');
         showError(`Selected vehicle has only ${selectedCarData.numberOfSeats} seats. Please select a larger vehicle or reduce passengers.`);
         return;
       }
@@ -598,14 +570,12 @@ const CarRental = () => {
 
     // Validate contact number
     if (!/^\d{10}$/.test(bookingForm.contactNumber)) {
-      console.log('❌ Invalid contact number:', bookingForm.contactNumber);
       showError('Contact number must be exactly 10 digits');
       return;
     }
 
     // For non-marriage bookings, validate selectedCarData
     if (activeBookingType !== 'marriage' && !selectedCarData) {
-      console.log('❌ No car selected');
       showError('Please select a valid car');
       return;
     }
@@ -613,7 +583,6 @@ const CarRental = () => {
     // For monthly bookings and marriage bookings, distance is not required
     // For other bookings, if distance is 0, calculate a default estimate
     if (activeBookingType !== 'monthly' && activeBookingType !== 'marriage' && (!bookingForm.distance || bookingForm.distance === 0)) {
-      console.log('⚠️ Distance not calculated, using default estimate');
       // Set a default estimated cost based on car type
       const defaultCost = selectedCarData.pricing[
         activeBookingType === 'one-way' ? 'oneWay' : 
@@ -634,7 +603,6 @@ const CarRental = () => {
       }));
     }
 
-    console.log('✅ All validations passed, opening modal');
     // Show confirmation modal
     setShowConfirmModal(true);
   };
@@ -663,7 +631,6 @@ const CarRental = () => {
             };
           });
 
-        console.log('💒 Marriage booking data:', {
           numberOfCars: bookingForm.numberOfCars,
           selectedCarsData,
           pickupDate: bookingForm.pickupDate,
@@ -723,9 +690,7 @@ const CarRental = () => {
         };
       }
 
-      console.log('📤 Submitting car booking:', bookingData);
       const response = await bookingService.createCarBooking(bookingData);
-      console.log('✅ Booking created successfully:', response);
       
       showSuccess('Car booking request submitted successfully! Your booking is pending admin confirmation.');
       

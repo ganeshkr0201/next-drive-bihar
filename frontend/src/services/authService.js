@@ -111,7 +111,6 @@ class AuthService {
       await api.post('/auth/logout');
     } catch (error) {
       // Continue with logout even if request fails
-      console.log('Logout request failed:', error.message);
     } finally {
       // Always clear local storage
       this.clearAuthData();
