@@ -465,6 +465,33 @@ const AdminDashboard = () => {
                   onClick={() => setActiveTab('car-bookings')}
                 />
               </div>
+
+              {/* Offline Bookings Row */}
+              <div className="mt-4 sm:mt-6 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                <StatCard
+                  title="Offline / Walk-in"
+                  value={carBookings.filter(b => b.isOfflineBooking).length}
+                  badge={carBookings.filter(b => b.isOfflineBooking && b.status === 'pending').length || null}
+                  icon="📋"
+                  color="green"
+                  onClick={() => setActiveTab('offline-booking')}
+                />
+                <StatCard
+                  title="Online Car Bookings"
+                  value={carBookings.filter(b => !b.isOfflineBooking).length}
+                  badge={carBookings.filter(b => !b.isOfflineBooking && b.status === 'pending').length || null}
+                  icon="💻"
+                  color="blue"
+                  onClick={() => setActiveTab('car-bookings')}
+                />
+                <StatCard
+                  title="Tour Packages"
+                  value={Array.isArray(tourPackages) ? tourPackages.length : 0}
+                  icon="📦"
+                  color="purple"
+                  onClick={() => setActiveTab('tour-packages')}
+                />
+              </div>
             </div>
           )}
 
