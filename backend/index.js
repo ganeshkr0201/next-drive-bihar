@@ -27,6 +27,7 @@ import publicRoutes from './routes/publicRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import carRoutes from './routes/carRoutes.js';
 import galleryRoutes from './routes/galleryRoutes.js';
+import driverRoutes from './routes/driverRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -118,6 +119,7 @@ app.use('/api', publicRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/cars', carRoutes);
 app.use('/api/gallery', galleryRoutes);
+app.use('/api/drivers', driverRoutes);
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {

@@ -30,6 +30,7 @@ import TourDetail from './pages/TourDetail';
 import Gallery from './pages/Gallery';
 import AdminGallery from './pages/AdminGallery';
 import AdminOfflineBooking from './pages/AdminOfflineBooking';
+import AdminDriverManagement from './pages/AdminDriverManagement';
 
 function App() {
   return (
@@ -142,6 +143,14 @@ function App() {
                 element={
                   <AdminProtectedRoute>
                     <AdminOfflineBooking />
+                  </AdminProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/drivers" 
+                element={
+                  <AdminProtectedRoute>
+                    <AdminDriverManagement />
                   </AdminProtectedRoute>
                 } 
               />

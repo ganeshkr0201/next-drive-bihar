@@ -351,6 +351,12 @@ const AdminDashboard = () => {
       name: 'Offline Booking', 
       icon: '📋',
       badge: null
+    },
+    { 
+      id: 'drivers', 
+      name: 'Drivers', 
+      icon: '🚘',
+      badge: null
     }
   ];
 
@@ -645,6 +651,31 @@ const AdminDashboard = () => {
                     <p className="text-xs text-gray-500">Booking confirmation message with all details is auto-generated for WhatsApp.</p>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Drivers Tab */}
+          {activeTab === 'drivers' && (
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold">Driver Management</h2>
+                  <p className="text-gray-500 text-sm mt-1">Add and manage drivers for bookings</p>
+                </div>
+                <button
+                  onClick={() => navigate('/admin/drivers')}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-xl transition-all flex items-center gap-2"
+                >
+                  <span>🚘</span> Manage Drivers
+                </button>
+              </div>
+              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 text-center border-2 border-dashed border-blue-200">
+                <div className="text-6xl mb-4">🚘</div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Driver Fleet</h3>
+                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                  Add drivers with their licence details, vehicle information, and document photos. Manage availability and assign to bookings.
+                </p>
               </div>
             </div>
           )}
