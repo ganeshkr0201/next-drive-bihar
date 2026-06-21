@@ -118,6 +118,8 @@ const AdminOfflineBooking = () => {
   const handlePhoneChange = (field, value) => {
     set(field, normalizePhone(value));
   };
+
+  const toggleMarriageCar = (car) => {
     setForm(prev => {
       const exists = prev.selectedCars.find(c => c.carId === car._id);
       if (exists) return { ...prev, selectedCars: prev.selectedCars.filter(c => c.carId !== car._id) };
