@@ -106,13 +106,25 @@ const AdminOfflineBooking = () => {
     else { set('dropoffLocation', label); setShowDestSug(false); setDestSuggestions([]); }
   };
 
-  // Normalize phone number: strip country code +91/91, keep 10 digits only
+  // Allow typing up to 12 digits. On submit, if 12 digits and starts with 91 → strip to 10.
+  // Valid if: 10 digits, OR 12 digits starting with 91
   const normalizePhone = (value) => {
-    let digits = value.replace(/\D/g, ''); // keep only digits
-    if (digits.startsWith('91') && digits.length > 10) {
-      digits = digits.slice(2); // remove leading 91
+    const digits = value.replace(/\D/g, ''); // digits only
+    return digits.slice(0, 12); // allow up to 12 chars while typing
+  };
+
+  // Returns clean 10-digit number for saving (strips 91 prefix if 12 digits)
+  const resolvePhone = (value) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length === 12 && digits.startsWith('91')) {
+      return digits.slice(2); // strip country code
     }
-    return digits.slice(0, 10); // max 10 digits
+    return digits;
+  };
+
+  const isValidPhone = (value) => {
+    const digits = value.replace(/\D/g, '');
+    return digits.length === 10 || (digits.length === 12 && digits.startsWith('91'));
   };
 
   const handlePhoneChange = (field, value) => {
@@ -148,8 +160,8 @@ const AdminOfflineBooking = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.customerName.trim() || !form.customerPhone.trim()) return showError('Customer name and phone are required');
-    if (form.customerPhone.length !== 10) return showError('Phone number must be exactly 10 digits');
-    if (form.customerWhatsapp && form.customerWhatsapp.length !== 10) return showError('WhatsApp number must be exactly 10 digits');
+    if (!isValidPhone(form.customerPhone)) return showError('Phone number must be 10 digits or 12 digits starting with 91');
+    if (form.customerWhatsapp && !isValidPhone(form.customerWhatsapp)) return showError('WhatsApp number must be 10 digits or 12 digits starting with 91');
     if (!form.pickupLocation.trim() || !form.dropoffLocation.trim()) return showError('Pickup and drop locations are required');
     if (!form.pickupDate) return showError('Pickup date is required');
     if (needsDropDate(form.tripType) && !form.dropoffDate) return showError('Drop date is required for this trip type');
@@ -164,6 +176,8 @@ const AdminOfflineBooking = () => {
 
       const payload = {
         ...form,
+        customerPhone: resolvePhone(form.customerPhone),
+        customerWhatsapp: form.customerWhatsapp ? resolvePhone(form.customerWhatsapp) : '',
         numberOfPassengers: Number(form.numberOfPassengers) || 1,
         numberOfCars: totalCars,
         totalAmount: total,
@@ -244,19 +258,37 @@ const AdminOfflineBooking = () => {
               <InputField label="Phone Number" required hint="(used for WhatsApp)">
                 <input type="tel" required value={form.customerPhone}
                   onChange={e => handlePhoneChange('customerPhone', e.target.value)}
-                  className={inputCls} placeholder="10-digit number e.g. 9876543210"
-                  maxLength={10} />
-                {form.customerPhone && form.customerPhone.length !== 10 && (
-                  <p className="text-xs text-red-500 mt-1">Must be exactly 10 digits</p>
+                  className={inputCls} placeholder="e.g. 9876543210 or 919876543210"
+                  maxLength={12} />
+                {form.customerPhone.length > 0 && !isValidPhone(form.customerPhone) && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    Enter 10 digits, or 12 digits with country code (91XXXXXXXXXX)
+                  </p>
+                )}
+                {form.customerPhone.length > 0 && isValidPhone(form.customerPhone) && (
+                  <p className="text-xs text-green-600 mt-1">
+                    {form.customerPhone.length === 12
+                      ? `Will save as: ${resolvePhone(form.customerPhone)}`
+                      : 'Valid'}
+                  </p>
                 )}
               </InputField>
               <InputField label="WhatsApp Number" hint="(if different from phone)">
                 <input type="tel" value={form.customerWhatsapp}
                   onChange={e => handlePhoneChange('customerWhatsapp', e.target.value)}
                   className={inputCls} placeholder="Leave blank to use phone number"
-                  maxLength={10} />
-                {form.customerWhatsapp && form.customerWhatsapp.length !== 10 && (
-                  <p className="text-xs text-red-500 mt-1">Must be exactly 10 digits</p>
+                  maxLength={12} />
+                {form.customerWhatsapp.length > 0 && !isValidPhone(form.customerWhatsapp) && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    Enter 10 digits, or 12 digits with country code (91XXXXXXXXXX)
+                  </p>
+                )}
+                {form.customerWhatsapp.length > 0 && isValidPhone(form.customerWhatsapp) && (
+                  <p className="text-xs text-green-600 mt-1">
+                    {form.customerWhatsapp.length === 12
+                      ? `Will save as: ${resolvePhone(form.customerWhatsapp)}`
+                      : 'Valid'}
+                  </p>
                 )}
               </InputField>
               <InputField label="Email Address" hint="(optional)">
