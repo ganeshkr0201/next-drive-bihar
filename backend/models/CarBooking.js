@@ -183,7 +183,7 @@ carBookingSchema.set('toObject', { virtuals: true });
 carBookingSchema.index({ user: 1 });
 carBookingSchema.index({ status: 1 });
 carBookingSchema.index({ pickupDate: 1 });
-carBookingSchema.index({ bookingReference: 1 });
 carBookingSchema.index({ createdAt: -1 });
+// Note: bookingReference has unique:true on the field — no separate index needed
 
 export default mongoose.model('CarBooking', carBookingSchema);

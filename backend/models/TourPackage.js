@@ -133,7 +133,7 @@ tourPackageSchema.pre('save', async function() {
 });
 
 // Indexes
-tourPackageSchema.index({ slug: 1 });
+// Note: slug has unique:true on the field — no separate index needed
 tourPackageSchema.index({ status: 1 });
 tourPackageSchema.index({ featured: 1 });
 tourPackageSchema.index({ createdAt: -1 });

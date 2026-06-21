@@ -142,7 +142,7 @@ bookingSchema.set('toObject', { virtuals: true });
 bookingSchema.index({ user: 1 });
 bookingSchema.index({ type: 1 });
 bookingSchema.index({ status: 1 });
-bookingSchema.index({ bookingReference: 1 });
 bookingSchema.index({ createdAt: -1 });
+// Note: bookingReference has unique:true on the field — no separate index needed
 
 export default mongoose.model('Booking', bookingSchema);
