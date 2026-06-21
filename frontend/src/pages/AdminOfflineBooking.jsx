@@ -43,7 +43,7 @@ const InputField = ({ label, required, hint, children }) => (
   </div>
 );
 
-const inputCls = "w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all";
+const inputCls = "w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all";
 const sectionCls = "bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden";
 
 const AdminOfflineBooking = () => {
@@ -106,7 +106,18 @@ const AdminOfflineBooking = () => {
     else { set('dropoffLocation', label); setShowDestSug(false); setDestSuggestions([]); }
   };
 
-  const toggleMarriageCar = (car) => {
+  // Normalize phone number: strip country code +91/91, keep 10 digits only
+  const normalizePhone = (value) => {
+    let digits = value.replace(/\D/g, ''); // keep only digits
+    if (digits.startsWith('91') && digits.length > 10) {
+      digits = digits.slice(2); // remove leading 91
+    }
+    return digits.slice(0, 10); // max 10 digits
+  };
+
+  const handlePhoneChange = (field, value) => {
+    set(field, normalizePhone(value));
+  };
     setForm(prev => {
       const exists = prev.selectedCars.find(c => c.carId === car._id);
       if (exists) return { ...prev, selectedCars: prev.selectedCars.filter(c => c.carId !== car._id) };
@@ -135,6 +146,8 @@ const AdminOfflineBooking = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.customerName.trim() || !form.customerPhone.trim()) return showError('Customer name and phone are required');
+    if (form.customerPhone.length !== 10) return showError('Phone number must be exactly 10 digits');
+    if (form.customerWhatsapp && form.customerWhatsapp.length !== 10) return showError('WhatsApp number must be exactly 10 digits');
     if (!form.pickupLocation.trim() || !form.dropoffLocation.trim()) return showError('Pickup and drop locations are required');
     if (!form.pickupDate) return showError('Pickup date is required');
     if (needsDropDate(form.tripType) && !form.dropoffDate) return showError('Drop date is required for this trip type');
@@ -227,10 +240,22 @@ const AdminOfflineBooking = () => {
                 <input type="text" required value={form.customerName} onChange={e => set('customerName', e.target.value)} className={inputCls} placeholder="e.g. Ramesh Kumar" />
               </InputField>
               <InputField label="Phone Number" required hint="(used for WhatsApp)">
-                <input type="tel" required value={form.customerPhone} onChange={e => set('customerPhone', e.target.value)} className={inputCls} placeholder="e.g. 9876543210" />
+                <input type="tel" required value={form.customerPhone}
+                  onChange={e => handlePhoneChange('customerPhone', e.target.value)}
+                  className={inputCls} placeholder="10-digit number e.g. 9876543210"
+                  maxLength={10} />
+                {form.customerPhone && form.customerPhone.length !== 10 && (
+                  <p className="text-xs text-red-500 mt-1">Must be exactly 10 digits</p>
+                )}
               </InputField>
               <InputField label="WhatsApp Number" hint="(if different from phone)">
-                <input type="tel" value={form.customerWhatsapp} onChange={e => set('customerWhatsapp', e.target.value)} className={inputCls} placeholder="Leave blank to use phone number" />
+                <input type="tel" value={form.customerWhatsapp}
+                  onChange={e => handlePhoneChange('customerWhatsapp', e.target.value)}
+                  className={inputCls} placeholder="Leave blank to use phone number"
+                  maxLength={10} />
+                {form.customerWhatsapp && form.customerWhatsapp.length !== 10 && (
+                  <p className="text-xs text-red-500 mt-1">Must be exactly 10 digits</p>
+                )}
               </InputField>
               <InputField label="Email Address" hint="(optional)">
                 <input type="email" value={form.customerEmail} onChange={e => set('customerEmail', e.target.value)} className={inputCls} placeholder="customer@email.com" />
@@ -268,11 +293,11 @@ const AdminOfflineBooking = () => {
           </div>
 
           {/* 3. Locations */}
-          <div className={sectionCls}>
-            <div className="px-5 py-3.5 border-b border-gray-100 bg-gray-50">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="px-5 py-3.5 border-b border-gray-100 bg-gray-50 rounded-t-xl">
               <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Locations</h2>
             </div>
-            <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-visible">
               <InputField label="Pickup Location" required>
                 <div className="relative">
                   <input type="text" required value={form.pickupLocation}
@@ -281,7 +306,7 @@ const AdminOfflineBooking = () => {
                     onFocus={() => form.pickupLocation.length >= 3 && setShowSourceSug(true)}
                     className={inputCls} placeholder="Type city or area..." />
                   {showSourceSug && sourceSuggestions.length > 0 && (
-                    <ul className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                    <ul className="absolute z-[100] top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl max-h-48 overflow-y-auto">
                       {sourceSuggestions.map((s, i) => (
                         <li key={i} onClick={() => selectSuggestion(s, 'source')}
                           className="px-4 py-2.5 hover:bg-blue-50 cursor-pointer text-sm border-b border-gray-100 last:border-0">
@@ -301,7 +326,7 @@ const AdminOfflineBooking = () => {
                     onFocus={() => form.dropoffLocation.length >= 3 && setShowDestSug(true)}
                     className={inputCls} placeholder="Type city or area..." />
                   {showDestSug && destSuggestions.length > 0 && (
-                    <ul className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                    <ul className="absolute z-[100] top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl max-h-48 overflow-y-auto">
                       {destSuggestions.map((s, i) => (
                         <li key={i} onClick={() => selectSuggestion(s, 'dest')}
                           className="px-4 py-2.5 hover:bg-blue-50 cursor-pointer text-sm border-b border-gray-100 last:border-0">
@@ -541,7 +566,7 @@ const AdminOfflineBooking = () => {
               <InputField label="Driver Phone"><input type="tel" value={form.driverPhone} onChange={e => set('driverPhone', e.target.value)} className={inputCls} placeholder="Driver phone" /></InputField>
               <InputField label="Vehicle Make"><input type="text" value={form.vehicleMake} onChange={e => set('vehicleMake', e.target.value)} className={inputCls} placeholder="e.g. Maruti" /></InputField>
               <InputField label="Vehicle Model"><input type="text" value={form.vehicleModel} onChange={e => set('vehicleModel', e.target.value)} className={inputCls} placeholder="e.g. Swift Dzire" /></InputField>
-              <InputField label="Number Plate"><input type="text" value={form.vehiclePlate} onChange={e => set('vehiclePlate', e.target.value)} className={inputCls} placeholder="e.g. BR 01 AB 1234" /></InputField>
+              <InputField label="Number Plate"><input type="text" value={form.vehiclePlate} onChange={e => set('vehiclePlate', e.target.value.toUpperCase())} className={`${inputCls} uppercase`} placeholder="e.g. BR 01 AB 1234" /></InputField>
               <InputField label="Color"><input type="text" value={form.vehicleColor} onChange={e => set('vehicleColor', e.target.value)} className={inputCls} placeholder="e.g. White" /></InputField>
             </div>
           </div>
