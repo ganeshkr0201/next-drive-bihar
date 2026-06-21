@@ -14,6 +14,7 @@ export const createDriver = async (formData) => {
   const res = await api.post('/api/drivers', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
     transformRequest: [(data) => data],
+    timeout: 60000, // 60s for image uploads
   });
   return res.data;
 };
@@ -22,6 +23,7 @@ export const updateDriver = async (id, formData) => {
   const res = await api.put(`/api/drivers/${id}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
     transformRequest: [(data) => data],
+    timeout: 60000, // 60s for image uploads
   });
   return res.data;
 };
