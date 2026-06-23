@@ -102,6 +102,12 @@ const carBookingSchema = new mongoose.Schema({
     phone: String,
     licenseNumber: String
   },
+  // Reference to Driver document (optional — links to Driver collection)
+  assignedDriver: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Driver',
+    default: null
+  },
   vehicleDetails: {
     make: String,
     model: String,

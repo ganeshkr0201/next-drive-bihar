@@ -24,8 +24,7 @@ const defaultForm = {
   numberOfPassengers: 1,
   numberOfCars: 1, selectedCars: [],
   totalAmount: '', paidAmount: '', discount: '',
-  driverName: '', driverPhone: '',
-  vehicleMake: '', vehicleModel: '', vehiclePlate: '', vehicleColor: '',
+  assignedDriverId: '',
   specialRequests: '', notes: ''
 };
 
@@ -52,6 +51,7 @@ const AdminOfflineBooking = () => {
   const [submitting, setSubmitting] = useState(false);
   const [createdBooking, setCreatedBooking] = useState(null);
   const [availableCars, setAvailableCars] = useState([]);
+  const [availableDriversList, setAvailableDriversList] = useState([]);
   const [sourceSuggestions, setSourceSuggestions] = useState([]);
   const [destSuggestions, setDestSuggestions] = useState([]);
   const [showSourceSug, setShowSourceSug] = useState(false);
@@ -63,6 +63,7 @@ const AdminOfflineBooking = () => {
 
   useEffect(() => {
     carService.getAvailableCars().then(setAvailableCars).catch(() => {});
+    import('../services/driverService.js').then(m => m.getAllDrivers()).then(res => setAvailableDriversList(res.data || [])).catch(() => {});
   }, []);
 
   // Clear drop date when switching to one-way
@@ -590,18 +591,31 @@ const AdminOfflineBooking = () => {
             </div>
           </div>
 
-          {/* 7. Driver & Vehicle (collapsible-style optional) */}
+          {/* 7. Driver Assignment (optional) */}
           <div className={sectionCls}>
             <div className="px-5 py-3.5 border-b border-gray-100 bg-gray-50">
-              <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Driver & Vehicle <span className="text-gray-400 font-normal normal-case text-xs ml-1">(optional)</span></h2>
+              <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Assign Driver <span className="text-gray-400 font-normal normal-case text-xs ml-1">(optional — can assign later too)</span></h2>
             </div>
-            <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <InputField label="Driver Name"><input type="text" value={form.driverName} onChange={e => set('driverName', e.target.value)} className={inputCls} placeholder="Driver full name" /></InputField>
-              <InputField label="Driver Phone"><input type="tel" value={form.driverPhone} onChange={e => set('driverPhone', e.target.value)} className={inputCls} placeholder="Driver phone" /></InputField>
-              <InputField label="Vehicle Make"><input type="text" value={form.vehicleMake} onChange={e => set('vehicleMake', e.target.value)} className={inputCls} placeholder="e.g. Maruti" /></InputField>
-              <InputField label="Vehicle Model"><input type="text" value={form.vehicleModel} onChange={e => set('vehicleModel', e.target.value)} className={inputCls} placeholder="e.g. Swift Dzire" /></InputField>
-              <InputField label="Number Plate"><input type="text" value={form.vehiclePlate} onChange={e => set('vehiclePlate', e.target.value.toUpperCase())} className={`${inputCls} uppercase`} placeholder="e.g. BR 01 AB 1234" /></InputField>
-              <InputField label="Color"><input type="text" value={form.vehicleColor} onChange={e => set('vehicleColor', e.target.value)} className={inputCls} placeholder="e.g. White" /></InputField>
+            <div className="p-5">
+              <InputField label="Select Driver">
+                <select value={form.assignedDriverId || ''} onChange={e => set('assignedDriverId', e.target.value)} className={inputCls}>
+                  <option value="">-- No driver assigned (assign later) --</option>
+                  {availableCars.length === 0 && <option disabled>Loading drivers...</option>}
+                  {availableDriversList.map(d => (
+                    <option key={d._id} value={d._id}>
+                      {d.name} &bull; {d.phone} &bull; {d.carType} &bull; {d.carNumber || 'No plate'}
+                    </option>
+                  ))}
+                </select>
+              </InputField>
+              {form.assignedDriverId && availableDriversList.find(d => d._id === form.assignedDriverId) && (
+                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200 text-sm text-blue-800">
+                  {(() => {
+                    const d = availableDriversList.find(dr => dr._id === form.assignedDriverId);
+                    return <span>Selected: <strong>{d.name}</strong> &bull; {d.carModel} &bull; {d.carNumber} &bull; Exp: {d.drivingExperience} yrs</span>;
+                  })()}
+                </div>
+              )}
             </div>
           </div>
 

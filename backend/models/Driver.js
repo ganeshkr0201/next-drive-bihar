@@ -75,6 +75,12 @@ const driverSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    // Reference to the auto-created User account for this driver
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
   },
   {
     timestamps: true,

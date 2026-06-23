@@ -31,6 +31,8 @@ import Gallery from './pages/Gallery';
 import AdminGallery from './pages/AdminGallery';
 import AdminOfflineBooking from './pages/AdminOfflineBooking';
 import AdminDriverManagement from './pages/AdminDriverManagement';
+import DriverDashboard from './pages/DriverDashboard';
+import DriverProtectedRoute from './components/DriverProtectedRoute';
 
 function App() {
   return (
@@ -156,6 +158,14 @@ function App() {
               />
               {/* Catch-all route for 404 - must be last */}
               <Route path="*" element={<NotFound />} />
+              <Route
+                path="/driver/dashboard"
+                element={
+                  <DriverProtectedRoute>
+                    <DriverDashboard />
+                  </DriverProtectedRoute>
+                }
+              />
             </Routes>
           </main>
           <Footer />

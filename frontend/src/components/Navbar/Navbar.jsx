@@ -116,6 +116,44 @@ const Navbar = () => {
     };
   }, [isMenuOpen]);
 
+  // Driver users get a minimal navbar — no public nav links at all
+  if (isAuthenticated && user?.role === 'driver') {
+    return (
+      <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14">
+            <Link to="/driver/dashboard" className="flex items-center space-x-2.5 group">
+              <img src="/nextDriveLogo.png" alt="NextDrive Bihar" className="w-9 h-9 object-contain" />
+              <div>
+                <h1 className="text-base font-bold text-gray-900 leading-tight">NextDrive</h1>
+                <p className="text-[10px] text-gray-500 font-medium">Driver Portal</p>
+              </div>
+            </Link>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
+                  {user?.name?.[0] || 'D'}
+                </div>
+                <span className="text-sm font-medium text-gray-700">{user?.name?.split(' ')[0]}</span>
+              </div>
+              <Link to="/driver/dashboard"
+                className="text-sm font-medium text-indigo-600 hover:text-indigo-800 px-3 py-1.5 hover:bg-indigo-50 rounded-lg transition-colors">
+                Dashboard
+              </Link>
+              <button onClick={handleLogout}
+                className="text-sm font-medium text-red-600 hover:text-red-800 px-3 py-1.5 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
+
   return (
     <>
       <nav className="bg-white shadow-md sticky top-0 z-50 border-b border-gray-200">
@@ -396,28 +434,32 @@ const Navbar = () => {
                               <div className="text-xs text-gray-500">Edit your info</div>
                             </div>
                           </Link>
-                          <Link to="/user-dashboard" className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group">
-                            <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-indigo-200 transition-colors duration-200">
-                              <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2V7zm0 0a2 2 0 012-2h10a2 2 0 012 2v2H3V7z" />
-                              </svg>
-                            </div>
-                            <div>
-                              <div className="font-medium">Dashboard</div>
-                              <div className="text-xs text-gray-500">Your overview</div>
-                            </div>
-                          </Link>
-                          <Link to="/my-bookings" className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-all duration-200 group">
-                            <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-purple-200 transition-colors duration-200">
-                              <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                              </svg>
-                            </div>
-                            <div>
-                              <div className="font-medium">My Bookings</div>
-                              <div className="text-xs text-gray-500">View reservations</div>
-                            </div>
-                          </Link>
+                          {user.role !== 'admin' && (
+                            <>
+                              <Link to="/user-dashboard" className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group">
+                                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-indigo-200 transition-colors duration-200">
+                                  <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2V7zm0 0a2 2 0 012-2h10a2 2 0 012 2v2H3V7z" />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <div className="font-medium">Dashboard</div>
+                                  <div className="text-xs text-gray-500">Your overview</div>
+                                </div>
+                              </Link>
+                              <Link to="/my-bookings" className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-all duration-200 group">
+                                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-purple-200 transition-colors duration-200">
+                                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <div className="font-medium">My Bookings</div>
+                                  <div className="text-xs text-gray-500">View reservations</div>
+                                </div>
+                              </Link>
+                            </>
+                          )}
                           <div className="border-t border-gray-100 my-2"></div>
                           <button 
                             onClick={handleLogout}
@@ -782,26 +824,30 @@ const Navbar = () => {
                     </svg>
                     <span className="font-medium">Profile</span>
                   </Link>
-                  <Link 
-                    to="/user-dashboard" 
-                    className="flex items-center px-4 py-3 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200 touch-manipulation"
-                    onClick={closeMobileMenu}
-                  >
-                    <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2V7zm0 0a2 2 0 012-2h10a2 2 0 012 2v2H3V7z" />
-                    </svg>
-                    <span className="font-medium">Dashboard</span>
-                  </Link>
-                  <Link 
-                    to="/my-bookings" 
-                    className="flex items-center px-4 py-3 text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200 touch-manipulation"
-                    onClick={closeMobileMenu}
-                  >
-                    <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                    </svg>
-                    <span className="font-medium">My Bookings</span>
-                  </Link>
+                  {user.role !== 'admin' && (
+                    <>
+                      <Link 
+                        to="/user-dashboard" 
+                        className="flex items-center px-4 py-3 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200 touch-manipulation"
+                        onClick={closeMobileMenu}
+                      >
+                        <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2V7zm0 0a2 2 0 012-2h10a2 2 0 012 2v2H3V7z" />
+                        </svg>
+                        <span className="font-medium">Dashboard</span>
+                      </Link>
+                      <Link 
+                        to="/my-bookings" 
+                        className="flex items-center px-4 py-3 text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200 touch-manipulation"
+                        onClick={closeMobileMenu}
+                      >
+                        <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                        <span className="font-medium">My Bookings</span>
+                      </Link>
+                    </>
+                  )}
                   
                   {/* Logout */}
                   <div className="border-t border-gray-200 mt-4 pt-4">

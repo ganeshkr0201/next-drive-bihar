@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { authenticateJWT, requireAdmin } from '../middlewares/auth.js';
+import { authenticateJWT, requireAdmin, requireDriver } from '../middlewares/auth.js';
 import {
   getAllDrivers,
   getDriverById,
@@ -8,6 +8,10 @@ import {
   updateDriver,
   deleteDriver,
   toggleDriverStatus,
+  getMyDriverProfile,
+  getMyRides,
+  markRideComplete,
+  migrateDriverAccounts,
 } from '../controllers/driverControllers.js';
 
 const router = express.Router();
@@ -32,7 +36,13 @@ const multerUpload = multer({
   { name: 'carFrontImage', maxCount: 1 },
 ]);
 
-// All routes require JWT + admin
+// ── Driver dashboard routes (require driver role) ──────────────────────────
+router.get('/dashboard/me',   authenticateJWT, requireDriver, getMyDriverProfile);
+router.get('/dashboard/rides', authenticateJWT, requireDriver, getMyRides);
+router.patch('/dashboard/rides/:bookingId/complete', authenticateJWT, requireDriver, markRideComplete);
+
+// ── Admin-only routes ──────────────────────────────────────────────────────
+router.post('/migrate-accounts', authenticateJWT, requireAdmin, migrateDriverAccounts);
 router.get('/', authenticateJWT, requireAdmin, getAllDrivers);
 router.get('/:id', authenticateJWT, requireAdmin, getDriverById);
 router.post('/', authenticateJWT, requireAdmin, multerUpload, createDriver);
