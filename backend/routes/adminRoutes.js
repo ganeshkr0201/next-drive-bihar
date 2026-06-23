@@ -70,6 +70,9 @@ router.patch('/car-bookings/:id/complete', adminControllers.completeCarBooking);
 // Get WhatsApp confirmation link for a car booking
 router.get('/car-bookings/:id/whatsapp', adminControllers.getCarBookingWhatsAppLink);
 
+// Assign/unassign driver to a car booking
+router.put('/car-bookings/:id/driver', adminControllers.assignDriverToCarBooking);
+
 // Update booking payment details (works for both tour and car bookings)
 router.put('/bookings/:id/payment', adminControllers.updateBookingPayment);
 

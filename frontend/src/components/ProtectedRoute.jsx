@@ -2,7 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -14,8 +14,12 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    // Redirect to login page with the attempted location
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Drivers only go to their own dashboard
+  if (user?.role === 'driver') {
+    return <Navigate to="/driver/dashboard" replace />;
   }
 
   return children;

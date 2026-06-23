@@ -6,7 +6,7 @@ import { validateEmail } from '../utils/validation';
 import authService from '../services/authService';
 
 const LoginPage = () => {
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const { showSuccess, showError } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -21,19 +21,19 @@ const LoginPage = () => {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      // Check if there's a redirect location from protected routes
+    if (isAuthenticated && user) {
       const from = location.state?.from?.pathname;
-      
-      if (from) {
-        // User was redirected from a protected page, send them back there
+      if (from && user.role !== 'driver') {
         navigate(from, { replace: true });
+      } else if (user.role === 'driver') {
+        navigate('/driver/dashboard', { replace: true });
+      } else if (user.role === 'admin') {
+        navigate('/admin/dashboard', { replace: true });
       } else {
-        // User manually navigated to login page, send them to home
         navigate('/', { replace: true });
       }
     }
-  }, [isAuthenticated, navigate, location]);
+  }, [isAuthenticated, user, navigate, location]);
 
   const handleChange = (e) => {
     setFormData({
@@ -63,15 +63,14 @@ const LoginPage = () => {
       const result = await login(formData.email, formData.password);
       showSuccess(`Welcome back, ${result.user.name}!`);
       
-      // Check if there's a redirect location from protected routes
+      // Route by role — drivers always go to their dashboard, ignoring any prior redirect
       const from = location.state?.from?.pathname;
-      
-      if (from) {
-        // User was redirected from a protected page, send them back there
-        navigate(from, { replace: true });
+      if (result.user.role === 'driver') {
+        navigate('/driver/dashboard', { replace: true });
+      } else if (result.user.role === 'admin') {
+        navigate(from || '/admin/dashboard', { replace: true });
       } else {
-        // User manually navigated to login page, send them to home
-        navigate('/', { replace: true });
+        navigate(from || '/', { replace: true });
       }
     } catch (err) {
       // Check if user needs email verification

@@ -367,49 +367,48 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Welcome back, {user?.name}! Manage your NextDrive Bihar platform.</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Admin Dashboard</h1>
+              <p className="text-sm text-gray-500 mt-0.5">Welcome back, <span className="font-medium text-gray-700">{user?.name}</span></p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              <button
-                onClick={() => navigate('/admin/cars')}
-                className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 text-sm sm:text-base"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-                <span className="hidden sm:inline">Manage Cars</span>
-                <span className="sm:hidden">Cars</span>
-              </button>
-            </div>
+            <button
+              onClick={() => navigate('/admin/cars')}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm self-start sm:self-auto"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 1h8" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7h3l2 6v3h-2m-4 0H9" />
+              </svg>
+              Manage Cars
+            </button>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="mb-6 sm:mb-8">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto scrollbar-hide">
+        <div className="mb-6">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <nav className="flex overflow-x-auto scrollbar-hide">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
-                  className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center space-x-1 sm:space-x-2 flex-shrink-0 ${
+                  className={`relative flex items-center gap-1.5 px-3 sm:px-4 py-3 text-xs sm:text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors border-b-2 ${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-indigo-600 text-indigo-600 bg-indigo-50/60'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                   }`}
                 >
-                  <span className="text-base sm:text-lg">{tab.icon}</span>
+                  <span className="text-sm">{tab.icon}</span>
                   <span className="hidden sm:inline">{tab.name}</span>
                   <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
                   {tab.badge > 0 && (
-                    <span className="bg-red-100 text-red-800 text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full">
+                    <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full">
                       {tab.badge}
                     </span>
                   )}
@@ -420,12 +419,12 @@ const AdminDashboard = () => {
         </div>
 
         {/* Content */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">Dashboard Overview</h2>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+              <h2 className="text-base font-semibold text-gray-800 mb-4">Platform Overview</h2>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <StatCard
                   title="Total Users"
                   value={users.length}
@@ -460,7 +459,7 @@ const AdminDashboard = () => {
               </div>
 
               {/* Offline Bookings Row */}
-              <div className="mt-4 sm:mt-6 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              <div className="mt-3 sm:mt-4 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 <StatCard
                   title="Offline / Walk-in"
                   value={carBookings.filter(b => b.isOfflineBooking).length}
@@ -525,15 +524,16 @@ const AdminDashboard = () => {
 
           {/* Car Bookings Tab */}
           {activeTab === 'car-bookings' && (
-            <BookingsSection
-              bookings={getFilteredData(carBookings, 'bookings')}
+            <CarBookingsSplitSection
+              onlineBookings={getFilteredData(carBookings.filter(b => !b.isOfflineBooking), 'bookings')}
+              offlineBookings={getFilteredData(carBookings.filter(b => b.isOfflineBooking), 'bookings')}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               statusFilter={statusFilter}
               setStatusFilter={setStatusFilter}
               onStatusUpdate={handleBookingStatusUpdate}
+              onRefetch={refetchCarBookings}
               isLoading={isLoading}
-              type="car"
               currentPage={currentPage}
               setCurrentPage={setCurrentPage}
               itemsPerPage={itemsPerPage}
@@ -585,29 +585,34 @@ const AdminDashboard = () => {
           {/* Gallery Tab */}
           {activeTab === 'gallery' && (
             <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold">Gallery Management</h2>
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="text-base font-semibold text-gray-800">Gallery Management</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">Upload and manage images for all categories</p>
+                </div>
                 <button
                   onClick={() => navigate('/admin/gallery')}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  Manage Gallery
+                  Open Gallery
                 </button>
               </div>
-              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 text-center border-2 border-dashed border-blue-200">
-                <div className="text-6xl mb-4">🖼️</div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Gallery Management</h3>
-                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                  Upload and manage images for your car rentals, marriage bookings, tour packages, and more.
+              <div className="bg-gray-50 rounded-xl p-8 text-center border border-dashed border-gray-300">
+                <div className="text-5xl mb-3">🖼️</div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">Gallery Manager</h3>
+                <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+                  Upload and manage images for car rentals, marriage bookings, tour packages, and more.
                 </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mt-8">
-                  <div className="bg-white rounded-xl p-4 shadow-sm"><div className="text-3xl mb-2">🚗</div><p className="text-sm font-medium text-gray-700">Car Images</p></div>
-                  <div className="bg-white rounded-xl p-4 shadow-sm"><div className="text-3xl mb-2">💒</div><p className="text-sm font-medium text-gray-700">Marriage Cars</p></div>
-                  <div className="bg-white rounded-xl p-4 shadow-sm"><div className="text-3xl mb-2">🏛️</div><p className="text-sm font-medium text-gray-700">Tour Places</p></div>
-                  <div className="bg-white rounded-xl p-4 shadow-sm"><div className="text-3xl mb-2">📸</div><p className="text-sm font-medium text-gray-700">Other</p></div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto">
+                  {[['🚗','Car Images'],['💒','Marriage Cars'],['🏛️','Tour Places'],['📸','Other']].map(([icon, label]) => (
+                    <div key={label} className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                      <div className="text-2xl mb-1">{icon}</div>
+                      <p className="text-xs font-medium text-gray-600">{label}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -616,40 +621,35 @@ const AdminDashboard = () => {
           {/* Offline Booking Tab */}
           {activeTab === 'offline-booking' && (
             <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h2 className="text-xl font-semibold">Offline / Walk-in Bookings</h2>
-                  <p className="text-gray-500 text-sm mt-1">Create bookings for WhatsApp or walk-in customers</p>
+                  <h2 className="text-base font-semibold text-gray-800">Offline / Walk-in Bookings</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">Create bookings for WhatsApp or walk-in customers</p>
                 </div>
                 <button
                   onClick={() => navigate('/admin/offline-booking')}
-                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
                 >
-                  <span>📋</span> Create Offline Booking
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Create Booking
                 </button>
               </div>
-              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 text-center border-2 border-dashed border-green-200">
-                <div className="text-6xl mb-4">📋</div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Offline Booking Manager</h3>
-                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                  Create bookings for customers who book via WhatsApp or walk-in. No customer account required. After creating a booking, a WhatsApp confirmation message will be ready to send automatically.
+              <div className="bg-gray-50 rounded-xl p-8 text-center border border-dashed border-gray-300">
+                <div className="text-5xl mb-3">📋</div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">Offline Booking Manager</h3>
+                <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+                  Create bookings for customers who book via WhatsApp or walk-in. No customer account required.
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
-                  <div className="bg-white rounded-xl p-5 shadow-sm text-left">
-                    <div className="text-3xl mb-2">📱</div>
-                    <h4 className="font-bold text-gray-800 mb-1">WhatsApp Booking</h4>
-                    <p className="text-xs text-gray-500">Customer books via WhatsApp. Admin enters details and sends confirmation.</p>
-                  </div>
-                  <div className="bg-white rounded-xl p-5 shadow-sm text-left">
-                    <div className="text-3xl mb-2">🚶</div>
-                    <h4 className="font-bold text-gray-800 mb-1">Walk-in Booking</h4>
-                    <p className="text-xs text-gray-500">Customer walks in. Admin creates booking instantly with all trip details.</p>
-                  </div>
-                  <div className="bg-white rounded-xl p-5 shadow-sm text-left">
-                    <div className="text-3xl mb-2">💬</div>
-                    <h4 className="font-bold text-gray-800 mb-1">Auto WhatsApp Message</h4>
-                    <p className="text-xs text-gray-500">Booking confirmation message with all details is auto-generated for WhatsApp.</p>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-2xl mx-auto">
+                  {[['📱','WhatsApp Booking','Customer books via WhatsApp. Admin enters details and sends confirmation.'],['🚶','Walk-in Booking','Customer walks in. Admin creates booking instantly with all trip details.'],['💬','Auto WhatsApp Msg','Confirmation message with all details is auto-generated for WhatsApp.']].map(([icon, title, desc]) => (
+                    <div key={title} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm text-left">
+                      <div className="text-2xl mb-2">{icon}</div>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-1">{title}</h4>
+                      <p className="text-xs text-gray-500">{desc}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -658,22 +658,25 @@ const AdminDashboard = () => {
           {/* Drivers Tab */}
           {activeTab === 'drivers' && (
             <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h2 className="text-xl font-semibold">Driver Management</h2>
-                  <p className="text-gray-500 text-sm mt-1">Add and manage drivers for bookings</p>
+                  <h2 className="text-base font-semibold text-gray-800">Driver Management</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">Add and manage drivers for bookings</p>
                 </div>
                 <button
                   onClick={() => navigate('/admin/drivers')}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-xl transition-all flex items-center gap-2"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
                 >
-                  <span>🚘</span> Manage Drivers
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Manage Drivers
                 </button>
               </div>
-              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 text-center border-2 border-dashed border-blue-200">
-                <div className="text-6xl mb-4">🚘</div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Driver Fleet</h3>
-                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+              <div className="bg-gray-50 rounded-xl p-8 text-center border border-dashed border-gray-300">
+                <div className="text-5xl mb-3">🚘</div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">Driver Fleet</h3>
+                <p className="text-sm text-gray-500 max-w-md mx-auto">
                   Add drivers with their licence details, vehicle information, and document photos. Manage availability and assign to bookings.
                 </p>
               </div>
@@ -687,32 +690,32 @@ const AdminDashboard = () => {
 
 // Simplified StatCard Component
 const StatCard = ({ title, value, badge, icon, color, onClick }) => {
-  const colorClasses = {
-    blue: 'bg-blue-50 hover:bg-blue-100 text-blue-600',
-    green: 'bg-green-50 hover:bg-green-100 text-green-600',
-    purple: 'bg-purple-50 hover:bg-purple-100 text-purple-600',
-    orange: 'bg-orange-50 hover:bg-orange-100 text-orange-600'
+  const styles = {
+    blue:   { bg: 'bg-blue-50',   text: 'text-blue-600',   border: 'border-blue-100',   icon: 'bg-blue-100' },
+    green:  { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100', icon: 'bg-emerald-100' },
+    purple: { bg: 'bg-violet-50', text: 'text-violet-600', border: 'border-violet-100', icon: 'bg-violet-100' },
+    orange: { bg: 'bg-amber-50',  text: 'text-amber-600',  border: 'border-amber-100',  icon: 'bg-amber-100' },
   };
+  const s = styles[color] || styles.blue;
 
   return (
-    <div 
-      className={`p-4 sm:p-6 rounded-lg cursor-pointer transition-colors duration-200 ${colorClasses[color]}`}
+    <div
+      className={`group relative p-4 sm:p-5 rounded-xl border cursor-pointer transition-all duration-200 hover:shadow-md ${s.bg} ${s.border}`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{title}</p>
-          <p className={`text-xl sm:text-2xl font-bold ${color === 'blue' ? 'text-blue-600' : color === 'green' ? 'text-green-600' : color === 'purple' ? 'text-purple-600' : 'text-orange-600'}`}>
-            {value}
-          </p>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate mb-1">{title}</p>
+          <p className={`text-2xl sm:text-3xl font-bold ${s.text}`}>{value}</p>
         </div>
-        <div className="text-xl sm:text-2xl ml-2">{icon}</div>
+        <div className={`w-9 h-9 rounded-lg ${s.icon} flex items-center justify-center text-lg flex-shrink-0`}>
+          {icon}
+        </div>
       </div>
       {badge > 0 && (
-        <div className="mt-2">
-          <span className="bg-red-100 text-red-800 text-xs font-medium px-2 py-1 rounded-full">
-            {badge} pending
-          </span>
+        <div className="mt-3 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+          <span className="text-xs font-semibold text-amber-700">{badge} pending</span>
         </div>
       )}
     </div>
@@ -738,20 +741,28 @@ const QueriesSection = ({ queries, searchTerm, setSearchTerm, statusFilter, setS
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="flex flex-col gap-3 sm:gap-4 mb-6">
-        <h2 className="text-lg sm:text-xl font-semibold">Customer Queries</h2>
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-          <input
-            type="text"
-            placeholder="Search queries..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+      <div className="flex flex-col gap-3 mb-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-gray-800">Customer Queries</h2>
+          <span className="text-xs text-gray-500 font-medium">{queries.length} total</span>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search queries..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 bg-white"
+            />
+          </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 bg-white text-gray-700"
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -1034,8 +1045,194 @@ const QueryCard = ({ query, response, setResponse, onRespond, isLoading }) => {
   );
 };
 // Simplified Bookings Section
-const BookingsSection = ({ bookings, searchTerm, setSearchTerm, statusFilter, setStatusFilter, onStatusUpdate, isLoading, type, currentPage, setCurrentPage, itemsPerPage }) => {
-  // Pagination calculations
+// Split car bookings into Online (by users) and Walk-in/Offline sections
+const CarBookingsSplitSection = ({
+  onlineBookings, offlineBookings,
+  searchTerm, setSearchTerm, statusFilter, setStatusFilter,
+  onStatusUpdate, onRefetch, isLoading, currentPage, setCurrentPage, itemsPerPage,
+}) => {
+  const [activeSource, setActiveSource] = useState('online'); // 'online' | 'offline'
+
+  const bookings = activeSource === 'online' ? onlineBookings : offlineBookings;
+  const pendingOnline  = onlineBookings.filter(b => b.status === 'pending').length;
+  const pendingOffline = offlineBookings.filter(b => b.status === 'pending').length;
+
+  return (
+    <div className="p-4 sm:p-6">
+      {/* Header */}
+      <div className="flex flex-col gap-3 mb-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-gray-800">Car Bookings</h2>
+          <span className="text-xs text-gray-500 font-medium">
+            {onlineBookings.length + offlineBookings.length} total
+          </span>
+        </div>
+
+        {/* Source toggle */}
+        <div className="flex gap-2 p-1 bg-gray-100 rounded-lg w-fit">
+          <button
+            onClick={() => { setActiveSource('online'); setCurrentPage(1); }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              activeSource === 'online'
+                ? 'bg-white text-indigo-600 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            Online Bookings
+            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+              activeSource === 'online' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-600'
+            }`}>{onlineBookings.length}</span>
+            {pendingOnline > 0 && (
+              <span className="min-w-[18px] h-[18px] px-1 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {pendingOnline}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => { setActiveSource('offline'); setCurrentPage(1); }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              activeSource === 'offline'
+                ? 'bg-white text-orange-600 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Walk-in / Offline
+            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+              activeSource === 'offline' ? 'bg-orange-100 text-orange-700' : 'bg-gray-200 text-gray-600'
+            }`}>{offlineBookings.length}</span>
+            {pendingOffline > 0 && (
+              <span className="min-w-[18px] h-[18px] px-1 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {pendingOffline}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Search + Status filter */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder={`Search ${activeSource === 'online' ? 'online' : 'walk-in'} bookings...`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 bg-white"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 bg-white text-gray-700"
+          >
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Booking list — reuse existing BookingCard rendering logic */}
+      <BookingsListBody
+        bookings={bookings}
+        onStatusUpdate={onStatusUpdate}
+        onRefetch={onRefetch}
+        isLoading={isLoading}
+        type="car"
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        itemsPerPage={itemsPerPage}
+      />
+    </div>
+  );
+};
+
+// Extracted list + pagination body so both BookingsSection and CarBookingsSplitSection can use it
+const BookingsListBody = ({ bookings, onStatusUpdate, onRefetch, isLoading, type, currentPage, setCurrentPage, itemsPerPage }) => {
+  const totalPages = Math.ceil(bookings.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBookings = bookings.slice(indexOfFirstItem, indexOfLastItem);
+
+  useEffect(() => { window.scrollTo(0, 0); }, [currentPage]);
+
+  if (bookings.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-4xl mb-4">{type === 'tour' ? '🎯' : '🚗'}</div>
+        <h3 className="text-base font-medium text-gray-900 mb-2">No bookings found</h3>
+        <p className="text-sm text-gray-500">No {type} bookings match your current filters.</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="mb-4 text-sm text-gray-600">
+        Showing {indexOfFirstItem + 1}–{Math.min(indexOfLastItem, bookings.length)} of {bookings.length} booking{bookings.length !== 1 ? 's' : ''}
+      </div>
+      <div className="space-y-6">
+        {currentBookings.map((booking) => (
+          <BookingCard
+            key={booking._id}
+            booking={booking}
+            onStatusUpdate={onStatusUpdate}
+            onRefetch={onRefetch}
+            isLoading={isLoading}
+            type={type}
+          />
+        ))}
+      </div>
+      {totalPages > 1 && (
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-gray-700">
+              Page <span className="font-medium">{currentPage}</span> of <span className="font-medium">{totalPages}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+                className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                Previous
+              </button>
+              <div className="hidden sm:flex items-center gap-1">
+                {[...Array(totalPages)].map((_, index) => {
+                  const n = index + 1;
+                  if (n === 1 || n === totalPages || (n >= currentPage - 1 && n <= currentPage + 1)) {
+                    return (
+                      <button key={n} onClick={() => setCurrentPage(n)}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                          currentPage === n ? 'bg-indigo-600 text-white' : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                        }`}>{n}</button>
+                    );
+                  }
+                  if (n === currentPage - 2 || n === currentPage + 2) return <span key={n} className="px-2 text-gray-500">...</span>;
+                  return null;
+                })}
+              </div>
+              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                Next
+              </button>
+            </div>
+            <div className="sm:hidden text-sm text-gray-600">{currentPage} / {totalPages}</div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+const BookingsSection = ({ bookings, searchTerm, setSearchTerm, statusFilter, setStatusFilter, onStatusUpdate, onRefetch, isLoading, type, currentPage, setCurrentPage, itemsPerPage }) => {
   const totalPages = Math.ceil(bookings.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -1052,20 +1249,28 @@ const BookingsSection = ({ bookings, searchTerm, setSearchTerm, statusFilter, se
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="flex flex-col gap-3 sm:gap-4 mb-6">
-        <h2 className="text-lg sm:text-xl font-semibold">{type === 'tour' ? 'Tour' : 'Car'} Bookings</h2>
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-          <input
-            type="text"
-            placeholder="Search bookings..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+      <div className="flex flex-col gap-3 mb-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-gray-800">{type === 'tour' ? 'Tour' : 'Car'} Bookings</h2>
+          <span className="text-xs text-gray-500 font-medium">{bookings.length} total</span>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search bookings..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 bg-white"
+            />
+          </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 bg-white text-gray-700"
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -1097,6 +1302,7 @@ const BookingsSection = ({ bookings, searchTerm, setSearchTerm, statusFilter, se
                 key={booking._id}
                 booking={booking}
                 onStatusUpdate={onStatusUpdate}
+                onRefetch={onRefetch}
                 isLoading={isLoading}
                 type={type}
               />
@@ -1429,7 +1635,7 @@ const PaymentDetailsSection = ({ booking, onUpdate, isLoading }) => {
 };
 
 // Enhanced Booking Card with Better Visual Hierarchy
-const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
+const BookingCard = ({ booking, onStatusUpdate, onRefetch, isLoading, type }) => {
   const isCarBooking = type === 'car';
   const isTourBooking = type === 'tour';
 
@@ -1507,6 +1713,39 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
     
     if (window.confirm(`Are you sure you want to ${actionText} this booking?`)) {
       onStatusUpdate(booking._id, newStatus, reason, type);
+    }
+  };
+
+  // Driver assignment state
+  const [showDriverPanel, setShowDriverPanel] = useState(false);
+  const [availableDrivers, setAvailableDrivers] = useState([]);
+  const [selectedDriverId, setSelectedDriverId] = useState(booking.assignedDriver?._id || '');
+  const [driverAssigning, setDriverAssigning] = useState(false);
+
+  const loadDrivers = async () => {
+    if (availableDrivers.length > 0) return;
+    try {
+      const { getAllDrivers } = await import('../services/driverService.js');
+      const res = await getAllDrivers();
+      setAvailableDrivers(res.data || []);
+    } catch { /* silent */ }
+  };
+
+  const handleAssignDriver = async () => {
+    setDriverAssigning(true);
+    try {
+      await adminService.assignDriverToCarBooking(booking._id, selectedDriverId || null);
+      setShowDriverPanel(false);
+      // Use onRefetch if available, otherwise fall back to onStatusUpdate
+      if (onRefetch) {
+        onRefetch();
+      } else {
+        onStatusUpdate(booking._id, booking.status, '', type);
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to assign driver');
+    } finally {
+      setDriverAssigning(false);
     }
   };
 
@@ -2051,66 +2290,204 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
         </div>
       </div>
 
+      {/* Driver Assignment Panel — shown for car bookings that are not cancelled/completed */}
+      {isCarBooking && booking.status !== 'cancelled' && booking.status !== 'completed' && (
+        <div className="mt-4 rounded-xl border border-gray-200 overflow-hidden">
+          {/* Assigned Driver Status */}
+          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${booking.assignedDriver ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
+              {booking.assignedDriver ? (
+                <span className="text-sm font-medium text-gray-800 truncate">
+                  <span className="font-semibold">{booking.assignedDriver.name}</span>
+                  <span className="text-gray-500 mx-1">·</span>
+                  <span className="text-gray-600">{booking.assignedDriver.phone}</span>
+                  {booking.assignedDriver.carNumber && (
+                    <><span className="text-gray-400 mx-1">·</span><span className="font-mono text-xs text-indigo-700">{booking.assignedDriver.carNumber}</span></>
+                  )}
+                </span>
+              ) : (
+                <span className="text-sm text-amber-700 font-medium">No driver assigned yet</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 ml-3 flex-shrink-0">
+              {/* WhatsApp driver-assigned message — only visible when a driver IS assigned */}
+              {booking.assignedDriver && (() => {
+                const customerPhone = (() => {
+                  // Online booking: extract from notes
+                  if (!booking.isOfflineBooking && booking.notes?.length) {
+                    try {
+                      const d = JSON.parse(booking.notes[0].content);
+                      return (d.contactNumber || '').replace(/\D/g, '');
+                    } catch { return ''; }
+                  }
+                  // Offline booking: use offlineCustomer phone / whatsapp
+                  return (booking.offlineCustomer?.whatsappNumber || booking.offlineCustomer?.phone || '').replace(/\D/g, '');
+                })();
+
+                const helpline = import.meta.env.VITE_HELPLINE_NUMBER || '9999999999';
+                const driverName  = booking.assignedDriver.name;
+                const driverPhone = booking.assignedDriver.phone;
+                const carNumber   = booking.assignedDriver.carNumber || '';
+                const carModel    = booking.assignedDriver.carModel  || '';
+
+                const lines = [
+                  `*Driver Assigned - NextDrive Bihar*`,
+                  ` `,
+                  `Hello! Your driver has been assigned for your booking *#${booking.bookingReference}*.`,
+                  ` `,
+                  `*Driver:* ${driverName}`,
+                  `*Phone:* ${driverPhone}`,
+                  carModel  ? `*Vehicle:* ${carModel}`  : null,
+                  carNumber ? `*Plate No:* ${carNumber}` : null,
+                  ` `,
+                  `For any assistance, please contact our helpline:`,
+                  `*Helpline:* +91 ${helpline}`,
+                  ` `,
+                  `Thank you for choosing NextDrive Bihar!`,
+                ].filter(l => l !== null);
+                const message = lines.join('\n');
+
+                const waLink = customerPhone
+                  ? `https://wa.me/91${customerPhone}?text=${encodeURIComponent(message)}`
+                  : `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+                return (
+                  <a
+                    href={waLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-[#25D366] hover:bg-[#1ebe5d] rounded-md transition-colors"
+                    title="Send driver assigned WhatsApp message to customer"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.101 1.514 5.835L.036 23.5l5.823-1.527A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.847 0-3.574-.5-5.063-1.371l-.363-.215-3.754.984.998-3.648-.237-.375A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+                    </svg>
+                    Notify Customer
+                  </a>
+                );
+              })()}
+              <button
+                type="button"
+                onClick={() => { setShowDriverPanel(p => !p); loadDrivers(); }}
+                className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                {booking.assignedDriver ? 'Change' : 'Assign'}
+              </button>
+            </div>
+          </div>
+
+          {showDriverPanel && (
+            <div className="px-4 py-4 bg-white space-y-3">
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Select Driver</label>
+              <select
+                value={selectedDriverId}
+                onChange={e => setSelectedDriverId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 bg-white"
+              >
+                <option value="">— Remove / No Driver —</option>
+                {availableDrivers.filter(d => d.status === 'available' || d._id === booking.assignedDriver?._id).map(d => (
+                  <option key={d._id} value={d._id}>
+                    {d.name} · {d.phone} · {d.carType}{d.carNumber ? ` · ${d.carNumber}` : ''}
+                    {d._id === booking.assignedDriver?._id ? ' (current)' : ''}
+                  </option>
+                ))}
+              </select>
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleAssignDriver}
+                  disabled={driverAssigning}
+                  className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg disabled:opacity-50 transition-colors"
+                >
+                  {driverAssigning ? 'Saving…' : (selectedDriverId ? 'Assign Driver' : 'Remove Driver')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDriverPanel(false)}
+                  className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-600 border border-gray-300 text-sm font-medium rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Admin Actions */}
       {booking.status === 'pending' && (
-        <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
+        <div className="flex flex-wrap items-center gap-2 pt-4 mt-2 border-t border-gray-100">
           <button
             onClick={() => handleStatusUpdate('confirmed')}
             disabled={isLoading}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Confirm Booking
+            Confirm
           </button>
           <button
             onClick={() => handleStatusUpdate('cancelled')}
             disabled={isLoading}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-            Cancel Booking
+            Cancel
           </button>
           {isCarBooking && (
             <button
               onClick={handleWhatsAppConfirm}
               disabled={whatsappLoading}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-[#25D366] text-white rounded-lg hover:bg-[#1ebe5d] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#25D366] hover:bg-[#1ebe5d] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.101 1.514 5.835L.036 23.5l5.823-1.527A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.847 0-3.574-.5-5.063-1.371l-.363-.215-3.754.984.998-3.648-.237-.375A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
               </svg>
-              {whatsappLoading ? 'Loading...' : 'Confirm Msg'}
+              {whatsappLoading ? 'Loading...' : 'WhatsApp'}
             </button>
           )}
         </div>
       )}
 
       {booking.status === 'confirmed' && (
-        <div className="pt-4 border-t border-gray-200 flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-wrap items-center gap-2 pt-4 mt-2 border-t border-gray-100">
           <button
             onClick={() => handleStatusUpdate('completed')}
             disabled={isLoading}
-            className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            Mark as Completed
+            Mark Completed
+          </button>
+          <button
+            onClick={() => handleStatusUpdate('cancelled')}
+            disabled={isLoading}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Cancel
           </button>
           {isCarBooking && (
             <button
               onClick={handleWhatsAppConfirm}
               disabled={whatsappLoading}
-              className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 text-sm font-medium bg-[#25D366] text-white rounded-lg hover:bg-[#1ebe5d] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#25D366] hover:bg-[#1ebe5d] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.101 1.514 5.835L.036 23.5l5.823-1.527A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.847 0-3.574-.5-5.063-1.371l-.363-.215-3.754.984.998-3.648-.237-.375A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
               </svg>
-              {whatsappLoading ? 'Loading...' : 'Confirm Msg'}
+              {whatsappLoading ? 'Loading...' : 'WhatsApp'}
             </button>
           )}
         </div>
@@ -2121,11 +2498,12 @@ const BookingCard = ({ booking, onStatusUpdate, isLoading, type }) => {
 
 // Enhanced Users Section with Admin/User Separation and Verification Filters
 const UsersSection = ({ users, searchTerm, setSearchTerm, verificationFilter, setVerificationFilter, onDeleteUser, isLoading, currentPage, setCurrentPage, itemsPerPage }) => {
-  // Separate admin and regular users
-  const adminUsers = users.filter(user => user.role === 'admin');
-  const regularUsers = users.filter(user => user.role !== 'admin');
+  // Separate into three groups
+  const adminUsers   = users.filter(user => user.role === 'admin');
+  const driverUsers  = users.filter(user => user.role === 'driver');
+  const regularUsers = users.filter(user => user.role !== 'admin' && user.role !== 'driver');
 
-  // Pagination for regular users only (admins always shown)
+  // Pagination for regular users only (admins & drivers always shown in full)
   const totalPages = Math.ceil(regularUsers.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -2141,39 +2519,41 @@ const UsersSection = ({ users, searchTerm, setSearchTerm, verificationFilter, se
   }, [currentPage]);
 
   // Get verification counts for filter badges
-  const verifiedCount = users.filter(user => user.isVerified).length;
+  const verifiedCount   = users.filter(user => user.isVerified).length;
   const unverifiedCount = users.filter(user => !user.isVerified).length;
+
+  const noResults = adminUsers.length === 0 && driverUsers.length === 0 && regularUsers.length === 0;
 
   return (
     <div className="p-4 sm:p-6">
       <div className="flex flex-col gap-3 sm:gap-4 mb-6">
-        <div>
-          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Users Management</h2>
-          <p className="text-xs sm:text-sm text-gray-600 mt-1">
-            {adminUsers.length} admin{adminUsers.length !== 1 ? 's' : ''} • {regularUsers.length} user{regularUsers.length !== 1 ? 's' : ''}
-            {verificationFilter && (
-              <span className="ml-2 text-blue-600">
-                • Filtered: {users.length} result{users.length !== 1 ? 's' : ''}
-              </span>
-            )}
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-gray-800">Users Management</h2>
+          <p className="text-xs text-gray-500 font-medium">
+            {adminUsers.length} admin{adminUsers.length !== 1 ? 's' : ''} · {driverUsers.length} driver{driverUsers.length !== 1 ? 's' : ''} · {regularUsers.length} user{regularUsers.length !== 1 ? 's' : ''}
           </p>
         </div>
         
         {/* Search and Filter Controls */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 bg-white"
+            />
+          </div>
           
           {/* Verification Filter */}
           <select
             value={verificationFilter}
             onChange={(e) => setVerificationFilter(e.target.value)}
-            className="px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 bg-white text-gray-700"
           >
             <option value="">All Users</option>
             <option value="verified">Verified Only ({verifiedCount})</option>
@@ -2190,13 +2570,8 @@ const UsersSection = ({ users, searchTerm, setSearchTerm, verificationFilter, se
           {searchTerm && (
             <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm">
               Search: "{searchTerm.length > 15 ? searchTerm.substring(0, 15) + '...' : searchTerm}"
-              <button
-                onClick={() => setSearchTerm('')}
-                className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button onClick={() => setSearchTerm('')} className="ml-1 hover:bg-blue-200 rounded-full p-0.5">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </span>
           )}
@@ -2204,28 +2579,16 @@ const UsersSection = ({ users, searchTerm, setSearchTerm, verificationFilter, se
           {verificationFilter && (
             <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm">
               Status: {verificationFilter === 'verified' ? 'Verified' : 'Unverified'}
-              <button
-                onClick={() => setVerificationFilter('')}
-                className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button onClick={() => setVerificationFilter('')} className="ml-1 hover:bg-blue-200 rounded-full p-0.5">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </span>
           )}
           
-          {(searchTerm || verificationFilter) && (
-            <button
-              onClick={() => {
-                setSearchTerm('');
-                setVerificationFilter('');
-              }}
-              className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 font-medium"
-            >
-              Clear All
-            </button>
-          )}
+          <button onClick={() => { setSearchTerm(''); setVerificationFilter(''); }}
+            className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 font-medium">
+            Clear All
+          </button>
         </div>
       )}
 
@@ -2238,88 +2601,82 @@ const UsersSection = ({ users, searchTerm, setSearchTerm, verificationFilter, se
           </div>
           <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No users found</h3>
           <p className="text-sm sm:text-base text-gray-500">
-            {searchTerm || verificationFilter 
-              ? 'No users match your current search and filter criteria.' 
-              : 'No users available in the system.'
-            }
+            {searchTerm || verificationFilter ? 'No users match your current search and filter criteria.' : 'No users available in the system.'}
           </p>
           {(searchTerm || verificationFilter) && (
-            <button
-              onClick={() => {
-                setSearchTerm('');
-                setVerificationFilter('');
-              }}
-              className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
+            <button onClick={() => { setSearchTerm(''); setVerificationFilter(''); }}
+              className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
               Clear Filters
             </button>
           )}
         </div>
       ) : (
         <div className="space-y-8">
-          {/* Admin Users Section */}
+
+          {/* ── Administrators ── */}
           {adminUsers.length > 0 && (
             <div>
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Administrators</h3>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
                 </div>
-                <span className="bg-purple-100 text-purple-800 text-xs font-medium px-2 py-1 rounded-full flex-shrink-0">
-                  {adminUsers.length}
-                </span>
+                <h3 className="text-base font-semibold text-gray-900">Administrators</h3>
+                <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-0.5 rounded-full">{adminUsers.length}</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {adminUsers.map((user) => (
-                  <UserCard
-                    key={user._id}
-                    user={user}
-                    onDelete={onDeleteUser}
-                    isLoading={isLoading}
-                    isAdmin={true}
-                  />
+                  <UserCard key={user._id} user={user} onDelete={onDeleteUser} isLoading={isLoading} role="admin" />
                 ))}
               </div>
             </div>
           )}
 
-          {/* Regular Users Section */}
+          {/* ── Drivers ── */}
+          {driverUsers.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 1h8" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7h3l2 6v3h-2m-4 0H9" />
+                  </svg>
+                </div>
+                <h3 className="text-base font-semibold text-gray-900">Drivers</h3>
+                <span className="bg-amber-100 text-amber-800 text-xs font-semibold px-2 py-0.5 rounded-full">{driverUsers.length}</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {driverUsers.map((user) => (
+                  <UserCard key={user._id} user={user} onDelete={onDeleteUser} isLoading={isLoading} role="driver" />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Regular Users ── */}
           {regularUsers.length > 0 && (
             <div>
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Regular Users</h3>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
                 </div>
-                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full flex-shrink-0">
-                  {regularUsers.length}
-                </span>
+                <h3 className="text-base font-semibold text-gray-900">Regular Users</h3>
+                <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full">{regularUsers.length}</span>
               </div>
 
-              {/* Results Summary */}
               {regularUsers.length > itemsPerPage && (
-                <div className="mb-4 text-sm text-gray-600">
-                  Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, regularUsers.length)} of {regularUsers.length} users
-                </div>
+                <p className="mb-3 text-sm text-gray-500">
+                  Showing {indexOfFirstItem + 1}–{Math.min(indexOfLastItem, regularUsers.length)} of {regularUsers.length}
+                </p>
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {currentRegularUsers.map((user) => (
-                  <UserCard
-                    key={user._id}
-                    user={user}
-                    onDelete={onDeleteUser}
-                    isLoading={isLoading}
-                    isAdmin={false}
-                  />
+                  <UserCard key={user._id} user={user} onDelete={onDeleteUser} isLoading={isLoading} role="user" />
                 ))}
               </div>
 
@@ -2327,97 +2684,53 @@ const UsersSection = ({ users, searchTerm, setSearchTerm, verificationFilter, se
               {totalPages > 1 && (
                 <div className="mt-6 pt-6 border-t border-gray-200">
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    {/* Page Info */}
                     <div className="text-sm text-gray-700">
-                      Page <span className="font-medium">{currentPage}</span> of{' '}
-                      <span className="font-medium">{totalPages}</span>
+                      Page <span className="font-medium">{currentPage}</span> of <span className="font-medium">{totalPages}</span>
                     </div>
-
-                    {/* Pagination Buttons */}
                     <div className="flex items-center gap-2">
-                      {/* Previous Button */}
-                      <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
+                      <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}
+                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                         Previous
                       </button>
-
-                      {/* Page Numbers */}
                       <div className="hidden sm:flex items-center gap-1">
                         {[...Array(totalPages)].map((_, index) => {
                           const pageNumber = index + 1;
-                          if (
-                            pageNumber === 1 ||
-                            pageNumber === totalPages ||
-                            (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                          ) {
+                          if (pageNumber === 1 || pageNumber === totalPages || (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
                             return (
-                              <button
-                                key={pageNumber}
-                                onClick={() => handlePageChange(pageNumber)}
+                              <button key={pageNumber} onClick={() => handlePageChange(pageNumber)}
                                 className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                  currentPage === pageNumber
-                                    ? 'bg-blue-600 text-white'
-                                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-                                }`}
-                              >
-                                {pageNumber}
-                              </button>
+                                  currentPage === pageNumber ? 'bg-indigo-600 text-white' : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                                }`}>{pageNumber}</button>
                             );
-                          } else if (
-                            pageNumber === currentPage - 2 ||
-                            pageNumber === currentPage + 2
-                          ) {
-                            return (
-                              <span key={pageNumber} className="px-2 text-gray-500">
-                                ...
-                              </span>
-                            );
+                          } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
+                            return <span key={pageNumber} className="px-2 text-gray-500">...</span>;
                           }
                           return null;
                         })}
                       </div>
-
-                      {/* Next Button */}
-                      <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
+                      <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}
+                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                         Next
                       </button>
                     </div>
-
-                    {/* Mobile Page Numbers */}
-                    <div className="sm:hidden text-sm text-gray-600">
-                      {currentPage} / {totalPages}
-                    </div>
+                    <div className="sm:hidden text-sm text-gray-600">{currentPage} / {totalPages}</div>
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* No Results Message for Filtered Results */}
-          {(searchTerm || verificationFilter) && adminUsers.length === 0 && regularUsers.length === 0 && (
+          {/* No match when filters active */}
+          {(searchTerm || verificationFilter) && noResults && (
             <div className="text-center py-8">
               <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <p className="text-gray-500 mb-3">
-                No users found matching your search and filter criteria
-              </p>
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setVerificationFilter('');
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
+              <p className="text-gray-500 mb-3">No users match your search and filter criteria</p>
+              <button onClick={() => { setSearchTerm(''); setVerificationFilter(''); }}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 Clear All Filters
               </button>
             </div>
@@ -2428,20 +2741,24 @@ const UsersSection = ({ users, searchTerm, setSearchTerm, verificationFilter, se
   );
 };
 
-// Enhanced User Card with Better Admin/User Distinction
-const UserCard = ({ user, onDelete, isLoading, isAdmin }) => {
+const UserCard = ({ user, onDelete, isLoading, isAdmin, role: roleProp }) => {
+  const role = roleProp || (isAdmin ? 'admin' : 'user');
+  const isAdminRole  = role === 'admin';
+  const isDriverRole = role === 'driver';
+
+  const styles = {
+    admin:  { card: 'border-purple-200 bg-gradient-to-br from-purple-50 to-white', avatar: 'bg-purple-100', initial: 'text-purple-600', badge: 'bg-purple-100 text-purple-800 border-purple-200' },
+    driver: { card: 'border-amber-200 bg-gradient-to-br from-amber-50 to-white',   avatar: 'bg-amber-100',  initial: 'text-amber-600',  badge: 'bg-amber-100 text-amber-800 border-amber-200'   },
+    user:   { card: 'border-gray-200 hover:border-gray-300',                        avatar: 'bg-blue-100',   initial: 'text-blue-600',   badge: 'bg-gray-100 text-gray-700 border-gray-200'      },
+  };
+  const s = styles[role] || styles.user;
+
   return (
-    <div className={`bg-white border rounded-xl p-5 hover:shadow-md transition-all duration-200 ${
-      isAdmin 
-        ? 'border-purple-200 bg-gradient-to-br from-purple-50 to-white' 
-        : 'border-gray-200 hover:border-gray-300'
-    }`}>
-      {/* Header with Avatar and Role Badge */}
+    <div className={`bg-white border rounded-xl p-5 hover:shadow-md transition-all duration-200 ${s.card}`}>
+      {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-            isAdmin ? 'bg-purple-100' : 'bg-blue-100'
-          }`}>
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${s.avatar}`}>
             {user.avatar ? (
               <img
                 src={user.avatar.startsWith('http') ? user.avatar : `${import.meta.env.VITE_API_URL}/${user.avatar}`}
@@ -2449,121 +2766,117 @@ const UserCard = ({ user, onDelete, isLoading, isAdmin }) => {
                 className="w-12 h-12 rounded-full object-cover"
               />
             ) : (
-              <span className={`font-semibold text-lg ${
-                isAdmin ? 'text-purple-600' : 'text-blue-600'
-              }`}>
+              <span className={`font-semibold text-lg ${s.initial}`}>
                 {user.name.charAt(0).toUpperCase()}
               </span>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-2 mb-1">
+            <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-gray-900 truncate">{user.name}</h3>
-              {isAdmin && (
-                <div className="flex items-center space-x-1">
-                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                </div>
+              {isAdminRole && (
+                <svg className="w-4 h-4 text-purple-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              )}
+              {isDriverRole && (
+                <svg className="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 1h8" />
+                </svg>
               )}
             </div>
             <p className="text-sm text-gray-600 truncate">{user.email}</p>
           </div>
         </div>
-        
-        {/* Role Badge */}
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          isAdmin 
-            ? 'bg-purple-100 text-purple-800 border border-purple-200' 
-            : 'bg-gray-100 text-gray-700 border border-gray-200'
-        }`}>
-          {isAdmin ? 'Admin' : 'User'}
+        <span className={`px-2 py-1 rounded-full text-xs font-medium border flex-shrink-0 ${s.badge}`}>
+          {isAdminRole ? 'Admin' : isDriverRole ? 'Driver' : 'User'}
         </span>
       </div>
 
-      {/* User Details */}
+      {/* Details */}
       <div className="space-y-3 mb-4">
-        {/* Verification Status */}
+        {/* Driver login hint */}
+        {isDriverRole && user.phone && (
+          <div className="bg-amber-50 rounded-lg px-3 py-2 border border-amber-100">
+            <p className="text-xs text-amber-700 font-medium mb-0.5">Login credentials</p>
+            <p className="text-xs text-amber-600 font-mono">{user.phone}@driver.nextdrive</p>
+            <p className="text-xs text-amber-600 font-mono">pw: {user.phone.slice(-6)}</p>
+          </div>
+        )}
+
+        {/* Verification */}
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600">Status</span>
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            user.isVerified 
-              ? 'bg-green-100 text-green-800 border border-green-200' 
-              : 'bg-red-100 text-red-800 border border-red-200'
+            user.isVerified ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'
           }`}>
-            {user.isVerified ? (
-              <div className="flex items-center space-x-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>Verified</span>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>Unverified</span>
-              </div>
-            )}
+            <div className="flex items-center space-x-1">
+              {user.isVerified ? (
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              ) : (
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              )}
+              <span>{user.isVerified ? 'Verified' : 'Unverified'}</span>
+            </div>
           </span>
         </div>
 
-        {/* Join Date */}
+        {/* Joined */}
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600">Joined</span>
           <span className="text-sm font-medium text-gray-900">
-            {new Date(user.createdAt).toLocaleString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true
-            })}
+            {new Date(user.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
           </span>
         </div>
 
-        {/* User ID */}
+        {/* ID */}
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600">User ID</span>
-          <span className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-1 rounded">
-            {user._id.slice(-8)}
-          </span>
+          <span className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-1 rounded">{user._id.slice(-8)}</span>
         </div>
       </div>
 
       {/* Actions */}
-      {!isAdmin && (
+      {role === 'user' && (
         <div className="pt-3 border-t border-gray-100">
           <button
             onClick={() => onDelete(user._id, user.name)}
             disabled={isLoading}
-            className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
-            <span>Delete User</span>
+            Delete User
           </button>
         </div>
       )}
 
-      {/* Admin Protection Message */}
-      {isAdmin && (
+      {isAdminRole && (
         <div className="pt-3 border-t border-purple-100">
-          <div className="flex items-center space-x-2 text-xs text-purple-600 bg-purple-50 px-3 py-2 rounded-lg">
+          <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-purple-50 text-purple-600">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            <span>Admin accounts are protected</span>
+            Admin accounts are protected
+          </div>
+        </div>
+      )}
+
+      {isDriverRole && (
+        <div className="pt-3 border-t border-amber-100">
+          <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-amber-50 text-amber-700">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Managed via Driver Management
           </div>
         </div>
       )}
     </div>
   );
 };
-
 // Simplified Tour Packages Section - Mobile Optimized
 const TourPackagesSection = ({ packages, searchTerm, setSearchTerm, onDeletePackage, onAddPackage, isLoading, currentPage, setCurrentPage, itemsPerPage }) => {
   // Pagination calculations

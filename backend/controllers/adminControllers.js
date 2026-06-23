@@ -191,6 +191,7 @@ export const getAllCarBookings = async (req, res) => {
     const bookings = await CarBooking.find()
       .populate('user', 'name email')
       .populate('assignedTo', 'name email')
+      .populate('assignedDriver', 'name phone carNumber carModel carType licenceType driverPhoto')
       .sort({ createdAt: -1 });
 
     res.json({
@@ -1363,7 +1364,8 @@ export const createOfflineCarBooking = async (req, res) => {
 
       // Extras
       specialRequests,
-      notes
+      notes,
+      assignedDriverId
     } = req.body;
 
     // Validation
@@ -1408,6 +1410,19 @@ export const createOfflineCarBooking = async (req, res) => {
       status: 'confirmed', // Offline bookings start as confirmed
       specialRequests: specialRequests?.trim() || ''
     };
+
+    // Assign driver if provided
+    if (assignedDriverId) {
+      try {
+        const { default: Driver } = await import('../models/Driver.js');
+        const driver = await Driver.findById(assignedDriverId);
+        if (driver) {
+          bookingData.assignedDriver = driver._id;
+          bookingData.driverDetails = { name: driver.name, phone: driver.phone, licenseNumber: driver.licenceType };
+          bookingData.vehicleDetails = { make: '', model: driver.carModel || '', plateNumber: driver.carNumber || '', color: '' };
+        }
+      } catch { /* skip if driver not found */ }
+    }
 
     // Selected cars for marriage bookings
     if (selectedCars && selectedCars.length > 0) {
@@ -1464,5 +1479,65 @@ export const createOfflineCarBooking = async (req, res) => {
       message: 'Failed to create offline booking',
       error: error.message
     });
+  }
+};
+
+// Assign or reassign a driver to a car booking (admin only)
+export const assignDriverToCarBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { driverId } = req.body; // null to unassign
+
+    const booking = await CarBooking.findById(id);
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+
+    if (booking.status === 'cancelled' || booking.status === 'completed') {
+      return res.status(400).json({ success: false, message: 'Cannot assign driver to a cancelled or completed booking' });
+    }
+
+    if (driverId) {
+      // Import Driver model
+      const { default: Driver } = await import('../models/Driver.js');
+      const driver = await Driver.findById(driverId);
+      if (!driver) {
+        return res.status(404).json({ success: false, message: 'Driver not found' });
+      }
+
+      // Assign driver and auto-populate driverDetails + vehicleDetails from Driver record
+      booking.assignedDriver = driver._id;
+      booking.driverDetails = {
+        name: driver.name,
+        phone: driver.phone,
+        licenseNumber: driver.licenceType // store licence type as reference
+      };
+      booking.vehicleDetails = {
+        make: driver.carModel ? driver.carModel.split(' ')[0] : '',
+        model: driver.carModel || '',
+        plateNumber: driver.carNumber || '',
+        color: ''
+      };
+    } else {
+      // Unassign driver
+      booking.assignedDriver = null;
+      booking.driverDetails = undefined;
+      booking.vehicleDetails = undefined;
+    }
+
+    await booking.save();
+    await booking.populate([
+      { path: 'user', select: 'name email' },
+      { path: 'assignedDriver', select: 'name phone carNumber carModel carType licenceType driverPhoto' }
+    ]);
+
+    res.json({
+      success: true,
+      message: driverId ? 'Driver assigned successfully' : 'Driver unassigned successfully',
+      booking
+    });
+  } catch (error) {
+    console.error('Assign driver error:', error);
+    res.status(500).json({ success: false, message: 'Failed to assign driver', error: error.message });
   }
 };

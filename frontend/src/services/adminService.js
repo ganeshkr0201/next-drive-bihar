@@ -273,6 +273,16 @@ class AdminService {
     }
   }
 
+  // Assign/unassign driver to a car booking
+  async assignDriverToCarBooking(bookingId, driverId) {
+    try {
+      const response = await api.put(`/admin/car-bookings/${bookingId}/driver`, { driverId });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   // Get WhatsApp confirmation link for a car booking
   async getCarBookingWhatsAppLink(bookingId) {
     try {

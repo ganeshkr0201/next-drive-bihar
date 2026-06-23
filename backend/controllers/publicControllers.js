@@ -716,6 +716,7 @@ export const userBookings = async (req, res) => {
         .populate('tourPackage', 'title duration pricing images')
         .sort({ createdAt: -1 }),
       CarBooking.find({ user: req.user._id })
+        .populate('assignedDriver', 'name phone carType carModel carNumber licenceType driverPhoto drivingExperience languagesKnown')
         .sort({ createdAt: -1 })
     ]);
 

@@ -1,5 +1,8 @@
 import { cloudinary } from '../config/cloudinary.js';
 import Driver from '../models/Driver.js';
+import User from '../models/User.js';
+import CarBooking from '../models/CarBooking.js';
+import bcrypt from 'bcrypt';
 
 // Helper: upload buffer to Cloudinary
 const uploadToCloudinary = (buffer, folder = 'nextdrive/drivers') => {
@@ -120,8 +123,38 @@ export const createDriver = async (req, res) => {
 
     const driver = new Driver(driverData);
     await driver.save();
-    await driver.populate('addedBy', 'name email');
 
+    // Auto-create a User account for the driver
+    // Email: <phone>@driver.nextdrive  |  Password: last 6 digits of phone
+    try {
+      const driverEmail = `${phone}@driver.nextdrive`;
+      const rawPassword = phone.slice(-6);
+      const hashedPassword = await bcrypt.hash(rawPassword, 10);
+
+      let driverUser = await User.findOne({ email: driverEmail });
+      if (!driverUser) {
+        driverUser = await User.create({
+          name,
+          email: driverEmail,
+          password: hashedPassword,
+          role: 'driver',
+          isVerified: true,
+          phone,
+        });
+      } else {
+        // Update name if driver was edited
+        driverUser.name = name;
+        await driverUser.save();
+      }
+
+      driver.userId = driverUser._id;
+      await driver.save();
+      console.log(`✅ Driver account: ${driverEmail} / pw: ${rawPassword}`);
+    } catch (userErr) {
+      console.error('⚠️ Could not auto-create driver user account:', userErr.message);
+    }
+
+    await driver.populate('addedBy', 'name email');
     res.status(201).json({ success: true, message: 'Driver created successfully', data: driver });
   } catch (error) {
     console.error('createDriver error:', error);
@@ -249,5 +282,146 @@ export const toggleDriverStatus = async (req, res) => {
   } catch (error) {
     console.error('toggleDriverStatus error:', error);
     res.status(500).json({ success: false, message: 'Failed to toggle driver status', error: error.message });
+  }
+};
+
+// ─── Driver Dashboard Endpoints ───────────────────────────────────────────────
+
+// GET /api/drivers/dashboard/me
+// Returns the Driver document linked to the logged-in driver user
+export const getMyDriverProfile = async (req, res) => {
+  try {
+    const driver = await Driver.findOne({ userId: req.user._id });
+    if (!driver) {
+      return res.status(404).json({ success: false, message: 'Driver profile not found' });
+    }
+    res.json({ success: true, data: driver });
+  } catch (error) {
+    console.error('getMyDriverProfile error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch driver profile', error: error.message });
+  }
+};
+
+// GET /api/drivers/dashboard/rides
+// Returns all car bookings where this driver is assigned
+export const getMyRides = async (req, res) => {
+  try {
+    const driver = await Driver.findOne({ userId: req.user._id });
+    if (!driver) {
+      return res.status(404).json({ success: false, message: 'Driver profile not found' });
+    }
+
+    const rides = await CarBooking.find({ assignedDriver: driver._id })
+      .populate('user', 'name email phone')
+      .sort({ pickupDate: 1 });
+
+    // Today's rides
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const todayRides = rides.filter(r => {
+      const d = new Date(r.pickupDate);
+      return d >= todayStart && d <= todayEnd;
+    });
+
+    // Stats
+    const stats = {
+      total:     rides.length,
+      pending:   rides.filter(r => r.status === 'pending').length,
+      confirmed: rides.filter(r => r.status === 'confirmed').length,
+      inProgress:rides.filter(r => r.status === 'in-progress').length,
+      completed: rides.filter(r => r.status === 'completed').length,
+      cancelled: rides.filter(r => r.status === 'cancelled').length,
+      today:     todayRides.length,
+    };
+
+    res.json({ success: true, data: { rides, todayRides, stats } });
+  } catch (error) {
+    console.error('getMyRides error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch rides', error: error.message });
+  }
+};
+
+// PATCH /api/drivers/dashboard/rides/:bookingId/complete
+// Driver can mark a confirmed/in-progress booking as completed
+export const markRideComplete = async (req, res) => {
+  try {
+    const driver = await Driver.findOne({ userId: req.user._id });
+    if (!driver) {
+      return res.status(404).json({ success: false, message: 'Driver profile not found' });
+    }
+
+    const booking = await CarBooking.findOne({
+      _id: req.params.bookingId,
+      assignedDriver: driver._id,
+    });
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found or not assigned to you' });
+    }
+
+    if (!['confirmed', 'in-progress'].includes(booking.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Only confirmed or in-progress bookings can be marked as completed',
+      });
+    }
+
+    booking.status = 'completed';
+    await booking.save();
+    await booking.populate('user', 'name email phone');
+
+    res.json({ success: true, message: 'Ride marked as completed', data: booking });
+  } catch (error) {
+    console.error('markRideComplete error:', error);
+    res.status(500).json({ success: false, message: 'Failed to complete ride', error: error.message });
+  }
+};
+
+// POST /api/drivers/migrate-accounts  (admin only)
+// One-time migration: create User accounts for drivers that don't have one yet
+export const migrateDriverAccounts = async (req, res) => {
+  try {
+    const drivers = await Driver.find({ userId: null });
+    const results = { created: 0, skipped: 0, errors: [] };
+
+    for (const driver of drivers) {
+      try {
+        const driverEmail = `${driver.phone}@driver.nextdrive`;
+        const rawPassword = driver.phone.slice(-6);
+        const hashedPassword = await bcrypt.hash(rawPassword, 10);
+
+        let driverUser = await User.findOne({ email: driverEmail });
+        if (!driverUser) {
+          driverUser = await User.create({
+            name: driver.name,
+            email: driverEmail,
+            password: hashedPassword,
+            role: 'driver',
+            isVerified: true,
+            phone: driver.phone,
+          });
+          results.created++;
+        } else {
+          results.skipped++;
+        }
+
+        driver.userId = driverUser._id;
+        await driver.save();
+      } catch (err) {
+        results.errors.push({ driver: driver.name, error: err.message });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Migration complete: ${results.created} created, ${results.skipped} already existed`,
+      results,
+    });
+  } catch (error) {
+    console.error('migrateDriverAccounts error:', error);
+    res.status(500).json({ success: false, message: 'Migration failed', error: error.message });
   }
 };

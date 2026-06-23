@@ -63,7 +63,6 @@ export const AuthProvider = ({ children }) => {
       throw error;
     }
   };
-
   const register = async (userData) => {
     try {
       const response = await authService.register(userData);
