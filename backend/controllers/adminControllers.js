@@ -1541,3 +1541,68 @@ export const assignDriverToCarBooking = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to assign driver', error: error.message });
   }
 };
+
+
+// PUT /admin/car-bookings/:id/offline  —  edit an offline/walk-in booking
+export const updateOfflineCarBooking = async (req, res) => {
+  try {
+    const booking = await CarBooking.findById(req.params.id);
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+    if (!booking.isOfflineBooking) {
+      return res.status(400).json({ success: false, message: 'Only offline/walk-in bookings can be edited this way' });
+    }
+
+    const {
+      customerName, customerPhone, customerEmail, customerWhatsapp,
+      tripType, carType, pickupLocation, dropoffLocation,
+      pickupDate, pickupTime, dropoffDate, dropoffTime,
+      numberOfPassengers, totalAmount, paidAmount, discount,
+      specialRequests, notes,
+    } = req.body;
+
+    // Customer details
+    if (customerName)    booking.offlineCustomer.name            = customerName.trim();
+    if (customerPhone)   booking.offlineCustomer.phone           = customerPhone.trim();
+    if (customerEmail !== undefined) booking.offlineCustomer.email = customerEmail.trim();
+    if (customerWhatsapp !== undefined)
+      booking.offlineCustomer.whatsappNumber = (customerWhatsapp || customerPhone || '').trim();
+
+    // Trip details
+    if (tripType)          booking.tripType          = tripType;
+    if (carType)           booking.carType           = carType;
+    if (pickupLocation)    booking.pickupLocation    = pickupLocation.trim();
+    if (dropoffLocation)   booking.dropoffLocation   = dropoffLocation.trim();
+    if (pickupDate)        booking.pickupDate        = new Date(pickupDate);
+    if (pickupTime !== undefined) booking.pickupTime = pickupTime;
+    if (dropoffDate)       booking.dropoffDate       = new Date(dropoffDate);
+    if (dropoffTime !== undefined) booking.dropoffTime = dropoffTime;
+    if (numberOfPassengers !== undefined) booking.numberOfPassengers = Number(numberOfPassengers);
+
+    // Pricing
+    if (totalAmount !== undefined) booking.totalAmount = Number(totalAmount);
+    if (paidAmount  !== undefined) booking.paidAmount  = Number(paidAmount);
+    if (discount    !== undefined) booking.discount    = Number(discount);
+
+    // Special requests
+    if (specialRequests !== undefined) booking.specialRequests = specialRequests.trim();
+
+    // Append a note if provided
+    if (notes?.trim()) {
+      booking.notes = booking.notes || [];
+      booking.notes.push({ content: notes.trim(), addedBy: req.user._id, addedAt: new Date() });
+    }
+
+    await booking.save();
+    await booking.populate([
+      { path: 'user', select: 'name email' },
+      { path: 'assignedDriver', select: 'name phone carNumber carModel carType licenceType driverPhoto' },
+    ]);
+
+    res.json({ success: true, message: 'Booking updated successfully', booking });
+  } catch (error) {
+    console.error('updateOfflineCarBooking error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update booking', error: error.message });
+  }
+};

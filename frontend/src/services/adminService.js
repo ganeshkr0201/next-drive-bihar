@@ -263,6 +263,16 @@ class AdminService {
     }
   }
 
+  // Edit offline/walk-in car booking details
+  async updateOfflineCarBooking(bookingId, data) {
+    try {
+      const response = await api.put(`/admin/car-bookings/${bookingId}/offline`, data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   // Create offline/walk-in car booking (admin)
   async createOfflineCarBooking(bookingData) {
     try {
