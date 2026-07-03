@@ -31,6 +31,9 @@ router.get('/car-bookings', adminControllers.getAllCarBookings);
 // Create offline/walk-in car booking (admin only)
 router.post('/car-bookings/offline', adminControllers.createOfflineCarBooking);
 
+// Edit offline/walk-in car booking details (admin only)
+router.put('/car-bookings/:id/offline', adminControllers.updateOfflineCarBooking);
+
 // Get all tour packages (no cache for admin - they need real-time data)
 router.get('/tour-packages', adminControllers.getAllTourPackages);
 

@@ -201,7 +201,7 @@ const AdminOfflineBooking = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-6 sticky top-0 z-40 shadow-sm">
+      <div className="bg-white border-b border-gray-200 px-4 py-6 shadow-sm">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Offline Booking</h1>
@@ -333,13 +333,14 @@ const AdminOfflineBooking = () => {
               <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Locations</h2>
             </div>
             <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-visible">
-              <InputField label="Pickup Location" required>
+              {/* Pickup */}
+              <InputField label="Pickup Location" required hint="Type a city/area or enter any custom address">
                 <div className="relative">
                   <input type="text" required value={form.pickupLocation}
                     onChange={e => handleLocationInput(e.target.value, 'source')}
                     onBlur={() => setTimeout(() => setShowSourceSug(false), 200)}
                     onFocus={() => form.pickupLocation.length >= 3 && setShowSourceSug(true)}
-                    className={inputCls} placeholder="Type city or area..." />
+                    className={inputCls} placeholder="City, area or full address..." />
                   {showSourceSug && sourceSuggestions.length > 0 && (
                     <ul className="absolute z-[100] top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl max-h-48 overflow-y-auto">
                       {sourceSuggestions.map((s, i) => (
@@ -351,15 +352,26 @@ const AdminOfflineBooking = () => {
                       ))}
                     </ul>
                   )}
+                  {/* Free-type indicator — shown when typed but no suggestions returned */}
+                  {form.pickupLocation.trim().length >= 3 && !showSourceSug && sourceSuggestions.length === 0 && (
+                    <p className="mt-1 text-xs text-emerald-600 flex items-center gap-1">
+                      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+                      </svg>
+                      Custom location — will be saved as entered (distance = N/A)
+                    </p>
+                  )}
                 </div>
               </InputField>
-              <InputField label="Drop Location" required>
+
+              {/* Drop */}
+              <InputField label="Drop Location" required hint="Type a city/area or enter any custom address">
                 <div className="relative">
                   <input type="text" required value={form.dropoffLocation}
                     onChange={e => handleLocationInput(e.target.value, 'dest')}
                     onBlur={() => setTimeout(() => setShowDestSug(false), 200)}
                     onFocus={() => form.dropoffLocation.length >= 3 && setShowDestSug(true)}
-                    className={inputCls} placeholder="Type city or area..." />
+                    className={inputCls} placeholder="City, area or full address..." />
                   {showDestSug && destSuggestions.length > 0 && (
                     <ul className="absolute z-[100] top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl max-h-48 overflow-y-auto">
                       {destSuggestions.map((s, i) => (
@@ -370,6 +382,14 @@ const AdminOfflineBooking = () => {
                         </li>
                       ))}
                     </ul>
+                  )}
+                  {form.dropoffLocation.trim().length >= 3 && !showDestSug && destSuggestions.length === 0 && (
+                    <p className="mt-1 text-xs text-emerald-600 flex items-center gap-1">
+                      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+                      </svg>
+                      Custom location — will be saved as entered (distance = N/A)
+                    </p>
                   )}
                 </div>
               </InputField>

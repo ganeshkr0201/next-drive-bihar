@@ -366,327 +366,177 @@ const AdminDashboard = () => {
     setCurrentPage(1);
   };
 
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Admin Dashboard</h1>
-              <p className="text-sm text-gray-500 mt-0.5">Welcome back, <span className="font-medium text-gray-700">{user?.name}</span></p>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* ── Top header ── */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <span className="text-sm font-bold text-gray-900">Admin Dashboard</span>
             </div>
-            <button
-              onClick={() => navigate('/admin/cars')}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm self-start sm:self-auto"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 1h8" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7h3l2 6v3h-2m-4 0H9" />
-              </svg>
-              Manage Cars
-            </button>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-400 hidden md:block">{user?.name}</span>
+              <a href="/admin/cars"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg transition-colors">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 1h8M15 7h3l2 6v3h-2m-4 0H9" />
+                </svg>
+                Manage Cars
+              </a>
+            </div>
           </div>
         </div>
+      </header>
 
-        {/* Navigation Tabs */}
-        <div className="mb-6">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <nav className="flex overflow-x-auto scrollbar-hide">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`relative flex items-center gap-1.5 px-3 sm:px-4 py-3 text-xs sm:text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors border-b-2 ${
-                    activeTab === tab.id
-                      ? 'border-indigo-600 text-indigo-600 bg-indigo-50/60'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="text-sm">{tab.icon}</span>
-                  <span className="hidden sm:inline">{tab.name}</span>
-                  <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
-                  {tab.badge > 0 && (
-                    <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full">
-                      {tab.badge}
-                    </span>
-                  )}
+      {/* ── Layout: sidebar + main ── */}
+      <div className="flex flex-1 max-w-screen-2xl mx-auto w-full">
+
+        {/* Sidebar — lg+ only */}
+        <aside className="hidden lg:flex flex-col w-52 xl:w-60 bg-white border-r border-gray-200 shrink-0 sticky top-14 max-h-[calc(100vh-56px)] overflow-y-auto">
+          <nav className="flex flex-col gap-0.5 p-3 pb-6">
+
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-3 pt-2 pb-1">Main</p>
+            {tabs.filter(t => ['overview','queries'].includes(t.id)).map(tab => (
+              <SidebarBtn key={tab.id} tab={tab} active={activeTab === tab.id} onClick={() => handleTabChange(tab.id)} />
+            ))}
+
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-3 pt-4 pb-1">Bookings</p>
+            {tabs.filter(t => ['tour-bookings','car-bookings','offline-booking'].includes(t.id)).map(tab => (
+              <SidebarBtn key={tab.id} tab={tab} active={activeTab === tab.id} onClick={() => handleTabChange(tab.id)} />
+            ))}
+
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-3 pt-4 pb-1">Manage</p>
+            {tabs.filter(t => ['users','tour-packages','add-package'].includes(t.id)).map(tab => (
+              <SidebarBtn key={tab.id} tab={tab} active={activeTab === tab.id} onClick={() => handleTabChange(tab.id)} />
+            ))}
+
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-3 pt-4 pb-1">Pages</p>
+            {[
+              { href: '/admin/drivers',         label: 'Drivers',         icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+              { href: '/admin/gallery',          label: 'Gallery',         icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' },
+              { href: '/admin/offline-booking',  label: 'Create Booking',  icon: 'M12 4v16m8-8H4' },
+            ].map(({ href, label, icon }) => (
+              <a key={href} href={href}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                <svg className="w-4 h-4 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icon} />
+                </svg>
+                {label}
+                <svg className="w-3 h-3 ml-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main content */}
+        <main className="flex-1 min-w-0 px-3 sm:px-4 lg:px-6 py-4 lg:py-5">
+
+          {/* Mobile tab bar */}
+          <div className="lg:hidden bg-white rounded-xl border border-gray-200 shadow-sm mb-4 overflow-hidden">
+            <div className="flex overflow-x-auto scrollbar-hide">
+              {tabs.filter(t => !['gallery','offline-booking','drivers'].includes(t.id)).map(tab => (
+                <button key={tab.id} onClick={() => handleTabChange(tab.id)}
+                  className={`flex items-center gap-1 px-3 py-3 text-xs font-medium whitespace-nowrap flex-shrink-0 border-b-2 transition-colors ${activeTab === tab.id ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}>
+                  <span>{tab.icon}</span>
+                  <span>{tab.name.split(' ')[0]}</span>
+                  {tab.badge > 0 && <span className="min-w-[14px] h-[14px] px-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{tab.badge}</span>}
                 </button>
               ))}
-            </nav>
+              {/* Mobile quick links */}
+              {[
+                { href: '/admin/drivers', label: '🚘 Drivers' },
+                { href: '/admin/gallery', label: '🖼️ Gallery' },
+                { href: '/admin/offline-booking', label: '📋 New Booking' },
+              ].map(({ href, label }) => (
+                <a key={href} href={href}
+                  className="flex items-center gap-1 px-3 py-3 text-xs font-medium whitespace-nowrap flex-shrink-0 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors">
+                  {label}
+                </a>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Content */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          {/* Content card */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="p-4 sm:p-6">
               <h2 className="text-base font-semibold text-gray-800 mb-4">Platform Overview</h2>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                <StatCard
-                  title="Total Users"
-                  value={users.length}
-                  icon="👥"
-                  color="blue"
-                  onClick={() => setActiveTab('users')}
-                />
-                <StatCard
-                  title="Queries"
-                  value={queries.length}
-                  badge={getPendingCount(queries)}
-                  icon="💬"
-                  color="green"
-                  onClick={() => setActiveTab('queries')}
-                />
-                <StatCard
-                  title="Tour Bookings"
-                  value={tourBookings.length}
-                  badge={getPendingCount(tourBookings)}
-                  icon="🎯"
-                  color="purple"
-                  onClick={() => setActiveTab('tour-bookings')}
-                />
-                <StatCard
-                  title="Car Bookings"
-                  value={carBookings.length}
-                  badge={getPendingCount(carBookings)}
-                  icon="🚗"
-                  color="orange"
-                  onClick={() => setActiveTab('car-bookings')}
-                />
+                <StatCard title="Total Users"    value={users.length}         icon="👥" color="blue"   onClick={() => setActiveTab('users')} />
+                <StatCard title="Queries"        value={queries.length}       badge={getPendingCount(queries)}      icon="💬" color="green"  onClick={() => setActiveTab('queries')} />
+                <StatCard title="Tour Bookings"  value={tourBookings.length}  badge={getPendingCount(tourBookings)} icon="🎯" color="purple" onClick={() => setActiveTab('tour-bookings')} />
+                <StatCard title="Car Bookings"   value={carBookings.length}   badge={getPendingCount(carBookings)}  icon="🚗" color="orange" onClick={() => setActiveTab('car-bookings')} />
               </div>
-
-              {/* Offline Bookings Row */}
               <div className="mt-3 sm:mt-4 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                <StatCard
-                  title="Offline / Walk-in"
-                  value={carBookings.filter(b => b.isOfflineBooking).length}
-                  badge={carBookings.filter(b => b.isOfflineBooking && b.status === 'pending').length || null}
-                  icon="📋"
-                  color="green"
-                  onClick={() => setActiveTab('offline-booking')}
-                />
-                <StatCard
-                  title="Online Car Bookings"
-                  value={carBookings.filter(b => !b.isOfflineBooking).length}
-                  badge={carBookings.filter(b => !b.isOfflineBooking && b.status === 'pending').length || null}
-                  icon="💻"
-                  color="blue"
-                  onClick={() => setActiveTab('car-bookings')}
-                />
-                <StatCard
-                  title="Tour Packages"
-                  value={Array.isArray(tourPackages) ? tourPackages.length : 0}
-                  icon="📦"
-                  color="purple"
-                  onClick={() => setActiveTab('tour-packages')}
-                />
+                <StatCard title="Offline / Walk-in"   value={carBookings.filter(b => b.isOfflineBooking).length}  badge={carBookings.filter(b => b.isOfflineBooking && b.status === 'pending').length || null}  icon="📋" color="green"  onClick={() => setActiveTab('offline-booking')} />
+                <StatCard title="Online Car Bookings" value={carBookings.filter(b => !b.isOfflineBooking).length} badge={carBookings.filter(b => !b.isOfflineBooking && b.status === 'pending').length || null} icon="💻" color="blue"   onClick={() => setActiveTab('car-bookings')} />
+                <StatCard title="Tour Packages"       value={Array.isArray(tourPackages) ? tourPackages.length : 0} icon="📦" color="purple" onClick={() => setActiveTab('tour-packages')} />
               </div>
             </div>
           )}
-
           {/* Queries Tab */}
           {activeTab === 'queries' && (
-            <QueriesSection
-              queries={getFilteredData(queries, 'queries')}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              queryResponses={queryResponses}
-              setQueryResponses={setQueryResponses}
-              onRespond={handleRespondToQuery}
-              isLoading={isLoading}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              itemsPerPage={itemsPerPage}
-            />
+            <QueriesSection queries={getFilteredData(queries, 'queries')} searchTerm={searchTerm} setSearchTerm={setSearchTerm} statusFilter={statusFilter} setStatusFilter={setStatusFilter} queryResponses={queryResponses} setQueryResponses={setQueryResponses} onRespond={handleRespondToQuery} isLoading={isLoading} currentPage={currentPage} setCurrentPage={setCurrentPage} itemsPerPage={itemsPerPage} />
           )}
-
           {/* Tour Bookings Tab */}
           {activeTab === 'tour-bookings' && (
-            <BookingsSection
-              bookings={getFilteredData(tourBookings, 'bookings')}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              onStatusUpdate={handleBookingStatusUpdate}
-              isLoading={isLoading}
-              type="tour"
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              itemsPerPage={itemsPerPage}
-            />
+            <BookingsSection bookings={getFilteredData(tourBookings, 'bookings')} searchTerm={searchTerm} setSearchTerm={setSearchTerm} statusFilter={statusFilter} setStatusFilter={setStatusFilter} onStatusUpdate={handleBookingStatusUpdate} isLoading={isLoading} type="tour" currentPage={currentPage} setCurrentPage={setCurrentPage} itemsPerPage={itemsPerPage} />
           )}
-
           {/* Car Bookings Tab */}
           {activeTab === 'car-bookings' && (
-            <CarBookingsSplitSection
-              onlineBookings={getFilteredData(carBookings.filter(b => !b.isOfflineBooking), 'bookings')}
-              offlineBookings={getFilteredData(carBookings.filter(b => b.isOfflineBooking), 'bookings')}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              onStatusUpdate={handleBookingStatusUpdate}
-              onRefetch={refetchCarBookings}
-              isLoading={isLoading}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              itemsPerPage={itemsPerPage}
-            />
+            <CarBookingsSplitSection onlineBookings={getFilteredData(carBookings.filter(b => !b.isOfflineBooking), 'bookings')} offlineBookings={getFilteredData(carBookings.filter(b => b.isOfflineBooking), 'bookings')} searchTerm={searchTerm} setSearchTerm={setSearchTerm} statusFilter={statusFilter} setStatusFilter={setStatusFilter} onStatusUpdate={handleBookingStatusUpdate} onRefetch={refetchCarBookings} isLoading={isLoading} currentPage={currentPage} setCurrentPage={setCurrentPage} itemsPerPage={itemsPerPage} />
           )}
-
           {/* Users Tab */}
           {activeTab === 'users' && (
-            <UsersSection
-              users={getFilteredData(users, 'users')}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              verificationFilter={verificationFilter}
-              setVerificationFilter={setVerificationFilter}
-              onDeleteUser={handleDeleteUser}
-              isLoading={isLoading}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              itemsPerPage={10}
-            />
+            <UsersSection users={getFilteredData(users, 'users')} searchTerm={searchTerm} setSearchTerm={setSearchTerm} verificationFilter={verificationFilter} setVerificationFilter={setVerificationFilter} onDeleteUser={handleDeleteUser} isLoading={isLoading} currentPage={currentPage} setCurrentPage={setCurrentPage} itemsPerPage={10} />
           )}
-
           {/* Tour Packages Tab */}
           {activeTab === 'tour-packages' && (
-            <TourPackagesSection
-              packages={getFilteredData(tourPackages, 'packages')}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              onDeletePackage={handleDeleteTourPackage}
-              onAddPackage={() => setActiveTab('add-package')}
-              isLoading={isLoading}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              itemsPerPage={12}
-            />
+            <TourPackagesSection packages={getFilteredData(tourPackages, 'packages')} searchTerm={searchTerm} setSearchTerm={setSearchTerm} onDeletePackage={handleDeleteTourPackage} onAddPackage={() => setActiveTab('add-package')} isLoading={isLoading} currentPage={currentPage} setCurrentPage={setCurrentPage} itemsPerPage={12} />
           )}
-
           {/* Add Package Tab */}
           {activeTab === 'add-package' && (
-            <AddPackageSection
-              form={tourPackageForm}
-              setForm={setTourPackageForm}
-              onSubmit={handleTourPackageSubmit}
-              onImageChange={handleImageChange}
-              isLoading={isLoading}
-            />
+            <AddPackageSection form={tourPackageForm} setForm={setTourPackageForm} onSubmit={handleTourPackageSubmit} onImageChange={handleImageChange} isLoading={isLoading} />
           )}
-
-          {/* Gallery Tab */}
-          {activeTab === 'gallery' && (
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h2 className="text-base font-semibold text-gray-800">Gallery Management</h2>
-                  <p className="text-sm text-gray-500 mt-0.5">Upload and manage images for all categories</p>
-                </div>
-                <button
-                  onClick={() => navigate('/admin/gallery')}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  Open Gallery
-                </button>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-8 text-center border border-dashed border-gray-300">
-                <div className="text-5xl mb-3">🖼️</div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-1">Gallery Manager</h3>
-                <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-                  Upload and manage images for car rentals, marriage bookings, tour packages, and more.
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto">
-                  {[['🚗','Car Images'],['💒','Marriage Cars'],['🏛️','Tour Places'],['📸','Other']].map(([icon, label]) => (
-                    <div key={label} className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
-                      <div className="text-2xl mb-1">{icon}</div>
-                      <p className="text-xs font-medium text-gray-600">{label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Offline Booking Tab */}
+          {/* Offline Booking placeholder */}
           {activeTab === 'offline-booking' && (
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h2 className="text-base font-semibold text-gray-800">Offline / Walk-in Bookings</h2>
-                  <p className="text-sm text-gray-500 mt-0.5">Create bookings for WhatsApp or walk-in customers</p>
-                </div>
-                <button
-                  onClick={() => navigate('/admin/offline-booking')}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Create Booking
-                </button>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-8 text-center border border-dashed border-gray-300">
-                <div className="text-5xl mb-3">📋</div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-1">Offline Booking Manager</h3>
-                <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-                  Create bookings for customers who book via WhatsApp or walk-in. No customer account required.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-2xl mx-auto">
-                  {[['📱','WhatsApp Booking','Customer books via WhatsApp. Admin enters details and sends confirmation.'],['🚶','Walk-in Booking','Customer walks in. Admin creates booking instantly with all trip details.'],['💬','Auto WhatsApp Msg','Confirmation message with all details is auto-generated for WhatsApp.']].map(([icon, title, desc]) => (
-                    <div key={title} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm text-left">
-                      <div className="text-2xl mb-2">{icon}</div>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-1">{title}</h4>
-                      <p className="text-xs text-gray-500">{desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <div className="p-6 text-center">
+              <div className="text-4xl mb-3">📋</div>
+              <h3 className="text-base font-semibold text-gray-800 mb-2">Offline / Walk-in Bookings</h3>
+              <p className="text-sm text-gray-500 mb-4">Create bookings for WhatsApp or walk-in customers.</p>
+              <a href="/admin/offline-booking" className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors">
+                Open Booking Tool
+              </a>
             </div>
           )}
-
-          {/* Drivers Tab */}
-          {activeTab === 'drivers' && (
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h2 className="text-base font-semibold text-gray-800">Driver Management</h2>
-                  <p className="text-sm text-gray-500 mt-0.5">Add and manage drivers for bookings</p>
-                </div>
-                <button
-                  onClick={() => navigate('/admin/drivers')}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  Manage Drivers
-                </button>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-8 text-center border border-dashed border-gray-300">
-                <div className="text-5xl mb-3">🚘</div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-1">Driver Fleet</h3>
-                <p className="text-sm text-gray-500 max-w-md mx-auto">
-                  Add drivers with their licence details, vehicle information, and document photos. Manage availability and assign to bookings.
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        </main>
       </div>
     </div>
   );
 };
+
+// ── SidebarBtn helper ────────────────────────────────────────────────────────
+const SidebarBtn = ({ tab, active, onClick }) => (
+  <button onClick={onClick}
+    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${active ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
+    <span className="text-base w-5 text-center flex-shrink-0">{tab.icon}</span>
+    <span className="flex-1 truncate">{tab.name}</span>
+    {tab.badge > 0 && <span className="ml-auto min-w-[20px] h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{tab.badge}</span>}
+  </button>
+);
+
 
 // Simplified StatCard Component
 const StatCard = ({ title, value, badge, icon, color, onClick }) => {
@@ -1722,6 +1572,44 @@ const BookingCard = ({ booking, onStatusUpdate, onRefetch, isLoading, type }) =>
   const [selectedDriverId, setSelectedDriverId] = useState(booking.assignedDriver?._id || '');
   const [driverAssigning, setDriverAssigning] = useState(false);
 
+  // Offline booking edit state
+  const [showEditPanel, setShowEditPanel] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editForm, setEditForm] = useState({
+    customerName:     booking.offlineCustomer?.name         || '',
+    customerPhone:    booking.offlineCustomer?.phone        || '',
+    customerEmail:    booking.offlineCustomer?.email        || '',
+    customerWhatsapp: booking.offlineCustomer?.whatsappNumber || '',
+    tripType:         booking.tripType      || 'one-way',
+    carType:          booking.carType       || 'Sedan',
+    pickupLocation:   booking.pickupLocation  || '',
+    dropoffLocation:  booking.dropoffLocation || '',
+    pickupDate:       booking.pickupDate ? new Date(booking.pickupDate).toISOString().slice(0,10) : '',
+    pickupTime:       booking.pickupTime    || '',
+    dropoffDate:      booking.dropoffDate ? new Date(booking.dropoffDate).toISOString().slice(0,10) : '',
+    dropoffTime:      booking.dropoffTime   || '',
+    numberOfPassengers: booking.numberOfPassengers ?? 1,
+    totalAmount:      booking.totalAmount   || 0,
+    paidAmount:       booking.paidAmount    || 0,
+    discount:         booking.discount      || 0,
+    specialRequests:  booking.specialRequests || '',
+  });
+
+  const handleEditSave = async () => {
+    setEditSaving(true);
+    try {
+      await adminService.updateOfflineCarBooking(booking._id, editForm);
+      setShowEditPanel(false);
+      onRefetch();
+    } catch (err) {
+      alert(err.message || 'Failed to save changes');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const ef = (field) => (e) => setEditForm(prev => ({ ...prev, [field]: e.target.value }));
+
   const loadDrivers = async () => {
     if (availableDrivers.length > 0) return;
     try {
@@ -2184,11 +2072,24 @@ const BookingCard = ({ booking, onStatusUpdate, onRefetch, isLoading, type }) =>
             </div>
           )}
           {booking.isOfflineBooking && (
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Booking Type</p>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-semibold rounded-full border border-orange-200">
-                Offline / Walk-in
-              </span>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Booking Type</p>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-semibold rounded-full border border-orange-200">
+                  Offline / Walk-in
+                </span>
+              </div>
+              {booking.status !== 'cancelled' && booking.status !== 'completed' && (
+                <button
+                  onClick={() => setShowEditPanel(p => !p)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  {showEditPanel ? 'Cancel Edit' : 'Edit Booking'}
+                </button>
+              )}
             </div>
           )}
 
@@ -2290,89 +2191,256 @@ const BookingCard = ({ booking, onStatusUpdate, onRefetch, isLoading, type }) =>
         </div>
       </div>
 
+      {/* Offline Booking Edit Panel */}
+      {booking.isOfflineBooking && showEditPanel && (
+        <div className="mt-4 rounded-xl border border-indigo-200 overflow-hidden">
+          <div className="px-4 py-3 bg-indigo-50 border-b border-indigo-100 flex items-center justify-between">
+            <p className="text-sm font-semibold text-indigo-900">Edit Booking Details</p>
+            <span className="text-xs text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">Walk-in / Offline</span>
+          </div>
+          <div className="p-4 bg-white space-y-4">
+            {/* Customer Details */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Customer Details</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Customer Name *</label>
+                  <input value={editForm.customerName} onChange={ef('customerName')} placeholder="Full name"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Phone *</label>
+                  <input value={editForm.customerPhone} onChange={ef('customerPhone')} placeholder="10-digit phone"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">WhatsApp Number</label>
+                  <input value={editForm.customerWhatsapp} onChange={ef('customerWhatsapp')} placeholder="WhatsApp number"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Email</label>
+                  <input value={editForm.customerEmail} onChange={ef('customerEmail')} placeholder="Email address" type="email"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none" />
+                </div>
+              </div>
+            </div>
+
+            {/* Trip Details */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Trip Details</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Trip Type</label>
+                  <select value={editForm.tripType} onChange={ef('tripType')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none bg-white">
+                    {['one-way','round-trip','outstation','marriage','monthly'].map(t => (
+                      <option key={t} value={t}>{t.replace('-',' ').replace(/\b\w/g,c=>c.toUpperCase())}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Car Type</label>
+                  <select value={editForm.carType} onChange={ef('carType')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none bg-white">
+                    {['Sedan','SUV','Hatchback','Luxury','Tempo Traveller','Bus'].map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Pickup Location *</label>
+                  <input value={editForm.pickupLocation} onChange={ef('pickupLocation')} placeholder="Pickup address"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Drop-off Location *</label>
+                  <input value={editForm.dropoffLocation} onChange={ef('dropoffLocation')} placeholder="Drop address"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Pickup Date</label>
+                  <input type="date" value={editForm.pickupDate} onChange={ef('pickupDate')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Pickup Time</label>
+                  <input type="time" value={editForm.pickupTime} onChange={ef('pickupTime')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Drop-off Date</label>
+                  <input type="date" value={editForm.dropoffDate} onChange={ef('dropoffDate')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Drop-off Time</label>
+                  <input type="time" value={editForm.dropoffTime} onChange={ef('dropoffTime')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Passengers</label>
+                  <input type="number" min="1" value={editForm.numberOfPassengers} onChange={ef('numberOfPassengers')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none" />
+                </div>
+              </div>
+            </div>
+
+            {/* Pricing */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Pricing</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Total Amount (₹) *</label>
+                  <input type="number" min="0" value={editForm.totalAmount} onChange={ef('totalAmount')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Paid Amount (₹)</label>
+                  <input type="number" min="0" value={editForm.paidAmount} onChange={ef('paidAmount')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Discount (₹)</label>
+                  <input type="number" min="0" value={editForm.discount} onChange={ef('discount')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none" />
+                </div>
+              </div>
+            </div>
+
+            {/* Special Requests */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Special Requests</label>
+              <textarea rows={2} value={editForm.specialRequests} onChange={ef('specialRequests')}
+                placeholder="Any special instructions..."
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none resize-none" />
+            </div>
+
+            {/* Save / Cancel */}
+            <div className="flex gap-2 pt-1 border-t border-gray-100">
+              <button onClick={handleEditSave} disabled={editSaving}
+                className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg disabled:opacity-50 transition-colors">
+                {editSaving ? 'Saving…' : 'Save Changes'}
+              </button>
+              <button onClick={() => setShowEditPanel(false)}
+                className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-600 border border-gray-300 text-sm font-medium rounded-lg transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Driver Assignment Panel — shown for car bookings that are not cancelled/completed */}
       {isCarBooking && booking.status !== 'cancelled' && booking.status !== 'completed' && (
         <div className="mt-4 rounded-xl border border-gray-200 overflow-hidden">
-          {/* Assigned Driver Status */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
+          {/* Assigned Driver Status — stacks on mobile */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 bg-gray-50 border-b border-gray-100 gap-2">
+            {/* Driver info row */}
             <div className="flex items-center gap-2 min-w-0">
               <div className={`w-2 h-2 rounded-full flex-shrink-0 ${booking.assignedDriver ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
               {booking.assignedDriver ? (
-                <span className="text-sm font-medium text-gray-800 truncate">
-                  <span className="font-semibold">{booking.assignedDriver.name}</span>
-                  <span className="text-gray-500 mx-1">·</span>
-                  <span className="text-gray-600">{booking.assignedDriver.phone}</span>
+                <div className="min-w-0">
+                  <span className="text-sm font-semibold text-gray-900">{booking.assignedDriver.name}</span>
+                  <span className="text-gray-400 mx-1">·</span>
+                  <span className="text-sm text-gray-600">{booking.assignedDriver.phone}</span>
                   {booking.assignedDriver.carNumber && (
                     <><span className="text-gray-400 mx-1">·</span><span className="font-mono text-xs text-indigo-700">{booking.assignedDriver.carNumber}</span></>
                   )}
-                </span>
+                </div>
               ) : (
                 <span className="text-sm text-amber-700 font-medium">No driver assigned yet</span>
               )}
             </div>
-            <div className="flex items-center gap-2 ml-3 flex-shrink-0">
-              {/* WhatsApp driver-assigned message — only visible when a driver IS assigned */}
+            {/* Action buttons — wrap on mobile */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Notify Customer */}
               {booking.assignedDriver && (() => {
                 const customerPhone = (() => {
-                  // Online booking: extract from notes
                   if (!booking.isOfflineBooking && booking.notes?.length) {
-                    try {
-                      const d = JSON.parse(booking.notes[0].content);
-                      return (d.contactNumber || '').replace(/\D/g, '');
-                    } catch { return ''; }
+                    try { const d = JSON.parse(booking.notes[0].content); return (d.contactNumber || '').replace(/\D/g, ''); } catch { return ''; }
                   }
-                  // Offline booking: use offlineCustomer phone / whatsapp
                   return (booking.offlineCustomer?.whatsappNumber || booking.offlineCustomer?.phone || '').replace(/\D/g, '');
                 })();
-
-                const helpline = import.meta.env.VITE_HELPLINE_NUMBER || '9999999999';
+                const helpline    = import.meta.env.VITE_HELPLINE_NUMBER || '9999999999';
                 const driverName  = booking.assignedDriver.name;
                 const driverPhone = booking.assignedDriver.phone;
                 const carNumber   = booking.assignedDriver.carNumber || '';
                 const carModel    = booking.assignedDriver.carModel  || '';
-
                 const lines = [
-                  `*Driver Assigned - NextDrive Bihar*`,
-                  ` `,
-                  `Hello! Your driver has been assigned for your booking *#${booking.bookingReference}*.`,
-                  ` `,
-                  `*Driver:* ${driverName}`,
-                  `*Phone:* ${driverPhone}`,
+                  `*Driver Assigned - NextDrive Bihar*`, ` `,
+                  `Hello! Your driver has been assigned for your booking *#${booking.bookingReference}*.`, ` `,
+                  `*Driver:* ${driverName}`, `*Phone:* ${driverPhone}`,
                   carModel  ? `*Vehicle:* ${carModel}`  : null,
-                  carNumber ? `*Plate No:* ${carNumber}` : null,
-                  ` `,
+                  carNumber ? `*Plate No:* ${carNumber}` : null, ` `,
                   `For any assistance, please contact our helpline:`,
-                  `*Helpline:* +91 ${helpline}`,
-                  ` `,
+                  `*Helpline:* +91 ${helpline}`, ` `,
                   `Thank you for choosing NextDrive Bihar!`,
                 ].filter(l => l !== null);
                 const message = lines.join('\n');
-
                 const waLink = customerPhone
                   ? `https://wa.me/91${customerPhone}?text=${encodeURIComponent(message)}`
                   : `https://wa.me/?text=${encodeURIComponent(message)}`;
-
                 return (
-                  <a
-                    href={waLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-[#25D366] hover:bg-[#1ebe5d] rounded-md transition-colors"
-                    title="Send driver assigned WhatsApp message to customer"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                  <a href={waLink} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-[#25D366] hover:bg-[#1ebe5d] rounded-lg transition-colors"
+                    title="Send driver assigned WhatsApp message to customer">
+                    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.101 1.514 5.835L.036 23.5l5.823-1.527A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.847 0-3.574-.5-5.063-1.371l-.363-.215-3.754.984.998-3.648-.237-.375A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
                     </svg>
-                    Notify Customer
+                    <span>Notify Customer</span>
                   </a>
                 );
               })()}
-              <button
-                type="button"
-                onClick={() => { setShowDriverPanel(p => !p); loadDrivers(); }}
-                className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+              {/* Notify Driver */}
+              {booking.assignedDriver && (() => {
+                const d = booking.assignedDriver;
+                const driverWaNumber = (d.phone || '').replace(/\D/g, '');
+                const pickup  = booking.pickupLocation  || '';
+                const dropoff = booking.dropoffLocation || '';
+                const pickupDateStr = booking.pickupDate
+                  ? new Date(booking.pickupDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+                const pickupTimeStr = booking.pickupTime || '';
+                const customerName  = booking.isOfflineBooking
+                  ? (booking.offlineCustomer?.name || 'Customer') : (booking.user?.name || 'Customer');
+                const customerPhone = booking.isOfflineBooking
+                  ? (booking.offlineCustomer?.whatsappNumber || booking.offlineCustomer?.phone || '')
+                  : (() => { try { const n = booking.notes?.length ? JSON.parse(booking.notes[0].content) : {}; return n.contactNumber || ''; } catch { return ''; } })();
+                const driverLines = [
+                  `*New Booking - NextDrive Bihar*`, ` `,
+                  `Hello ${d.name}, you have been assigned a new booking.`, ` `,
+                  `*Booking ID:* #${booking.bookingReference}`,
+                  `*Car Type:* ${booking.carType}`,
+                  booking.tripType ? `*Trip Type:* ${booking.tripType.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase())}` : null, ` `,
+                  `*Customer:* ${customerName}`,
+                  customerPhone ? `*Customer Phone:* ${customerPhone}` : null, ` `,
+                  `*Pickup:* ${pickup}`, `*Drop-off:* ${dropoff}`,
+                  pickupDateStr ? `*Date:* ${pickupDateStr}` : null,
+                  pickupTimeStr ? `*Time:* ${pickupTimeStr}` : null, ` `,
+                  `Please be ready on time.`,
+                  `For any queries contact NextDrive Bihar helpline: +91 ${import.meta.env.VITE_HELPLINE_NUMBER || '9999999999'}`,
+                ].filter(l => l !== null);
+                const driverMsg = driverLines.join('\n');
+                const driverWaLink = driverWaNumber
+                  ? `https://wa.me/91${driverWaNumber}?text=${encodeURIComponent(driverMsg)}`
+                  : `https://wa.me/?text=${encodeURIComponent(driverMsg)}`;
+                return (
+                  <a href={driverWaLink} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                    title="Send booking details to driver via WhatsApp">
+                    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.101 1.514 5.835L.036 23.5l5.823-1.527A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.847 0-3.574-.5-5.063-1.371l-.363-.215-3.754.984.998-3.648-.237-.375A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+                    </svg>
+                    <span>Notify Driver</span>
+                  </a>
+                );
+              })()}
+
+              {/* Change / Assign Driver */}
+              <button type="button" onClick={() => { setShowDriverPanel(p => !p); loadDrivers(); }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors">
+                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
                 {booking.assignedDriver ? 'Change' : 'Assign'}
@@ -2420,11 +2488,11 @@ const BookingCard = ({ booking, onStatusUpdate, onRefetch, isLoading, type }) =>
 
       {/* Admin Actions */}
       {booking.status === 'pending' && (
-        <div className="flex flex-wrap items-center gap-2 pt-4 mt-2 border-t border-gray-100">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 pt-4 mt-2 border-t border-gray-100">
           <button
             onClick={() => handleStatusUpdate('confirmed')}
             disabled={isLoading}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -2434,7 +2502,7 @@ const BookingCard = ({ booking, onStatusUpdate, onRefetch, isLoading, type }) =>
           <button
             onClick={() => handleStatusUpdate('cancelled')}
             disabled={isLoading}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 text-sm font-medium bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -2445,7 +2513,7 @@ const BookingCard = ({ booking, onStatusUpdate, onRefetch, isLoading, type }) =>
             <button
               onClick={handleWhatsAppConfirm}
               disabled={whatsappLoading}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#25D366] hover:bg-[#1ebe5d] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              className="col-span-2 sm:col-span-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 text-sm font-medium bg-[#25D366] hover:bg-[#1ebe5d] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.101 1.514 5.835L.036 23.5l5.823-1.527A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.847 0-3.574-.5-5.063-1.371l-.363-.215-3.754.984.998-3.648-.237-.375A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
@@ -2457,11 +2525,11 @@ const BookingCard = ({ booking, onStatusUpdate, onRefetch, isLoading, type }) =>
       )}
 
       {booking.status === 'confirmed' && (
-        <div className="flex flex-wrap items-center gap-2 pt-4 mt-2 border-t border-gray-100">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 pt-4 mt-2 border-t border-gray-100">
           <button
             onClick={() => handleStatusUpdate('completed')}
             disabled={isLoading}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -2471,7 +2539,7 @@ const BookingCard = ({ booking, onStatusUpdate, onRefetch, isLoading, type }) =>
           <button
             onClick={() => handleStatusUpdate('cancelled')}
             disabled={isLoading}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 text-sm font-medium bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -2482,7 +2550,7 @@ const BookingCard = ({ booking, onStatusUpdate, onRefetch, isLoading, type }) =>
             <button
               onClick={handleWhatsAppConfirm}
               disabled={whatsappLoading}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#25D366] hover:bg-[#1ebe5d] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              className="col-span-2 sm:col-span-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 text-sm font-medium bg-[#25D366] hover:bg-[#1ebe5d] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.101 1.514 5.835L.036 23.5l5.823-1.527A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.847 0-3.574-.5-5.063-1.371l-.363-.215-3.754.984.998-3.648-.237-.375A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>

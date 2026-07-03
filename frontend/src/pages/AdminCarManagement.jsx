@@ -406,7 +406,7 @@ const AdminCarManagement = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto backdrop-blur-sm">
           <div className="bg-gradient-to-br from-slate-50 via-white to-blue-50 rounded-2xl max-w-4xl w-full my-4 sm:my-8 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200">
             {/* Modal Header with Gradient */}
-            <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-4 sm:p-6 sticky top-0 z-10">
+            <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-4 sm:p-6">
               <div className="flex justify-between items-start gap-3">
                 <div className="flex-1 min-w-0">
                   <h2 className="text-xl sm:text-2xl font-bold mb-2 flex items-center">
