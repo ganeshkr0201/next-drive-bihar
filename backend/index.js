@@ -134,15 +134,13 @@ process.on('SIGINT', async () => {
     process.exit(0);
 });
 
-// Initialize services and start server
-const startServer = async () => {
-    await initializeServices();
-    
-    app.listen(PORT, "0.0.0.0", () => {
-        console.log(`🚀 Server listening on port ${PORT}`);
-        console.log(`🌐 Client URL: ${CLIENT_URL}`);
-        console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
-    });
-};
+// Start server immediately — services initialize in background (non-blocking)
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀 Server listening on port ${PORT}`);
+    console.log(`🌐 Client URL: ${CLIENT_URL}`);
+    console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
+});
 
-startServer().catch(console.error);
+initializeServices().catch(err => {
+    console.error("Service init failed:", err);
+});
