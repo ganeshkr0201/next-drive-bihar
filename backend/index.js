@@ -138,9 +138,10 @@ process.on('SIGINT', async () => {
 const startServer = async () => {
     await initializeServices();
     
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
+        console.log(`🚀 Server listening on port ${PORT}`);
         console.log(`🌐 Client URL: ${CLIENT_URL}`);
-        console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
     });
 };
 
