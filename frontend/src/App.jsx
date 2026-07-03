@@ -31,6 +31,8 @@ import Gallery from './pages/Gallery';
 import AdminGallery from './pages/AdminGallery';
 import AdminOfflineBooking from './pages/AdminOfflineBooking';
 import AdminDriverManagement from './pages/AdminDriverManagement';
+import AdminDriverList from './pages/AdminDriverList';
+import AdminDriverForm from './pages/AdminDriverForm';
 import DriverDashboard from './pages/DriverDashboard';
 import DriverProtectedRoute from './components/DriverProtectedRoute';
 
@@ -152,7 +154,15 @@ function App() {
                 path="/admin/drivers" 
                 element={
                   <AdminProtectedRoute>
-                    <AdminDriverManagement />
+                    <AdminDriverList />
+                  </AdminProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/drivers/add" 
+                element={
+                  <AdminProtectedRoute>
+                    <AdminDriverForm />
                   </AdminProtectedRoute>
                 } 
               />

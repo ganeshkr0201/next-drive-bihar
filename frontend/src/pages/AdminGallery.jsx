@@ -1,489 +1,318 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   getAdminGalleryImages,
   uploadGalleryImage,
   updateGalleryImage,
-  deleteGalleryImage
+  deleteGalleryImage,
 } from '../services/galleryService';
 import { useToast } from '../context/ToastContext';
 
+const CATS = [
+  { value: 'all',      label: 'All',      icon: '🖼️' },
+  { value: 'car',      label: 'Cars',     icon: '🚗' },
+  { value: 'marriage', label: 'Marriage', icon: '💒' },
+  { value: 'tour',     label: 'Tours',    icon: '🏔️' },
+  { value: 'other',    label: 'Other',    icon: '📸' },
+];
+
 const AdminGallery = () => {
-  const [images, setImages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [editingImage, setEditingImage] = useState(null);
   const { showSuccess, showError } = useToast();
+  const navigate = useNavigate();
+  const fileRef  = useRef(null);
 
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    imageUrl: '',
-    category: 'car'
-  });
-  
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [uploading, setUploading] = useState(false);
+  const [images, setImages]               = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [cat, setCat]                     = useState('all');
+  const [editingImage, setEditingImage]   = useState(null);
+  const [showForm, setShowForm]           = useState(false);
+  const [uploading, setUploading]         = useState(false);
+  const [selectedFile, setSelectedFile]   = useState(null);
+  const [preview, setPreview]             = useState(null);
+  const [form, setForm]                   = useState({ title: '', description: '', category: 'car' });
 
-  const categories = [
-    { value: 'all', label: 'All Photos', icon: '🖼️', color: 'from-purple-500 to-pink-500', bgColor: 'bg-purple-50', textColor: 'text-purple-700' },
-    { value: 'car', label: 'Cars', icon: '🚗', color: 'from-blue-500 to-cyan-500', bgColor: 'bg-blue-50', textColor: 'text-blue-700' },
-    { value: 'marriage', label: 'Marriage', icon: '💒', color: 'from-pink-500 to-rose-500', bgColor: 'bg-pink-50', textColor: 'text-pink-700' },
-    { value: 'tour', label: 'Tours', icon: '🏔️', color: 'from-green-500 to-emerald-500', bgColor: 'bg-green-50', textColor: 'text-green-700' },
-    { value: 'other', label: 'Other', icon: '📸', color: 'from-orange-500 to-amber-500', bgColor: 'bg-orange-50', textColor: 'text-orange-700' }
-  ];
-
-  useEffect(() => {
-    fetchImages();
-  }, [selectedCategory]);
+  useEffect(() => { fetchImages(); }, [cat]);
 
   const fetchImages = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await getAdminGalleryImages(selectedCategory);
-      setImages(response.data || []);
-    } catch (error) {
-      console.error('Error fetching gallery images:', error);
-      showError('Failed to load gallery images');
-    } finally {
-      setLoading(false);
-    }
+      const res = await getAdminGalleryImages(cat);
+      setImages(res.data || []);
+    } catch { showError('Failed to load gallery images'); }
+    finally { setLoading(false); }
+  };
+
+  const openAdd = () => {
+    setEditingImage(null);
+    setForm({ title: '', description: '', category: 'car' });
+    setSelectedFile(null);
+    setPreview(null);
+    setShowForm(true);
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+  };
+
+  const openEdit = (img) => {
+    setEditingImage(img);
+    setForm({ title: img.title, description: img.description || '', category: img.category });
+    setPreview(img.imageUrl);
+    setSelectedFile(null);
+    setShowForm(true);
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+  };
+
+  const closeForm = () => { setShowForm(false); setEditingImage(null); setPreview(null); setSelectedFile(null); };
+
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { showError('Please select a valid image file'); return; }
+    if (file.size > 5 * 1024 * 1024)    { showError('Image size must be under 5 MB'); return; }
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setPreview(reader.result);
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    if (!selectedFile && !editingImage) { showError('Please select an image'); return; }
+    setUploading(true);
     try {
-      setUploading(true);
-      
-      const uploadData = new FormData();
-      uploadData.append('title', formData.title);
-      uploadData.append('description', formData.description);
-      uploadData.append('category', formData.category);
-      
-      if (selectedFile) {
-        uploadData.append('image', selectedFile);
-      } else if (editingImage) {
-        uploadData.append('imageUrl', formData.imageUrl);
-      } else {
-        showError('Please select an image to upload');
-        setUploading(false);
-        return;
-      }
-      
-      if (editingImage) {
-        await updateGalleryImage(editingImage._id, uploadData);
-        showSuccess('Image updated successfully!');
-      } else {
-        await uploadGalleryImage(uploadData);
-        showSuccess('Image uploaded successfully!');
-      }
-      
-      setEditingImage(null);
-      setFormData({ title: '', description: '', imageUrl: '', category: 'car' });
-      setSelectedFile(null);
-      setImagePreview(null);
-      fetchImages();
-    } catch (error) {
-      console.error('Error saving image:', error);
-      showError(error.response?.data?.message || 'Failed to save image');
-    } finally {
-      setUploading(false);
-    }
-  };
-  
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        showError('Please select a valid image file');
-        return;
-      }
-      
-      if (file.size > 5 * 1024 * 1024) {
-        showError('Image size should be less than 5MB');
-        return;
-      }
-      
-      setSelectedFile(file);
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+      const fd = new FormData();
+      fd.append('title', form.title);
+      fd.append('description', form.description);
+      fd.append('category', form.category);
+      if (selectedFile) fd.append('image', selectedFile);
+      else if (editingImage) fd.append('imageUrl', editingImage.imageUrl);
 
-  const handleEdit = (image) => {
-    setEditingImage(image);
-    setFormData({
-      title: image.title,
-      description: image.description || '',
-      imageUrl: image.imageUrl,
-      category: image.category
-    });
-    setImagePreview(image.imageUrl);
-    setSelectedFile(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (editingImage) { await updateGalleryImage(editingImage._id, fd); showSuccess('Image updated!'); }
+      else              { await uploadGalleryImage(fd); showSuccess('Image uploaded!'); }
+      closeForm();
+      fetchImages();
+    } catch (err) { showError(err.response?.data?.message || 'Failed to save image'); }
+    finally { setUploading(false); }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this image?')) return;
-    
-    try {
-      await deleteGalleryImage(id);
-      showSuccess('Image deleted successfully!');
-      fetchImages();
-    } catch (error) {
-      console.error('Error deleting image:', error);
-      showError('Failed to delete image');
-    }
+    if (!window.confirm('Delete this image?')) return;
+    try { await deleteGalleryImage(id); showSuccess('Deleted!'); fetchImages(); }
+    catch { showError('Failed to delete image'); }
   };
 
-  const handleToggleActive = async (image) => {
+  const handleToggle = async (img) => {
     try {
-      await updateGalleryImage(image._id, { isActive: !image.isActive });
-      showSuccess(`Image ${!image.isActive ? 'activated' : 'deactivated'} successfully!`);
+      await updateGalleryImage(img._id, { isActive: !img.isActive });
+      showSuccess(`Image ${!img.isActive ? 'activated' : 'deactivated'}`);
       fetchImages();
-    } catch (error) {
-      console.error('Error toggling image status:', error);
-      showError('Failed to update image status');
-    }
-  };
-
-  const getCategoryInfo = (cat) => {
-    return categories.find(c => c.value === cat) || categories[0];
+    } catch { showError('Failed to update status'); }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white py-12 px-4 shadow-xl">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-2 drop-shadow-lg">Gallery Management</h1>
-              <p className="text-white/90 text-lg">Upload and manage your gallery images</p>
-            </div>
-            <div className="hidden md:block">
-              <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-4">
-                <div className="text-3xl font-bold">{images.length}</div>
-                <div className="text-sm text-white/80">Total Images</div>
+    <div className="min-h-screen bg-slate-50">
+      {/* Page header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-2">
+            <button onClick={() => navigate('/admin/dashboard')} className="hover:text-indigo-600 transition-colors">Admin</button>
+            <span>/</span>
+            <span className="text-gray-600 font-medium">Gallery</span>
+          </div>
+          {/* Title row */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900">Gallery Management</h1>
+                <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                  {loading ? 'Loading…' : `${images.length} image${images.length !== 1 ? 's' : ''} · Upload and manage gallery photos`}
+                </p>
               </div>
             </div>
+            <button onClick={openAdd}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm self-start sm:self-auto">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Upload Image
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Upload Form Section */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8 border border-gray-100">
-          <div className="flex items-center gap-3 mb-6">
-            <div className={`p-3 rounded-xl bg-gradient-to-r ${editingImage ? 'from-orange-500 to-red-500' : 'from-blue-500 to-purple-500'}`}>
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                {editingImage ? 'Edit Image' : 'Upload New Image'}
-              </h2>
-              <p className="text-gray-600">
-                {editingImage ? 'Update the image details below' : 'Add a new image to your gallery'}
-              </p>
-            </div>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Image Upload */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">
-                  Image Upload *
-                </label>
-                <div 
-                  className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
-                    imagePreview 
-                      ? 'border-green-400 bg-green-50' 
-                      : 'border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50 cursor-pointer'
+        {/* Upload / Edit form */}
+        {showForm && (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-5 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 bg-indigo-50 border-b border-indigo-100">
+              <p className="text-sm font-semibold text-indigo-900">
+                {editingImage ? 'Edit Image' : 'Upload New Image'}
+              </p>
+              <button onClick={closeForm} className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-4 sm:p-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Image picker */}
+                <div
+                  onClick={() => fileRef.current?.click()}
+                  className={`cursor-pointer rounded-xl border-2 border-dashed flex items-center justify-center overflow-hidden transition-colors ${
+                    preview ? 'border-emerald-400 bg-emerald-50' : 'border-gray-300 hover:border-indigo-400 bg-gray-50'
                   }`}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.classList.add('border-blue-500', 'bg-blue-100');
-                  }}
-                  onDragLeave={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.classList.remove('border-blue-500', 'bg-blue-100');
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.classList.remove('border-blue-500', 'bg-blue-100');
-                    const file = e.dataTransfer.files[0];
-                    if (file) {
-                      handleFileChange({ target: { files: [file] } });
-                    }
-                  }}
-                >
-                  {imagePreview ? (
-                    <div className="space-y-3">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="max-h-64 mx-auto rounded-xl object-contain"
-                      />
-                      <div className="flex gap-2 justify-center">
-                        <label
-                          htmlFor="file-upload"
-                          className="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-semibold"
-                        >
-                          Change
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedFile(null);
-                            setImagePreview(editingImage ? formData.imageUrl : null);
-                          }}
-                          className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all text-sm font-semibold"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
+                  style={{ minHeight: 160 }}>
+                  {preview ? (
+                    <img src={preview} alt="Preview" className="w-full h-40 object-cover" />
                   ) : (
-                    <div className="py-8">
-                      <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="text-center p-6">
+                      <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                       </svg>
-                      <label
-                        htmlFor="file-upload"
-                        className="cursor-pointer inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all font-bold"
-                      >
-                        Choose Image
-                      </label>
-                      <p className="text-gray-500 mt-3 text-sm">or drag and drop</p>
-                      <p className="text-gray-400 text-xs mt-1">PNG, JPG, GIF up to 5MB</p>
+                      <p className="text-sm font-medium text-gray-500">Tap to choose image</p>
+                      <p className="text-xs text-gray-400 mt-0.5">PNG, JPG up to 5 MB</p>
                     </div>
                   )}
-                  <input
-                    id="file-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
+                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+                </div>
+
+                {/* Fields */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Title *</label>
+                    <input required value={form.title} onChange={e => setForm(p => ({...p, title: e.target.value}))}
+                      placeholder="e.g., Luxury Wedding Car"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Category *</label>
+                    <select required value={form.category} onChange={e => setForm(p => ({...p, category: e.target.value}))}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none bg-white">
+                      <option value="car">🚗 Cars</option>
+                      <option value="marriage">💒 Marriage</option>
+                      <option value="tour">🏔️ Tours</option>
+                      <option value="other">📸 Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Description</label>
+                    <textarea value={form.description} onChange={e => setForm(p => ({...p, description: e.target.value}))}
+                      placeholder="Optional description..." rows={3} resize="none"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none resize-none" />
+                  </div>
+                  {preview && selectedFile && (
+                    <button type="button" onClick={() => { setSelectedFile(null); setPreview(editingImage?.imageUrl || null); }}
+                      className="text-xs text-red-500 hover:text-red-700 underline">
+                      Remove selected image
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {/* Form Fields */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Title *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                    placeholder="e.g., Luxury Wedding Car"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
-                    placeholder="Add a brief description..."
-                    rows="3"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Category *
-                  </label>
-                  <select
-                    required
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold"
-                  >
-                    <option value="car">🚗 Cars</option>
-                    <option value="marriage">💒 Marriage</option>
-                    <option value="tour">🏔️ Tours</option>
-                    <option value="other">📸 Other</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-4 border-t border-gray-200">
-              {editingImage && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingImage(null);
-                    setFormData({ title: '', description: '', imageUrl: '', category: 'car' });
-                    setSelectedFile(null);
-                    setImagePreview(null);
-                  }}
-                  className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-300 transition-all"
-                >
+              <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+                <button type="submit" disabled={uploading}
+                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg disabled:opacity-50 transition-colors">
+                  {uploading ? 'Saving…' : (editingImage ? 'Update Image' : 'Upload Image')}
+                </button>
+                <button type="button" onClick={closeForm}
+                  className="px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-600 border border-gray-300 text-sm font-medium rounded-lg transition-colors">
                   Cancel
                 </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Category filter chips — scrollable on mobile */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide mb-5">
+          {CATS.map(c => (
+            <button key={c.value} onClick={() => setCat(c.value)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+                cat === c.value
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600'
+              }`}>
+              <span>{c.icon}</span>
+              <span>{c.label}</span>
+              {cat === c.value && images.length > 0 && (
+                <span className="text-[10px] bg-white/20 px-1 rounded-full">{images.length}</span>
               )}
-              <button
-                type="submit"
-                disabled={uploading}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {uploading ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    {editingImage ? 'Update Image' : 'Upload Image'}
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+            </button>
+          ))}
         </div>
 
-        {/* Category Filter */}
-        <div className="mb-8">
-          <div className="flex flex-wrap gap-3">
-            {categories.map((category) => (
-              <button
-                key={category.value}
-                onClick={() => setSelectedCategory(category.value)}
-                className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 ${
-                  selectedCategory === category.value
-                    ? `${category.bgColor} ${category.textColor} shadow-lg scale-105`
-                    : 'bg-white text-gray-700 hover:shadow-md shadow'
-                }`}
-              >
-                <span className="text-2xl">{category.icon}</span>
-                <span>{category.label}</span>
-                {selectedCategory === category.value && (
-                  <span className={`ml-1 px-2 py-0.5 ${category.bgColor} rounded-full text-xs font-bold`}>
-                    {images.length}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Loading State */}
+        {/* Loading */}
         {loading && (
-          <div className="flex flex-col justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
-            <p className="mt-4 text-gray-600 font-semibold">Loading images...</p>
+          <div className="flex justify-center py-16">
+            <div className="w-8 h-8 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
           </div>
         )}
 
-        {/* Empty State */}
+        {/* Empty */}
         {!loading && images.length === 0 && (
-          <div className="text-center py-20 bg-white rounded-3xl shadow-xl">
-            <div className="text-7xl mb-4">📷</div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">No Images Found</h3>
-            <p className="text-gray-500 mb-6">
-              {selectedCategory === 'all' 
-                ? 'Upload your first image to get started'
-                : `No ${getCategoryInfo(selectedCategory).label.toLowerCase()} images yet`
-              }
+          <div className="bg-white rounded-xl border border-gray-200 text-center py-14">
+            <div className="text-4xl mb-3">📷</div>
+            <p className="text-base font-semibold text-gray-700 mb-1">No images found</p>
+            <p className="text-sm text-gray-400 mb-4">
+              {cat === 'all' ? 'Upload your first image to get started.' : `No ${cat} images yet.`}
             </p>
+            <button onClick={openAdd}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
+              Upload Image
+            </button>
           </div>
         )}
 
-        {/* Gallery Grid */}
+        {/* Gallery grid — 2 cols on mobile, 3 on sm, 4 on lg */}
         {!loading && images.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {images.map((image) => {
-              const catInfo = getCategoryInfo(image.category);
-              return (
-                <div
-                  key={image._id}
-                  className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300"
-                >
-                  <div className="relative aspect-square overflow-hidden bg-gray-100">
-                    <img
-                      src={image.imageUrl}
-                      alt={image.title}
-                      className="w-full h-full object-cover"
-                    />
-                    {!image.isActive && (
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                        <span className="bg-red-500 text-white px-4 py-2 rounded-full font-bold text-sm">
-                          Inactive
-                        </span>
-                      </div>
-                    )}
-                    <div className={`absolute top-3 right-3 px-3 py-1.5 bg-gradient-to-r ${catInfo.color} text-white text-xs font-bold rounded-full shadow-lg capitalize`}>
-                      {image.category}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            {images.map(image => (
+              <div key={image._id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                {/* Image */}
+                <div className="relative aspect-square bg-gray-100 overflow-hidden">
+                  <img src={image.imageUrl} alt={image.title} className="w-full h-full object-cover" />
+                  {!image.isActive && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <span className="text-xs bg-red-500 text-white px-2 py-1 rounded-full font-medium">Inactive</span>
                     </div>
-                  </div>
-                  
-                  <div className="p-4">
-                    <h3 className="font-bold text-gray-900 mb-1 truncate text-lg">{image.title}</h3>
-                    {image.description && (
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-3">{image.description}</p>
-                    )}
-                    
-                    <div className="flex items-center gap-2 mb-3">
-                      <button
-                        onClick={() => handleToggleActive(image)}
-                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
-                          image.isActive
-                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        {image.isActive ? '✓ Active' : '✗ Inactive'}
-                      </button>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(image)}
-                        className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-bold flex items-center justify-center gap-1"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(image._id)}
-                        className="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-bold flex items-center justify-center gap-1"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Delete
-                      </button>
-                    </div>
+                  )}
+                  <span className="absolute top-2 left-2 text-[10px] font-semibold bg-black/50 text-white px-1.5 py-0.5 rounded-full capitalize">
+                    {image.category}
+                  </span>
+                </div>
+                {/* Info + actions */}
+                <div className="p-2.5">
+                  <p className="text-xs font-semibold text-gray-900 truncate mb-1">{image.title}</p>
+                  {image.description && (
+                    <p className="text-[10px] text-gray-400 line-clamp-1 mb-2">{image.description}</p>
+                  )}
+                  <div className="flex gap-1.5">
+                    <button onClick={() => handleToggle(image)}
+                      className={`flex-1 py-1.5 text-[11px] font-medium rounded-md transition-colors ${
+                        image.isActive ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}>
+                      {image.isActive ? 'Active' : 'Inactive'}
+                    </button>
+                    <button onClick={() => openEdit(image)}
+                      className="px-2 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-[11px] font-medium rounded-md transition-colors">
+                      Edit
+                    </button>
+                    <button onClick={() => handleDelete(image._id)}
+                      className="px-2 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-md transition-colors">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         )}
       </div>
