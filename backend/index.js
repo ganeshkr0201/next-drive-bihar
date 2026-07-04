@@ -8,13 +8,17 @@ dotenv.config({
 
 console.log("NODE_ENV:", process.env.NODE_ENV);
 
+// ⚠️  All imports below are hoisted in ES modules and run BEFORE the code above.
+// The fix: passport.js reads env vars lazily (inside the if-block at call time,
+// not at module parse time), so it works correctly as long as we call
+// initializePassport() explicitly here AFTER dotenv has loaded.
+
 import cors from 'cors';
 import helmet from 'helmet';
-import express from 'express'
+import express from 'express';
 import passport from 'passport';
-
-// Import passport configuration for Google OAuth
-import './config/passport.js'
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import User from './models/User.js';
 
 import connectToDB from './config/database.js';
 import redisManager from './config/redis.js';
@@ -25,6 +29,55 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import carRoutes from './routes/carRoutes.js';
 import galleryRoutes from './routes/galleryRoutes.js';
 import driverRoutes from './routes/driverRoutes.js';
+import { generateTokenPair } from './utils/jwt.js';
+
+// Register Google strategy HERE — after dotenv.config() has run
+// (static imports are hoisted, but this function call is not)
+const initializePassport = () => {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_AUTH_CALLBACK) {
+    console.warn('⚠️ Google OAuth not configured - missing environment variables');
+    console.warn('  GOOGLE_CLIENT_ID:', !!process.env.GOOGLE_CLIENT_ID);
+    console.warn('  GOOGLE_CLIENT_SECRET:', !!process.env.GOOGLE_CLIENT_SECRET);
+    console.warn('  GOOGLE_AUTH_CALLBACK:', process.env.GOOGLE_AUTH_CALLBACK);
+    return;
+  }
+
+  passport.use(new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: process.env.GOOGLE_AUTH_CALLBACK,
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        let user = await User.findOne({ email: profile.emails[0].value });
+        if (user) {
+          if (!user.googleId) {
+            user.googleId = profile.id;
+            user.authProvider = 'google';
+            if (!user.avatar && profile.photos?.[0]) user.avatar = profile.photos[0].value;
+            await user.save();
+          }
+          return done(null, user);
+        }
+        user = await User.create({
+          name: profile.displayName,
+          email: profile.emails[0].value,
+          googleId: profile.id,
+          authProvider: 'google',
+          avatar: profile.photos?.[0]?.value || null,
+          isVerified: true,
+        });
+        return done(null, user);
+      } catch (err) {
+        return done(err, null);
+      }
+    }
+  ));
+  console.log('✅ Google OAuth strategy registered with callback:', process.env.GOOGLE_AUTH_CALLBACK);
+};
+
+initializePassport();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
