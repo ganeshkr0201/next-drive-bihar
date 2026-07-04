@@ -1,19 +1,10 @@
 import passport from "passport";
-import dotenv from 'dotenv';
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import User from "../models/User.js";
 
-// Load environment variables
-const env = process.env.NODE_ENV || "development";
-
-if(env === "production") {
-    dotenv.config();
-}
-else {
-    dotenv.config({
-        path: `.env.${env}`
-    })
-}
+// Note: dotenv is loaded in index.js before this module is imported.
+// Do NOT call dotenv.config() here — it would reload and potentially
+// override env vars with the wrong file.
 
 // GOOGLE STRATEGY - Updated for JWT (no sessions)
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_AUTH_CALLBACK) {
