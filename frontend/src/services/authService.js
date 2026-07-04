@@ -100,8 +100,9 @@ class AuthService {
       sessionStorage.setItem('oauth_redirect', '/');
     }
     
-    // Redirect to backend Google OAuth endpoint
-    window.location.href = `${api.defaults.baseURL}/auth/google`;
+    // Redirect to backend Google OAuth endpoint — strip trailing slash to avoid //auth/google
+    const baseUrl = (api.defaults.baseURL || '').replace(/\/$/, '');
+    window.location.href = `${baseUrl}/auth/google`;
   }
 
   // Logout user
