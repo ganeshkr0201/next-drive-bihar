@@ -1,15 +1,12 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 const env = process.env.NODE_ENV || "development";
 
-if(env === "production") {
-    dotenv.config();
-}
-else {
-    dotenv.config({
-        path: `.env.${env}`
-    })
-}
+dotenv.config({
+  path: env === "production" ? ".env" : `.env.${env}`,
+});
+
+console.log("NODE_ENV:", process.env.NODE_ENV);
 
 import cors from 'cors';
 import helmet from 'helmet';
